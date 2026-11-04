@@ -145,28 +145,109 @@ function topbar(){
   const app=S.screen=='app';const p=pend();
   return `<div class="top">${S.screen!='welcome'&&S.screen!='auth'?`<button class="x" onclick="to('welcome')" aria-label="${T('পেছনে','Back')}">←</button>`:''}<span class="sp"></span>${app?`<button class="bell" onclick="go('req')" aria-label="${T('নোটিফিকেশন','Notifications')}">🔔${p?`<i>${bn(p)}</i>`:''}</button>`:''}<button class="lang" onclick="tl()" aria-label="Language">${L=='bn'?'EN':'বাং'}</button></div>`;
 }
-function authView(){
+  function authView(){
   const m=S.amode=='signup';
-  if(S.astep=='otp')return `<h1>${T('ভেরিফিকেশন','Verify')}</h1><div class="mut">${T('পাঠানো ৬ সংখ্যার কোড লিখুন: ','Enter the 6-digit code sent to ')}${esc(S.cc+' '+S.ph)}</div>
-  <input type="text" inputmode="numeric" maxlength="6" value="${esc(S.otp)}" placeholder="------" style="font-size:26px;text-align:center;letter-spacing:6px;margin:12px 0" oninput="S.otp=this.value">
-  <div class="sample">${T('ডেমো: যেকোনো ৬ সংখ্যা দিন (যেমন 123456)','Demo: enter any 6 digits (e.g. 123456)')}</div><button class="btn" onclick="verify()">${T('যাচাই করুন','Verify')}</button>`;
-  if(S.astep=='name')return `<h1>${T('আপনার নাম','Your name')}</h1><div class="mut">${T('মেসে এই নামে দেখাবে','This name will show in the mess')}</div><input type="text" id="un" placeholder="${T('যেমন: সুমন','e.g. Suman')}" style="margin:12px 0"><button class="btn" onclick="finish()">${T('শুরু করুন','Get started')}</button>`;
-  return `<h1>🍽️ Smart Mess</h1><div class="mut">${T('মেসের হিসাব, সহজে','Mess accounts, made simple')}</div>
-  <div class="types" style="margin-top:18px"><button class="type ${!m?'on':''}" onclick="S.amode='login';render()"><b>${T('লগইন','Log in')}</b></button><button class="type ${m?'on':''}" onclick="S.amode='signup';render()"><b>${T('সাইন আপ','Sign up')}</b></button></div>
-  <h2>${T('ফোন নাম্বার','Phone number')}</h2><div class="row"><select onchange="S.cc=this.value">${CC.map(c=>`<option value="${c[0]}" ${S.cc==c[0]?'selected':''}>${c[1]} ${c[0]}</option>`).join('')}</select><input type="text" inputmode="tel" value="${esc(S.ph)}" placeholder="1712345678" oninput="S.ph=this.value"></div>
-  <div style="height:12px"></div><button class="btn" onclick="sendOtp()">${T('OTP পাঠান','Send OTP')}</button>
-  <div class="mut" style="text-align:center;margin:12px 0">${T('অথবা','or')}</div><button class="btn ghost" onclick="S.via='google';S.astep='name';render()"><b>G</b> ${T('Google দিয়ে চালিয়ে যান','Continue with Google')}</button>
-  <div class="sample" style="margin-top:16px">${T('ডেমো: আসল OTP বা Google লগইন পরে সার্ভার যুক্ত হলে কাজ করবে।','Demo: real OTP and Google login work once a server is connected.')}</div>`;
+  return `
+  <h1>🍽️ Smart Mess</h1>
+  <div class="mut">${T('মেসের হিসাব, সহজে','Mess accounts, made simple')}</div>
+
+  <div class="types" style="margin-top:18px">
+    <button class="type ${!m?'on':''}" onclick="S.amode='login';render()">
+      <b>${T('লগইন','Log in')}</b>
+    </button>
+    <button class="type ${m?'on':''}" onclick="S.amode='signup';render()">
+      <b>${T('সাইন আপ','Sign up')}</b>
+    </button>
+  </div>
+
+  ${m?`
+    <h2>${T('আপনার নাম','Your name')}</h2>
+    <input type="text" id="authName" placeholder="${T('আপনার নাম লিখুন','Enter your name')}" style="width:100%;padding:12px;border:1.5px solid var(--bd);border-radius:10px;background:var(--card);color:var(--ink);font:inherit">
+  `:''}
+
+  <h2>${T('ইমেইল','Email')}</h2>
+  <input type="email" id="authEmail" value="${esc(S.email||'')}" placeholder="example@gmail.com" style="width:100%;padding:12px;border:1.5px solid var(--bd);border-radius:10px;background:var(--card);color:var(--ink);font:inherit" autocomplete="email">
+
+  <h2>${T('পাসওয়ার্ড','Password')}</h2>
+  <input type="password" id="authPass" placeholder="${T('কমপক্ষে ৬ অক্ষর','At least 6 characters')}" style="width:100%;padding:12px;border:1.5px solid var(--bd);border-radius:10px;background:var(--card);color:var(--ink);font:inherit" autocomplete="${m?'new-password':'current-password'}">
+
+  <div style="height:16px"></div>
+  <button class="btn" onclick="authAction()">
+    ${m?T('একাউন্ট তৈরি করুন','Create account'):T('লগইন করুন','Log in')}
+  </button>
+  ${!m?`<button class="btn ghost" style="margin-top:10px" onclick="resetPassword()">${T('পাসওয়ার্ড ভুলে গেছেন?','Forgot password?')}</button>`:''}
+  `;
 }
-function sendOtp(){if(S.ph.replace(/\D/g,'').length<7)return say(T('সঠিক ফোন নাম্বার দিন','Enter a valid phone number'));S.via='phone';S.astep='otp';S.otp='';render()}
-function verify(){
-  if(S.otp.replace(/\D/g,'').length<6)return say(T('৬ সংখ্যার কোড দিন','Enter the 6-digit code'));
-  const u=USERS[S.cc+S.ph];
-  if(S.amode=='login'){if(u){S.user=u;return after()}S.amode='signup';S.astep='start';return say(T('এই নাম্বারে একাউন্ট নেই। সাইন আপ করুন','No account for this number. Please sign up'))}
-  S.astep='name';render();
+
+async function authAction(){
+  const email=document.getElementById('authEmail').value.trim();
+  const pass=document.getElementById('authPass').value;
+  const name=document.getElementById('authName')?.value.trim();
+  const signup=S.amode=='signup';
+
+  if(!email||!email.includes('@'))
+    return say(T('সঠিক ইমেইল দিন','Enter a valid email'));
+
+  if(pass.length<6)
+    return say(T('পাসওয়ার্ড কমপক্ষে ৬ অক্ষরের হতে হবে','Password must be at least 6 characters'));
+
+  if(signup&&!name)
+    return say(T('আপনার নাম লিখুন','Enter your name'));
+
+  try{
+    let result;
+
+    if(signup){
+      result=await auth.createUserWithEmailAndPassword(email,pass);
+      await result.user.updateProfile({displayName:name});
+    }else{
+      result=await auth.signInWithEmailAndPassword(email,pass);
+    }
+
+    S.user={
+      uid:result.user.uid,
+      name:result.user.displayName||email.split('@')[0],
+      email:result.user.email
+    };
+
+    after();
+
+  }catch(e){
+    const errors={
+      'auth/email-already-in-use':T('এই ইমেইলে আগে থেকেই একাউন্ট আছে','An account already exists with this email'),
+      'auth/invalid-email':T('ইমেইল ঠিকানা সঠিক নয়','Invalid email address'),
+      'auth/weak-password':T('আরও শক্তিশালী পাসওয়ার্ড দিন','Choose a stronger password'),
+      'auth/user-not-found':T('এই ইমেইলে কোনো একাউন্ট নেই','No account found with this email'),
+      'auth/wrong-password':T('পাসওয়ার্ড ভুল হয়েছে','Incorrect password'),
+      'auth/invalid-credential':T('ইমেইল অথবা পাসওয়ার্ড ভুল','Incorrect email or password'),
+      'auth/too-many-requests':T('অনেকবার চেষ্টা হয়েছে। পরে চেষ্টা করুন','Too many attempts. Try again later'),
+      'auth/network-request-failed':T('ইন্টারনেট সংযোগ পরীক্ষা করুন','Check your internet connection')
+    };
+
+    say(errors[e.code]||e.message);
+  }
 }
-function finish(){const n=document.getElementById('un').value.trim();if(!n)return say(T('আপনার নাম লিখুন','Enter your name'));S.user={name:n};if(S.via=='phone')USERS[S.cc+S.ph]=S.user;after()}
-function after(){S.members[0]=S.user.name;S.astep='start';S.screen='welcome';render()}
+
+async function resetPassword(){
+  const email=document.getElementById('authEmail').value.trim();
+  if(!email||!email.includes('@'))
+    return say(T('আগে ইমেইল লিখুন','Enter your email first'));
+
+  try{
+    await auth.sendPasswordResetEmail(email);
+    say(T('পাসওয়ার্ড রিসেট লিংক ইমেইলে পাঠানো হয়েছে','Password reset link sent to your email'));
+  }catch(e){
+    say(e.message);
+  }
+}
+
+function after(){
+  S.members[0]=S.user.name;
+  S.astep='start';
+  S.screen='welcome';
+  render();
+}
+
 function welcomeView(){
   return `<h1>🍽️ Smart Mess</h1><div class="mut">${T('হ্যালো, ','Hello, ')}<b>${esc(S.user.name)}</b> · <button class="x" style="font-size:14px;padding:0" onclick="S.user=null;S.astep='start';S.ph='';S.otp='';S.screen='auth';render()">${T('লগআউট','Log out')}</button></div><div style="height:22px"></div>
   <button class="btn" onclick="to('create')">➕ ${T('নতুন মেস তৈরি করুন','Create a new mess')}</button><div style="height:10px"></div>
