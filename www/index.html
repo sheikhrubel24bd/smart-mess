@@ -367,6 +367,21 @@ function render(){
   document.getElementById('app').innerHTML=topbar()+v+nav+(S.view!=null&&M.exp[S.view]?`<div class="ov" onclick="S.view=null;render()"><img src="${M.exp[S.view].memo}" alt=""></div>`:'')+(S.toast?`<div class="toast">${esc(S.toast)}</div>`:'');
 }
 render();
+
+auth.onAuthStateChanged(user=>{
+  if(user){
+    S.user={
+      uid:user.uid,
+      name:user.displayName||user.email.split('@')[0],
+      email:user.email
+    };
+    if(S.screen=='auth') S.screen='welcome';
+  }else{
+    S.user=null;
+    if(S.screen=='welcome'||S.screen=='app') S.screen='auth';
+  }
+  render();
+});
 </script>
 </body>
 </html>
