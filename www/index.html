@@ -249,7 +249,7 @@ function after(){
 }
 
 function welcomeView(){
-  return `<h1>🍽️ Smart Mess</h1><div class="mut">${T('হ্যালো, ','Hello, ')}<b>${esc(S.user.name)}</b> · <button class="x" style="font-size:14px;padding:0" onclick="S.user=null;S.astep='start';S.ph='';S.otp='';S.screen='auth';render()">${T('লগআউট','Log out')}</button></div><div style="height:22px"></div>
+  return `<h1>🍽️ Smart Mess</h1><div class="mut">${T('হ্যালো, ','Hello, ')}<b>${esc(S.user.name)}</b> · <button class="x" style="font-size:14px;padding:0" onclick="auth.signOut()">${T('লগআউট','Log out')}</button></div><div style="height:22px"></div>
   <button class="btn" onclick="to('create')">➕ ${T('নতুন মেস তৈরি করুন','Create a new mess')}</button><div style="height:10px"></div>
   <button class="btn ghost" onclick="to('join')">🔍 ${T('কোড দিয়ে মেস খুঁজুন','Find a mess by code')}</button>
   <div class="sample" style="margin-top:16px">${T('ডেমো মেসের কোড: ','Demo mess code: ')}<b>SM-1234</b></div>`;
