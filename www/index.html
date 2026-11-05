@@ -484,7 +484,53 @@ function joinView(){
   <button class="btn ghost" onclick="render()">${T('অবস্থা দেখুন','Check status')}</button><div style="height:10px"></div>
   <button class="btn" onclick="M=S.found;M.me=0;S.payer=0;S.screen='app';S.tab='req';render()">👑 ${T('অ্যাডমিন হিসেবে দেখুন (ডেমো)','View as admin (demo)')}</button>`;
 }
-function search(){const c=S.jcode.trim().toUpperCase();S.pend=null;S.found=REG.find(m=>m.code==c)||(c?false:null);render()}
+async function search(){
+  const c=S.jcode.trim().toUpperCase();
+  S.pend=null;
+  S.found=null;
+
+  if(!c){
+    S.found=false;
+    render();
+    return;
+  }
+
+  try{
+    const codeSnap=await db.collection('messCodes').doc(c).get();
+
+    if(!codeSnap.exists){
+      S.found=false;
+      render();
+      return;
+    }
+
+    const messId=codeSnap.data().messId;
+    const messSnap=await db.collection('messes').doc(messId).get();
+
+    if(!messSnap.exists){
+      S.found=false;
+      render();
+      return;
+    }
+
+    const data=messSnap.data();
+
+    S.found={
+      id:messId,
+      code:data.code,
+      name:data.name,
+      type:data.type,
+      cur:data.currency
+    };
+
+  }catch(e){
+    console.error(e);
+    S.found=false;
+    say('মেস খুঁজতে সমস্যা হয়েছে। আবার চেষ্টা করুন।');
+  }
+
+  render();
+}
 function send(){
   const n=document.getElementById('jn').value.trim();if(!n)return say(T('আপনার নাম লিখুন','Enter your name'));
   const r={name:n,s:'p'};S.found.reqs.push(r);S.pend=r;render();
