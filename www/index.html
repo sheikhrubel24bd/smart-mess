@@ -221,7 +221,7 @@ if(!userSnap.exists){
     createdAt:firebase.firestore.FieldValue.serverTimestamp()
   });
 }
-    after();
+    
 
   }catch(e){
     const errors={
@@ -252,11 +252,75 @@ async function resetPassword(){
   }
 }
 
-function after(){
-  S.members[0]=S.user.name;
-  S.astep='start';
-  S.screen='welcome';
-  render();
+async function after(){
+  try{
+    const uid=auth.currentUser.uid;
+    const userSnap=await db.collection('users').doc(uid).get();
+
+    if(!userSnap.exists)
+      throw new Error('USER_NOT_FOUND');
+
+    const messId=userSnap.data().messId;
+
+    S.astep='start';
+
+    if(!messId){
+      M=null;
+      S.screen='welcome';
+      render();
+      return;
+    }
+
+    const messRef=db.collection('messes').doc(messId);
+
+    const [messSnap,myMemberSnap,membersSnap]=await Promise.all([
+      messRef.get(),
+      messRef.collection('members').doc(uid).get(),
+      messRef.collection('members').where('status','==','active').get()
+    ]);
+
+    if(!messSnap.exists || !myMemberSnap.exists)
+      throw new Error('MESS_NOT_FOUND');
+
+    const myMember=myMemberSnap.data();
+
+    if(myMember.status!='active')
+      throw new Error('MEMBERSHIP_INACTIVE');
+
+    const data=messSnap.data();
+
+    const memberDocs=membersSnap.docs.filter(d=>d.data().status=='active');
+
+    const memberUids=memberDocs.map(d=>d.id);
+    const members=memberDocs.map(d=>d.data().name);
+
+    M={
+      id:messId,
+      code:data.code,
+      name:data.name,
+      type:data.type,
+      cur:data.currency,
+      adminUid:data.adminUid,
+      role:myMember.role,
+      memberUids:memberUids,
+      members:members,
+      me:memberUids.indexOf(uid),
+      meals:{},
+      exp:[],
+      reqs:[]
+    };
+
+    S.members=[...members];
+    S.payer=M.me;
+    S.screen='app';
+    S.tab='home';
+
+    render();
+
+  }catch(e){
+    console.error(e);
+    say(T('আগের মেস লোড করা যায়নি। আবার চেষ্টা করুন।','Could not load your previous mess. Please try again.'));
+  }
 }
 
 function welcomeView(){
@@ -478,19 +542,22 @@ function render(){
 }
 render();
 
-auth.onAuthStateChanged(user=>{
+auth.onAuthStateChanged(async user=>{
   if(user){
     S.user={
       uid:user.uid,
       name:user.displayName||user.email.split('@')[0],
       email:user.email
     };
-    if(S.screen=='auth') S.screen='welcome';
+
+    await after();
+
   }else{
     S.user=null;
-    if(S.screen=='welcome'||S.screen=='app') S.screen='auth';
+    M=null;
+    S.screen='auth';
+    render();
   }
-  render();
 });
 </script>
 </body>
