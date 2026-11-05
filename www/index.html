@@ -118,7 +118,7 @@ function seed(m){
   const n=m.members.length;m.members.forEach((_,i)=>m.meals[i]=[48,52,40,56][i%4]);
   m.exp=[['fish',0,2400],['veg',1,1800],['chk',2,3200],['rice',3,2600],['rent',0,12000],['gas',1,1200],['net',2,800]].map(([item,p,amt],k)=>({item,payer:p%n,amt,d:Date.now()-k*864e5}));
 }
-const demo=mk('সবুজ মেস','meal',['রহিম','করিম','সালাম','জামাল']);demo.code='SM-1234';seed(demo);
+
 
 function calc(){
   const n=M.members.length;let baz=0,fix=0;const paid=M.members.map(()=>0);
