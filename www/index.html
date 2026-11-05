@@ -209,7 +209,18 @@ async function authAction(){
       name:result.user.displayName||email.split('@')[0],
       email:result.user.email
     };
+const userRef=db.collection('users').doc(result.user.uid);
+const userSnap=await userRef.get();
 
+if(!userSnap.exists){
+  await userRef.set({
+    uid:result.user.uid,
+    name:S.user.name,
+    email:S.user.email,
+    messId:null,
+    createdAt:firebase.firestore.FieldValue.serverTimestamp()
+  });
+}
     after();
 
   }catch(e){
