@@ -299,11 +299,12 @@ async function after(){
 
     const messRef=db.collection('messes').doc(messId);
 
-    const [messSnap,myMemberSnap,membersSnap]=await Promise.all([
-      messRef.get(),
-      messRef.collection('members').doc(uid).get(),
-      messRef.collection('members').where('status','==','active').get()
-    ]);
+    const [messSnap,myMemberSnap,membersSnap,requestsSnap]=await Promise.all([
+  messRef.get(),
+  messRef.collection('members').doc(uid).get(),
+  messRef.collection('members').where('status','==','active').get(),
+  messRef.collection('joinRequests').get()
+]);
 
     if(!messSnap.exists || !myMemberSnap.exists)
       throw new Error('MESS_NOT_FOUND');
@@ -333,7 +334,14 @@ async function after(){
       me:memberUids.indexOf(uid),
       meals:{},
       exp:[],
-      reqs:[]
+    reqs:requestsSnap.docs.map(d=>{
+  const r=d.data();
+  return {
+    uid:d.id,
+    name:r.name,
+    s:r.status=='pending'?'p':r.status=='accepted'?'a':'r'
+  };
+})
     };
 
     S.members=[...members];
@@ -531,9 +539,64 @@ async function search(){
 
   render();
 }
-function send(){
-  const n=document.getElementById('jn').value.trim();if(!n)return say(T('আপনার নাম লিখুন','Enter your name'));
-  const r={name:n,s:'p'};S.found.reqs.push(r);S.pend=r;render();
+async function send(){
+  const n=document.getElementById('jn').value.trim();
+
+  if(!n)
+    return say(T('আপনার নাম লিখুন','Enter your name'));
+
+  if(!auth.currentUser)
+    return say(T('আগে লগইন করুন','Please login first'));
+
+  const uid=auth.currentUser.uid;
+  const messId=S.found.id;
+
+  try{
+    say(T('অনুরোধ পাঠানো হচ্ছে...','Sending request...'));
+
+    const userRef=db.collection('users').doc(uid);
+    const requestRef=db.collection('messes')
+      .doc(messId)
+      .collection('joinRequests')
+      .doc(uid);
+
+    await db.runTransaction(async tx=>{
+      const userSnap=await tx.get(userRef);
+      const requestSnap=await tx.get(requestRef);
+
+      if(!userSnap.exists)
+        throw new Error('USER_NOT_FOUND');
+
+      if(userSnap.data().messId)
+        throw new Error('ALREADY_IN_MESS');
+
+      if(requestSnap.exists && requestSnap.data().status=='pending')
+        throw new Error('REQUEST_EXISTS');
+
+      tx.set(requestRef,{
+        uid:uid,
+        name:n,
+        email:auth.currentUser.email,
+        status:'pending',
+        createdAt:firebase.firestore.FieldValue.serverTimestamp()
+      });
+    });
+
+    S.pend={name:n,s:'p'};
+    say(T('যোগদানের অনুরোধ পাঠানো হয়েছে।','Join request sent successfully.'));
+    render();
+
+  }catch(e){
+    console.error(e);
+
+    const messages={
+      USER_NOT_FOUND:'ইউজার তথ্য পাওয়া যায়নি।',
+      ALREADY_IN_MESS:'আপনি ইতিমধ্যে একটি মেসে আছেন।',
+      REQUEST_EXISTS:'আপনার অনুরোধ আগেই পাঠানো হয়েছে।'
+    };
+
+    say(messages[e.message]||'অনুরোধ পাঠানো যায়নি। Firebase Rules পরীক্ষা করতে হবে।');
+  }
 }
 function reqView(){
   const rows=M.reqs.map((r,i)=>({r,i}));const P=rows.filter(x=>x.r.s=='p'),D=rows.filter(x=>x.r.s!='p');
@@ -606,7 +669,7 @@ function render(){
   let v,nav='';
   if(S.screen=='auth')v=authView();else if(S.screen=='welcome')v=welcomeView();else if(S.screen=='create')v=createView();else if(S.screen=='join')v=joinView();
   else{
-    const tabs=[['home','🏠',T('হোম','Home')],['add','➕',T('খরচ','Add')]].concat(M.type=='meal'?[['meal','🍽️',T('মিল','Meals')]]:[]).concat([['rep','📊',T('হিসাব','Report')]]);
+    const tabs=[['home','🏠',T('হোম','Home')],['add','➕',T('খরচ','Add')]].concat(M.type=='meal'?[['meal','🍽️',T('মিল','Meals')]]:[]).concat([['rep','📊',T('হিসাব','Report')]]).concat(M.role=='admin'?[['req','🔔',T('অনুরোধ','Requests')]]:[]);
     v=({home:homeView,add:addView,meal:mealView,rep:reportView,req:reqView}[S.tab]||homeView)();
     nav=`<nav><div>${tabs.map(t=>`<button class="${S.tab==t[0]?'on':''}" onclick="go('${t[0]}')"><span>${t[1]}</span>${t[2]}</button>`).join('')}</div></nav>`;
   }
