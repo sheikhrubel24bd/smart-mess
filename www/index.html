@@ -278,9 +278,108 @@ function createView(){
   <div style="height:16px"></div><button class="btn" ${S.members.length<2?'disabled':''} onclick="start()">${T('মেস তৈরি করুন','Create mess')}</button>`;
 }
 function addMem(){const v=document.getElementById('nmem').value.trim();if(v){S.members.push(v);render()}}
-function start(){
-  M=mk(S.name.trim()||T('আমার মেস','My mess'),S.type,[...S.members],S.cur);seed(M);S.payer=0;
-  S.screen='app';S.tab='home';render();say(T('মেস তৈরি হয়েছে। কোড: ','Mess created. Code: ')+M.code);
+async function start(){
+  if(!auth.currentUser) return say(T('আগে লগইন করুন','Please login first'));
+
+  const name=S.name.trim()||T('আমার মেস','My mess');
+  const uid=auth.currentUser.uid;
+  const userRef=db.collection('users').doc(uid);
+  const messRef=db.collection('messes').doc();
+
+  try{
+    say(T('মেস তৈরি হচ্ছে...','Creating mess...'));
+
+    const result=await db.runTransaction(async tx=>{
+      const userSnap=await tx.get(userRef);
+
+      if(!userSnap.exists)
+        throw new Error('USER_PROFILE_MISSING');
+
+      if(userSnap.data().messId)
+        throw new Error('ALREADY_IN_MESS');
+
+      let code='',codeRef=null;
+
+      for(let i=0;i<10;i++){
+        const candidate='SM-'+(1000+Math.floor(Math.random()*9000));
+        const ref=db.collection('messCodes').doc(candidate);
+        const snap=await tx.get(ref);
+
+        if(!snap.exists){
+          code=candidate;
+          codeRef=ref;
+          break;
+        }
+      }
+
+      if(!code)
+        throw new Error('CODE_GENERATION_FAILED');
+
+      const now=firebase.firestore.FieldValue.serverTimestamp();
+
+      tx.set(messRef,{
+        name:name,
+        code:code,
+        type:S.type,
+        currency:S.cur,
+        adminUid:uid,
+        ownerUid:uid,
+        createdAt:now
+      });
+
+      tx.set(codeRef,{
+        messId:messRef.id
+      });
+
+      tx.set(
+        messRef.collection('members').doc(uid),
+        {
+          uid:uid,
+          name:S.user.name,
+          role:'admin',
+          status:'active',
+          joinedAt:now
+        }
+      );
+
+      tx.update(userRef,{
+        messId:messRef.id
+      });
+
+      return {code:code};
+    });
+
+    M={
+      id:messRef.id,
+      code:result.code,
+      name:name,
+      type:S.type,
+      members:[S.user.name],
+      cur:S.cur,
+      me:0,
+      meals:{},
+      exp:[],
+      reqs:[]
+    };
+
+    S.payer=0;
+    S.screen='app';
+    S.tab='home';
+    render();
+
+    say(T('মেস তৈরি হয়েছে। কোড: ','Mess created. Code: ')+M.code);
+
+  }catch(e){
+    console.error(e);
+
+    const errors={
+      USER_PROFILE_MISSING:T('ইউজার তথ্য পাওয়া যায়নি।','User profile not found.'),
+      ALREADY_IN_MESS:T('আপনি ইতিমধ্যে একটি মেসে আছেন।','You already belong to a mess.'),
+      CODE_GENERATION_FAILED:T('মেস কোড তৈরি করা যায়নি। আবার চেষ্টা করুন।','Could not generate a mess code.')
+    };
+
+    say(errors[e.message]||T('মেস তৈরি হয়নি। আবার চেষ্টা করুন।','Mess creation failed. Please try again.'));
+  }
 }
 function joinView(){
   let h=`<h1>🔍 ${T('মেস খুঁজুন','Find a mess')}</h1><div class="mut">${T('অ্যাডমিনের দেওয়া মেসের কোড লিখুন','Enter the code from the admin')}</div>
