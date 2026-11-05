@@ -108,7 +108,7 @@ const cs=()=>CUR[(M&&M.cur)||'BDT'][0];
 const mny=n=>cs()+fmt(n);
 const dt=d=>new Date(d).toLocaleDateString(L=='bn'?'bn-BD':'en-GB',{day:'numeric',month:'short'});
 let REG=[],M=null;
-let S={screen:'auth',user:null,cur:'BDT',astep:'start',amode:'login',cc:'+880',ph:'',otp:'',via:'phone',memo:null,view:null,tab:'home',type:'meal',name:'',members:['রহিম','করিম','সালাম','জামাল'],item:null,amt:'',payer:0,toast:'',jcode:'',found:null,pend:null};
+let S={screen:'auth',user:null,cur:'BDT',astep:'start',amode:'login',cc:'+880',ph:'',otp:'',via:'phone',memo:null,view:null,tab:'home',type:'meal',name:'',members:[],item:null,amt:'',payer:0,toast:'',jcode:'',found:null,pend:null};
 
 function mk(name,type,members,cur){
   let code;do code='SM-'+(1000+Math.floor(Math.random()*9000));while(REG.some(m=>m.code==code));
