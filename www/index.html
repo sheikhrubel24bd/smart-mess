@@ -476,7 +476,7 @@ function joinView(){
   <div class="row" style="margin-top:12px"><input type="text" value="${esc(S.jcode)}" placeholder="SM-1234" style="text-transform:uppercase" oninput="S.jcode=this.value" onkeydown="if(event.key=='Enter')search()"><button class="btn" style="width:auto;padding:12px 18px" onclick="search()">${T('খুঁজুন','Search')}</button></div>`;
   if(S.found===false)return h+`<div class="card neg" style="margin-top:12px">${T('এই কোডে কোনো মেস পাওয়া যায়নি।','No mess found with this code.')}</div>`;
   const m=S.found;if(!m)return h;
-  h+=`<div class="card" style="margin-top:12px"><b style="font-size:20px">${esc(m.name)}</b><div class="mut">${m.type=='meal'?'🍽️ '+T('মিল মেস','Meal mess'):'🏠 '+T('রেগুলার মেস','Regular mess')} · ${bn(m.members.length)} ${T('জন','members')}</div><div class="mut">👑 ${T('অ্যাডমিন: ','Admin: ')}${esc(m.members[0])}</div></div>`;
+  h+=`<div class="card" style="margin-top:12px"><b style="font-size:20px">${esc(m.name)}</b><div class="mut">${m.type=='meal'?'🍽️ '+T('মিল মেস','Meal mess'):'🏠 '+T('রেগুলার মেস','Regular mess')}</div></div>`;
   const r=S.pend;
   if(!r)return h+`<h2>${T('আপনার নাম','Your name')}</h2><input type="text" id="jn" value="${esc(S.user?S.user.name:'')}" placeholder="${T('যেমন: সুমন','e.g. Suman')}"><div style="height:12px"></div><button class="btn" onclick="send()">${T('যোগদানের অনুরোধ পাঠান','Send join request')}</button>`;
   return h+`<div class="card"><div class="row" style="justify-content:space-between"><b>${esc(r.name)}</b><span class="tag ${r.s=='a'?'pos':r.s=='r'?'neg':''}" style="${r.s=='p'?'background:var(--warm);color:#2a1d00':''}">${r.s=='p'?T('অপেক্ষমাণ','Pending'):r.s=='a'?T('অনুমোদিত','Accepted'):T('বাতিল','Rejected')}</span></div>
