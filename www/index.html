@@ -49,6 +49,33 @@
   z-index:3;
   pointer-events:none;
 }
+  .splash-dot{
+  position:absolute;
+  top:50%;
+  left:50%;
+  width:13px;
+  height:13px;
+  border-radius:50%;
+  box-shadow:0 0 12px currentColor;
+  transform:translate(-50%,-50%) rotate(0deg) translateY(-125px);
+}
+
+.dot-red{
+  color:#ff3030;
+  background:#ff3030;
+}
+
+.dot-blue{
+  color:#2196f3;
+  background:#2196f3;
+  transform:translate(-50%,-50%) rotate(120deg) translateY(-125px);
+}
+
+.dot-orange{
+  color:#ff9800;
+  background:#ff9800;
+  transform:translate(-50%,-50%) rotate(240deg) translateY(-125px);
+}
 
 .splash-plate{
   position:absolute;
@@ -167,11 +194,9 @@ select{border:1.5px solid var(--bd);background:var(--card);color:var(--ink);bord
   <img src="logo.png" class="splash-logo" alt="Smart Mess Logo">
 
 <div class="splash-orbit">
-  <div class="splash-plate">🐟</div>
-</div>
-
-<div class="splash-orbit" style="animation-duration:4s;animation-direction:reverse;width:280px;height:280px">
-  <div class="splash-plate">🐟</div>
+  <span class="splash-dot dot-red"></span>
+  <span class="splash-dot dot-blue"></span>
+  <span class="splash-dot dot-orange"></span>
 </div>
 
   <div class="splash-title">Smart-Mess</div>
