@@ -300,12 +300,17 @@ async function after(){
 
     const messRef=db.collection('messes').doc(messId);
 
-    const [messSnap,myMemberSnap,membersSnap,requestsSnap]=await Promise.all([
+    const [messSnap,myMemberSnap,membersSnap]=await Promise.all([
   messRef.get(),
   messRef.collection('members').doc(uid).get(),
-  messRef.collection('members').where('status','==','active').get(),
-  messRef.collection('joinRequests').get()
+  messRef.collection('members').where('status','==','active').get()
 ]);
+
+let requestsSnap={docs:[]};
+
+if(myMemberSnap.exists && myMemberSnap.data().role=='admin'){
+  requestsSnap=await messRef.collection('joinRequests').get();
+}
 
     if(!messSnap.exists || !myMemberSnap.exists)
       throw new Error('MESS_NOT_FOUND');
