@@ -169,7 +169,7 @@ function to(s){S.screen=s;S.found=null;S.pend=null;render();window.scrollTo(0,0)
 
 function topbar(){
   const app=S.screen=='app';const p=pend();
-  return `<div class="top">${S.screen!='welcome'&&S.screen!='auth'?`<button class="x" onclick="to('welcome')" aria-label="${T('পেছনে','Back')}">←</button>`:''}<span class="sp"></span>${app?`<button class="bell" onclick="go('req')" aria-label="${T('নোটিফিকেশন','Notifications')}">🔔${p?`<i>${bn(p)}</i>`:''}</button>`:''}<button class="lang" onclick="tl()" aria-label="Language">${L=='bn'?'EN':'বাং'}</button></div>`;
+  return `<div class="top">${S.screen!='welcome'&&S.screen!='auth'&&S.screen!='app'?`<button class="x" onclick="to('welcome')" aria-label="${T('পেছনে','Back')}">←</button>`:''}<span class="sp"></span>${app?`<button class="bell" onclick="go('req')" aria-label="${T('নোটিফিকেশন','Notifications')}">🔔${p?`<i>${bn(p)}</i>`:''}</button>`:''}<button class="lang" onclick="tl()" aria-label="Language">${L=='bn'?'EN':'বাং'}</button></div>`;
 }
   function authView(){
   const m=S.amode=='signup';
