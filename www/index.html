@@ -296,6 +296,10 @@ async function after(){
         window._smartMessExpenseUnsub();
         window._smartMessExpenseUnsub=null;
       }
+      if(window._smartMessMealUnsub){
+        window._smartMessMealUnsub();
+        window._smartMessMealUnsub=null;
+      }
       M=null;
       S.screen='welcome';
       render();
@@ -364,8 +368,14 @@ async function after(){
       window._smartMessExpenseUnsub=null;
     }
 
+    if(window._smartMessMealUnsub){
+      window._smartMessMealUnsub();
+      window._smartMessMealUnsub=null;
+    }
+
     render();
 
+    // EXPENSE LIVE SYNC
     window._smartMessExpenseUnsub=
       messRef.collection('expenses').onSnapshot(snapshot=>{
 
@@ -386,11 +396,12 @@ async function after(){
 
         render();
 
-          if(window._smartMessMealUnsub){
-      window._smartMessMealUnsub();
-      window._smartMessMealUnsub=null;
-    }
+      },error=>{
+        console.error('EXPENSE SYNC ERROR:',error);
+        say('খরচ আপডেট করা যায়নি: '+(error.code||error.message));
+      });
 
+    // MEAL LIVE SYNC
     window._smartMessMealUnsub=
       messRef.collection('mealCounts').onSnapshot(snapshot=>{
 
@@ -400,6 +411,7 @@ async function after(){
 
         snapshot.docs.forEach(doc=>{
           const i=memberUids.indexOf(doc.id);
+
           if(i>=0){
             M.meals[i]=Number(doc.data().count)||0;
           }
@@ -417,6 +429,7 @@ async function after(){
     say(T('আগের মেস লোড করা যায়নি। আবার চেষ্টা করুন।','Could not load your previous mess. Please try again.'));
   }
 }
+
 
 function welcomeView(){
   return `<h1>🍽️ Smart Mess</h1><div class="mut">${T('হ্যালো, ','Hello, ')}<b>${esc(S.user.name)}</b> · <button class="x" style="font-size:14px;padding:0" onclick="auth.signOut()">${T('লগআউট','Log out')}</button></div><div style="height:22px"></div>
