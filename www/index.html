@@ -704,6 +704,7 @@ async function decide(i,ok){
   'Error: '+(e.code||e.message||'Unknown error')
 ));
 }
+}
 function copy(){try{navigator.clipboard.writeText(M.code).catch(()=>{})}catch(e){}say(T('কোড কপি হয়েছে','Code copied'))}
 
 function meBlock(c){
