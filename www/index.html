@@ -605,7 +605,104 @@ function reqView(){
   <div class="row" style="margin-top:10px"><button class="btn" onclick="decide(${i},true)">✅ ${T('গ্রহণ','Accept')}</button><button class="btn ghost" style="color:var(--bad);border-color:var(--bad)" onclick="decide(${i},false)">❌ ${T('বাতিল','Reject')}</button></div></div>`).join(''):`<div class="card mut">${T('কোনো নতুন অনুরোধ নেই।','No new requests.')}</div>`}
   ${D.length?`<h2>${T('আগের অনুরোধ','Earlier requests')}</h2><div class="card">${D.map(({r})=>`<div class="li"><div class="t">${esc(r.name)}</div><span class="tag ${r.s=='a'?'pos':'neg'}">${r.s=='a'?T('অনুমোদিত','Accepted'):T('বাতিল','Rejected')}</span></div>`).join('')}</div>`:''}`;
 }
-function decide(i,ok){const r=M.reqs[i];r.s=ok?'a':'r';if(ok)M.members.push(r.name);say(ok?T('মেম্বার যোগ হয়েছে','Member added'):T('অনুরোধ বাতিল হয়েছে','Request rejected'))}
+async function decide(i,ok){
+  const r=M.reqs[i];
+
+  if(!r || !r.uid)
+    return say('অনুরোধের তথ্য পাওয়া যায়নি।');
+
+  const uid=auth.currentUser.uid;
+  const messId=M.id;
+
+  try{
+    say('প্রক্রিয়া চলছে...');
+
+    const messRef=db.collection('messes').doc(messId);
+    const requestRef=messRef.collection('joinRequests').doc(r.uid);
+    const userRef=db.collection('users').doc(r.uid);
+    const memberRef=messRef.collection('members').doc(r.uid);
+    const adminRef=messRef.collection('members').doc(uid);
+
+    await db.runTransaction(async tx=>{
+      const requestSnap=await tx.get(requestRef);
+      const userSnap=await tx.get(userRef);
+      const memberSnap=await tx.get(memberRef);
+      const adminSnap=await tx.get(adminRef);
+      const messSnap=await tx.get(messRef);
+
+      if(!requestSnap.exists ||
+         requestSnap.data().status!='pending')
+        throw new Error('REQUEST_NOT_PENDING');
+
+      if(!messSnap.exists ||
+         messSnap.data().adminUid!=uid ||
+         !adminSnap.exists ||
+         adminSnap.data().role!='admin' ||
+         adminSnap.data().status!='active')
+        throw new Error('NOT_ADMIN');
+
+      if(ok){
+        if(!userSnap.exists)
+          throw new Error('USER_NOT_FOUND');
+
+        if(userSnap.data().messId)
+          throw new Error('ALREADY_IN_MESS');
+
+        if(memberSnap.exists)
+          throw new Error('MEMBER_EXISTS');
+
+        const data=requestSnap.data();
+
+        tx.set(memberRef,{
+          uid:r.uid,
+          name:data.name,
+          email:data.email,
+          role:'member',
+          status:'active',
+          joinedAt:firebase.firestore.FieldValue.serverTimestamp()
+        });
+
+        tx.update(userRef,{
+          messId:messId
+        });
+
+        tx.update(requestRef,{
+          status:'accepted',
+          updatedAt:firebase.firestore.FieldValue.serverTimestamp()
+        });
+
+      }else{
+        tx.update(requestRef,{
+          status:'rejected',
+          updatedAt:firebase.firestore.FieldValue.serverTimestamp()
+        });
+      }
+    });
+
+    r.s=ok?'a':'r';
+
+    if(ok){
+      M.members.push(r.name);
+      M.memberUids.push(r.uid);
+    }
+
+    say(ok?'মেম্বার সফলভাবে যোগ হয়েছে।':'অনুরোধ বাতিল হয়েছে।');
+    render();
+
+  }catch(e){
+    console.error(e);
+
+    const messages={
+      REQUEST_NOT_PENDING:'এই অনুরোধটি আর Pending নেই।',
+      NOT_ADMIN:'শুধু মেসের Admin এই কাজ করতে পারবেন।',
+      USER_NOT_FOUND:'ইউজারের তথ্য পাওয়া যায়নি।',
+      ALREADY_IN_MESS:'এই ইউজার ইতিমধ্যে অন্য মেসে আছেন।',
+      MEMBER_EXISTS:'এই মেম্বার আগে থেকেই যুক্ত আছেন।'
+    };
+
+    say(messages[e.message]||'কাজটি সম্পন্ন হয়নি। Firestore Rules আপডেট করতে হবে।');
+  }
+}
 function copy(){try{navigator.clipboard.writeText(M.code).catch(()=>{})}catch(e){}say(T('কোড কপি হয়েছে','Code copied'))}
 
 function meBlock(c){
