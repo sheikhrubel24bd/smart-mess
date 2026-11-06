@@ -714,9 +714,25 @@ function copy(){try{navigator.clipboard.writeText(M.code).catch(()=>{})}catch(e)
 
 function meBlock(c){
   const b=c.bal[M.me]||0;
-  return `<div class="card"><div class="row" style="justify-content:space-between"><span class="mut">${T('ডেমো: আমি','Demo: I am')}</span><select onchange="M.me=+this.value;S.payer=M.me;render()">${M.members.map((m,i)=>`<option value="${i}" ${i==M.me?'selected':''}>${esc(m)}${i==0?' 👑':''}</option>`).join('')}</select></div>
-  <div class="row" style="justify-content:space-between;margin-top:8px"><span>${T('আমার হিসাব','My balance')}</span>${Math.abs(b)<.5?`<span class="tag pos">${T('মিটে গেছে','Settled')}</span>`:`<span class="tag ${b>0?'pos':'neg'}">${b>0?T('পাবে','Gets'):T('দেবে','Owes')} ${mny(Math.abs(b))}</span>`}</div>
-  <div class="row" style="justify-content:space-between;margin-top:8px"><span class="mut">${T('মুদ্রা','Currency')}</span><select onchange="M.cur=this.value;render()">${Object.entries(CUR).map(([k,v])=>`<option value="${k}" ${M.cur==k?'selected':''}>${v[0].trim()} ${T(v[1],v[2])}</option>`).join('')}</select></div></div>`;
+
+  return `<div class="card">
+  <div class="row" style="justify-content:space-between">
+    <span class="mut">${T('আমার পরিচয়','My account')}</span>
+    <b>${esc(S.user.name)}</b>
+  </div>
+
+  <div class="row" style="justify-content:space-between;margin-top:8px">
+    <span>${T('আমার হিসাব','My balance')}</span>
+    ${Math.abs(b)<.5
+      ?`<span class="tag pos">${T('মিটে গেছে','Settled')}</span>`
+      :`<span class="tag ${b>0?'pos':'neg'}">${b>0?T('পাবে','Gets'):T('দেবে','Owes')} ${mny(Math.abs(b))}</span>`}
+  </div>
+
+  <div class="row" style="justify-content:space-between;margin-top:8px">
+    <span class="mut">${T('মুদ্রা','Currency')}</span>
+    <b>${M.cur}</b>
+  </div>
+  </div>`;
 }
 function whoBlock(c){
   const mx=Math.max(1,...c.paid);
