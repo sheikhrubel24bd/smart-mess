@@ -292,6 +292,10 @@ async function after(){
     S.astep='start';
 
     if(!messId){
+      if(window._smartMessExpenseUnsub){
+        window._smartMessExpenseUnsub();
+        window._smartMessExpenseUnsub=null;
+      }
       M=null;
       S.screen='welcome';
       render();
@@ -301,16 +305,16 @@ async function after(){
     const messRef=db.collection('messes').doc(messId);
 
     const [messSnap,myMemberSnap,membersSnap]=await Promise.all([
-  messRef.get(),
-  messRef.collection('members').doc(uid).get(),
-  messRef.collection('members').where('status','==','active').get()
-]);
+      messRef.get(),
+      messRef.collection('members').doc(uid).get(),
+      messRef.collection('members').where('status','==','active').get()
+    ]);
 
-let requestsSnap={docs:[]};
+    let requestsSnap={docs:[]};
 
-if(myMemberSnap.exists && myMemberSnap.data().role=='admin'){
-  requestsSnap=await messRef.collection('joinRequests').get();
-}
+    if(myMemberSnap.exists && myMemberSnap.data().role=='admin'){
+      requestsSnap=await messRef.collection('joinRequests').get();
+    }
 
     if(!messSnap.exists || !myMemberSnap.exists)
       throw new Error('MESS_NOT_FOUND');
@@ -340,14 +344,14 @@ if(myMemberSnap.exists && myMemberSnap.data().role=='admin'){
       me:memberUids.indexOf(uid),
       meals:{},
       exp:[],
-    reqs:requestsSnap.docs.map(d=>{
-  const r=d.data();
-  return {
-    uid:d.id,
-    name:r.name,
-    s:r.status=='pending'?'p':r.status=='accepted'?'a':'r'
-  };
-})
+      reqs:requestsSnap.docs.map(d=>{
+        const r=d.data();
+        return {
+          uid:d.id,
+          name:r.name,
+          s:r.status=='pending'?'p':r.status=='accepted'?'a':'r'
+        };
+      })
     };
 
     S.members=[...members];
@@ -355,7 +359,58 @@ if(myMemberSnap.exists && myMemberSnap.data().role=='admin'){
     S.screen='app';
     S.tab='home';
 
+    if(window._smartMessExpenseUnsub){
+      window._smartMessExpenseUnsub();
+      window._smartMessExpenseUnsub=null;
+    }
+
     render();
+
+    window._smartMessExpenseUnsub=
+      messRef.collection('expenses').onSnapshot(snapshot=>{
+
+        if(!M || M.id!=messId) return;
+
+        M.exp=snapshot.docs.map(doc=>{
+          const e=doc.data();
+
+          return {
+            id:doc.id,
+            item:e.item,
+            payer:memberUids.indexOf(e.payerUid),
+            amt:e.amt,
+            d:e.d,
+            memo:e.memo
+          };
+        });
+
+        render();
+
+          if(window._smartMessMealUnsub){
+      window._smartMessMealUnsub();
+      window._smartMessMealUnsub=null;
+    }
+
+    window._smartMessMealUnsub=
+      messRef.collection('mealCounts').onSnapshot(snapshot=>{
+
+        if(!M || M.id!=messId) return;
+
+        M.meals={};
+
+        snapshot.docs.forEach(doc=>{
+          const i=memberUids.indexOf(doc.id);
+          if(i>=0){
+            M.meals[i]=Number(doc.data().count)||0;
+          }
+        });
+
+        render();
+
+      },error=>{
+        console.error('MEAL SYNC ERROR:',error);
+        say('মিল আপডেট করা যায়নি: '+(error.code||error.message));
+      });
 
   }catch(e){
     console.error(e);
@@ -767,13 +822,99 @@ function addView(){
 }
 function memo(inp){const f=inp.files[0];if(!f)return;const r=new FileReader();r.onload=()=>{const im=new Image();im.onload=()=>{const k=Math.min(1,800/Math.max(im.width,im.height)),c=document.createElement('canvas');c.width=im.width*k;c.height=im.height*k;c.getContext('2d').drawImage(im,0,0,c.width,c.height);S.memo=c.toDataURL('image/jpeg',.7);render()};im.src=r.result};r.readAsDataURL(f)}
 function key(k){if((S.amt+k).length<=6)S.amt=String(Number(S.amt+k));render()}
-function saveExp(){M.exp.push({item:S.item,payer:M.me==0?Math.min(S.payer,M.members.length-1):M.me,amt:Number(S.amt),d:Date.now(),memo:S.memo});S.item=null;S.amt='';S.memo=null;S.tab='home';say(T('খরচ সংরক্ষণ হয়েছে','Expense saved'))}
+async function saveExp(){
+  const item=S.item;
+  const amt=Number(S.amt);
+  const payer=M.role=='admin'
+    ? Math.min(S.payer,M.members.length-1)
+    : M.me;
+
+  if(!item || !amt || amt<=0)
+    return say('সঠিক খরচের পরিমাণ দিন।');
+
+  try{
+    say('খরচ সংরক্ষণ হচ্ছে...');
+
+    const expense={
+      item:item,
+      payerUid:M.memberUids[payer],
+      amt:amt,
+      d:Date.now(),
+      memo:S.memo||null,
+      createdBy:auth.currentUser.uid,
+      createdAt:firebase.firestore.FieldValue.serverTimestamp()
+    };
+
+    const doc=await db.collection('messes')
+      .doc(M.id)
+      .collection('expenses')
+      .add(expense);
+
+    
+
+    S.item=null;
+    S.amt='';
+    S.memo=null;
+    S.tab='home';
+
+    say(T('খরচ সংরক্ষণ হয়েছে','Expense saved'));
+    render();
+
+  }catch(e){
+    console.error('EXPENSE SAVE ERROR:',e);
+    say('খরচ সংরক্ষণ হয়নি: '+(e.code||e.message));
+  }
+}
+
+async function changeMeal(i,delta){
+  if(i!==M.me) return;
+
+  const uid=M.memberUids[i];
+  const ref=db.collection('messes')
+    .doc(M.id)
+    .collection('mealCounts')
+    .doc(uid);
+
+  const current=Number(M.meals[i])||0;
+  const count=Math.max(0,current+delta);
+
+  if(count===current) return;
+
+  try{
+    await ref.set({
+      count:count,
+      updatedAt:firebase.firestore.FieldValue.serverTimestamp()
+    },{merge:true});
+  }catch(e){
+    console.error('MEAL SAVE ERROR:',e);
+    say('মিল সংরক্ষণ হয়নি: '+(e.code||e.message));
+  }
+}
 
 function mealView(){
   const c=calc();
-  return `<h1>${T('মিল','Meals')}</h1><div class="mut">${T('মাসে কে কত মিল খেয়েছে','Meals eaten by each member this month')}</div><h2>${T('মোট মিল: ','Total meals: ')}${bn(c.tm)}</h2>
-  <div class="card">${M.members.map((m,i)=>`<div class="li"><div class="t"><b>${esc(m)}</b></div><button class="step" onclick="M.meals[${i}]=Math.max(0,(M.meals[${i}]||0)-1);render()" aria-label="−">−</button><div class="cnt">${bn(M.meals[i]||0)}</div><button class="step" onclick="M.meals[${i}]=(M.meals[${i}]||0)+1;render()" aria-label="+">+</button></div>`).join('')}</div>
-  <div class="card"><div class="mut">${T('মিল রেট','Meal rate')}</div><b style="font-size:24px">${cs()}${bn(c.rate.toFixed(2))}</b></div>`;
+
+  return `<h1>${T('মিল','Meals')}</h1>
+  <div class="mut">${T('মাসে কে কত মিল খেয়েছে','Meals eaten by each member this month')}</div>
+  <h2>${T('মোট মিল: ','Total meals: ')}${bn(c.tm)}</h2>
+
+  <div class="card">${M.members.map((m,i)=>`
+    <div class="li">
+      <div class="t"><b>${esc(m)}</b></div>
+      ${i==M.me?`
+        <button class="step" onclick="changeMeal(${i},-1)" aria-label="−">−</button>
+        <div class="cnt">${bn(M.meals[i]||0)}</div>
+        <button class="step" onclick="changeMeal(${i},1)" aria-label="+">+</button>
+      `:`
+        <div class="cnt">${bn(M.meals[i]||0)}</div>
+      `}
+    </div>`).join('')}
+  </div>
+
+  <div class="card">
+    <div class="mut">${T('মিল রেট','Meal rate')}</div>
+    <b style="font-size:24px">${cs()}${bn(c.rate.toFixed(2))}</b>
+  </div>`;
 }
 function reportView(){
   const c=calc();const meal=M.type=='meal';const st=settle(c.bal);
