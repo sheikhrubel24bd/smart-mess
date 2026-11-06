@@ -626,7 +626,7 @@ async function decide(i,ok){
 
     await db.runTransaction(async tx=>{
       const requestSnap=await tx.get(requestRef);
-      const userSnap=await tx.get(userRef);
+      
       const memberSnap=await tx.get(memberRef);
       const adminSnap=await tx.get(adminRef);
       const messSnap=await tx.get(messRef);
@@ -643,11 +643,9 @@ async function decide(i,ok){
         throw new Error('NOT_ADMIN');
 
       if(ok){
-        if(!userSnap.exists)
-          throw new Error('USER_NOT_FOUND');
+        
 
-        if(userSnap.data().messId)
-          throw new Error('ALREADY_IN_MESS');
+        
 
         if(memberSnap.exists)
           throw new Error('MEMBER_EXISTS');
@@ -701,8 +699,10 @@ async function decide(i,ok){
       MEMBER_EXISTS:'এই মেম্বার আগে থেকেই যুক্ত আছেন।'
     };
 
-    say(messages[e.message]||'কাজটি সম্পন্ন হয়নি। Firestore Rules আপডেট করতে হবে।');
-  }
+    say(T(
+  'সমস্যা হয়েছে: '+(e.code||e.message||'অজানা সমস্যা'),
+  'Error: '+(e.code||e.message||'Unknown error')
+));
 }
 function copy(){try{navigator.clipboard.writeText(M.code).catch(()=>{})}catch(e){}say(T('কোড কপি হয়েছে','Code copied'))}
 
