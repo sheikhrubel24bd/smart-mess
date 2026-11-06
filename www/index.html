@@ -4,6 +4,58 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <title>Smart Mess</title>
+  /* SMART MESS SPLASH SCREEN */
+#splash{
+  position:fixed;
+  inset:0;
+  z-index:99999;
+  background:#f0fff7;
+  display:flex;
+  flex-direction:column;
+  align-items:center;
+  justify-content:center;
+  overflow:hidden;
+}
+
+.splash-logo{
+  width:155px;
+  height:155px;
+  object-fit:contain;
+  z-index:2;
+}
+
+.splash-orbit{
+  position:absolute;
+  width:230px;
+  height:230px;
+  animation:orbit 3s linear infinite;
+}
+
+.splash-plate{
+  position:absolute;
+  top:0;
+  left:50%;
+  transform:translateX(-50%);
+  font-size:38px;
+}
+
+.splash-title{
+  margin-top:35px;
+  color:#218b50;
+  font-size:27px;
+  font-weight:800;
+}
+
+.splash-loading{
+  margin-top:8px;
+  color:#638b74;
+  font-size:14px;
+}
+
+@keyframes orbit{
+  from{transform:rotate(0deg)}
+  to{transform:rotate(360deg)}
+}
 <style>
 :root{--bg:#f4f6f1;--card:#fff;--ink:#17261f;--mut:#667a70;--pri:#16794f;--pri2:#dff1e7;--on:#fff;--bad:#c93d3d;--bad2:#fbe6e6;--bd:#dde4dc;--warm:#f2b134;
 box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}
@@ -89,6 +141,20 @@ select{border:1.5px solid var(--bd);background:var(--card);color:var(--ink);bord
 </style>
 </head>
 <body>
+  <div id="splash">
+  <img src="logo.png" class="splash-logo" alt="Smart Mess Logo">
+
+  <div class="splash-orbit">
+    <div class="splash-plate">🍽️</div>
+  </div>
+
+  <div class="splash-orbit" style="animation-duration:4s;animation-direction:reverse;width:280px;height:280px">
+    <div class="splash-plate">🥘</div>
+  </div>
+
+  <div class="splash-title">Smart-Mess</div>
+  <div class="splash-loading">Loading...</div>
+</div>
 <div id="app"></div>
   <script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-auth-compat.js"></script>
@@ -951,6 +1017,13 @@ function render(){
 }
 render();
 
+function hideSplash(){
+  setTimeout(()=>{
+    const splash=document.getElementById('splash');
+    if(splash) splash.remove();
+  },1200);
+}
+
 auth.onAuthStateChanged(async user=>{
   if(user){
     S.user={
@@ -960,12 +1033,14 @@ auth.onAuthStateChanged(async user=>{
     };
 
     await after();
+    hideSplash();
 
   }else{
     S.user=null;
     M=null;
     S.screen='auth';
     render();
+    hideSplash();
   }
 });
 </script>
