@@ -290,7 +290,7 @@ function to(s){S.screen=s;S.found=null;S.pend=null;render();window.scrollTo(0,0)
 
 function topbar(){
   const app=S.screen=='app';const p=pend();
-  return `<div class="top">${S.screen!='welcome'&&S.screen!='auth'&&S.screen!='app'?`<button class="x" onclick="to('welcome')" aria-label="${T('পেছনে','Back')}">←</button>`:''}<span class="sp"></span>${app?`<button class="bell" onclick="go('req')" aria-label="${T('নোটিফিকেশন','Notifications')}">🔔${p?`<i>${bn(p)}</i>`:''}</button>`:''}<button class="lang" onclick="tl()" aria-label="Language">${L=='bn'?'EN':'বাং'}</button></div>`;
+  return `<div class="top">${S.screen!='welcome'&&S.screen!='auth'&&S.screen!='app'?`<button class="x" onclick="to('welcome')" aria-label="${T('পেছনে','Back')}">←</button>`:''}<span class="sp"></span>${app?`<button class="bell" onclick="go('req')" aria-label="${T('নোটিফিকেশন','Notifications')}">🔔${p?`<i>${bn(p)}</i>`:''}</button>`:''}<button class="lang" onclick="tl()" aria-label="Language">${L=='bn'?'EN':'বাং'}</button>${app?`<button class="lang" onclick="go('settings')" aria-label="${T('সেটিংস','Settings')}">⚙️</button>`:''}</div>`;
 }
   function authView(){
   const m=S.amode=='signup';
@@ -937,7 +937,7 @@ function whoBlock(c){
 
 function homeView(){
   const c=calc();const meal=M.type=='meal';const p=pend();
-  return `<div class="row" style="justify-content:space-between"><h1>${esc(M.name)}</h1><button class="btn ghost" style="width:auto;padding:8px 12px" onclick="go('settings')">⚙️</button></div><div class="mut">${meal?'🍽️ '+T('মিল মেস','Meal mess'):'🏠 '+T('রেগুলার মেস','Regular mess')} · ${bn(c.n)} ${T('জন','members')}</div>
+  return `<div class="row" style="justify-content:space-between"><h1>${esc(M.name)}</h1></div>
   <div class="card row" style="justify-content:space-between;margin-top:12px"><div><div class="mut">${T('মেসের কোড','Mess code')}</div><div class="code">${M.code}</div></div><button class="btn ghost" style="width:auto;padding:10px 16px" onclick="copy()">${T('কপি','Copy')}</button></div>
   ${meBlock(c)}${p?`<button class="banner" onclick="go('req')">🔔 ${bn(p)} ${T('টি নতুন যোগদানের অনুরোধ','new join request(s)')}</button>`:''}
   <div class="stats"><div class="stat hero"><small>${T('এই মাসের মোট খরচ','Total spent this month')}</small><b>${cs()}${fmt(c.tot)}</b></div>
