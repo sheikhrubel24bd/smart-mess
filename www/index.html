@@ -455,6 +455,7 @@ async function after(){
 
     const memberUids=memberDocs.map(d=>d.id);
     const members=memberDocs.map(d=>d.data().name);
+    const memberPhones=memberDocs.map(d=>d.data().phone||'');
 
     M={
       id:messId,
@@ -466,6 +467,7 @@ async function after(){
       role:myMember.role,
       memberUids:memberUids,
       members:members,
+      memberPhones:memberPhones,
       me:memberUids.indexOf(uid),
       meals:{},
       exp:[],
