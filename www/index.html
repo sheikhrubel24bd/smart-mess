@@ -1091,7 +1091,8 @@ async function saveExp(){
     console.error('EXPENSE SAVE ERROR:',e);
     say('খরচ সংরক্ষণ হয়নি: '+(e.code||e.message));
   }
-  async function deleteExp(id){
+}
+async function deleteExp(id){
   if(!confirm(T('আপনি কি এই খরচটি মুছতে চান?','Delete this expense?')))
     return;
 
