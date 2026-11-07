@@ -944,9 +944,36 @@ function whoBlock(c){
 }
   function settingsView(){
   return `<h1>⚙️ ${T('সেটিংস','Settings')}</h1>
-  ${M.role=='admin'&&M.exp.length?`<div class="card">
-    <button class="btn ghost" onclick="M.exp=[];M.meals={};render()">${T('সব মুছে নতুন শুরু করুন','Clear sample data and start fresh')}</button>
-  </div>`:''}`;
+
+  <div class="card">
+    <button class="btn ghost" onclick="go('members')">
+      ${T('সদস্য তালিকা','Member List')}
+    </button>
+  </div>`;
+}
+  function memberListView(){
+  return `
+    <h1>👥 ${T('সদস্য তালিকা','Member List')}</h1>
+
+    <button class="btn ghost" onclick="go('settings')">
+      ← ${T('সেটিংসে ফিরে যান','Back to Settings')}
+    </button>
+
+    <div class="card" style="margin-top:12px">
+      ${M.members.map((name,i)=>{
+        const phone=(M.memberPhones&&M.memberPhones[i])||'';
+
+        return `
+          <div style="padding:12px 0;border-bottom:1px solid var(--bd)">
+            <b>${i+1}. ${esc(name)}</b>
+            <div class="mut" style="margin-top:5px">
+              📞 ${phone?esc(phone):T('নম্বর দেওয়া হয়নি','No phone number')}
+            </div>
+          </div>
+        `;
+      }).join('')}
+    </div>
+  `;
 }
 
 function homeView(){
@@ -1086,7 +1113,7 @@ function render(){
   if(S.screen=='auth')v=authView();else if(S.screen=='welcome')v=welcomeView();else if(S.screen=='create')v=createView();else if(S.screen=='join')v=joinView();
   else{
     const tabs=[['home','🏠',T('হোম','Home')],['add','➕',T('খরচ','Add')]].concat(M.type=='meal'?[['meal','🍽️',T('মিল','Meals')]]:[]).concat([['rep','📊',T('হিসাব','Report')]]).concat(M.role=='admin'?[['req','🔔',T('অনুরোধ','Requests')]]:[]);
-    v=({home:homeView,add:addView,meal:mealView,rep:reportView,req:reqView,settings:settingsView}[S.tab]||homeView)();
+    v=({home:homeView,add:addView,meal:mealView,rep:reportView,req:reqView,members:memberListView,settings:settingsView}[S.tab]||homeView)();
     nav=`<nav><div>${tabs.map(t=>`<button class="${S.tab==t[0]?'on':''}" onclick="go('${t[0]}')"><span>${t[1]}</span>${t[2]}</button>`).join('')}</div></nav>`;
   }
   document.getElementById('app').innerHTML=topbar()+v+nav+(S.view!=null&&M.exp[S.view]?`<div class="ov" onclick="S.view=null;render()"><img src="${M.exp[S.view].memo}" alt=""></div>`:'')+(S.toast?`<div class="toast">${esc(S.toast)}</div>`:'');
