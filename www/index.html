@@ -684,7 +684,14 @@ function joinView(){
   const m=S.found;if(!m)return h;
   h+=`<div class="card" style="margin-top:12px"><b style="font-size:20px">${esc(m.name)}</b><div class="mut">${m.type=='meal'?'🍽️ '+T('মিল মেস','Meal mess'):'🏠 '+T('রেগুলার মেস','Regular mess')}</div></div>`;
   const r=S.pend;
-  if(!r)return h+`<h2>${T('আপনার নাম','Your name')}</h2><input type="text" id="jn" value="${esc(S.user?S.user.name:'')}" placeholder="${T('যেমন: সুমন','e.g. Suman')}"><div style="height:12px"></div><button class="btn" onclick="send()">${T('যোগদানের অনুরোধ পাঠান','Send join request')}</button>`;
+  if(!r)return h+`
+<h2>${T('আপনার নাম','Your name')}</h2>
+<input type="text" id="jn" value="${esc(S.user?S.user.name:'')}" placeholder="${T('যেমন: সুমন','e.g. Suman')}">
+<div style="height:12px"></div>
+<h2>${T('মোবাইল নম্বর','Mobile number')}</h2>
+<input type="tel" id="jp" placeholder="${T('আপনার মোবাইল নম্বর','Your mobile number')}">
+<div style="height:12px"></div>
+<button class="btn" onclick="send()">${T('যোগদানের অনুরোধ পাঠান','Send join request')}</button>`;
   return h+`<div class="card"><div class="row" style="justify-content:space-between"><b>${esc(r.name)}</b><span class="tag ${r.s=='a'?'pos':r.s=='r'?'neg':''}" style="${r.s=='p'?'background:var(--warm);color:#2a1d00':''}">${r.s=='p'?T('অপেক্ষমাণ','Pending'):r.s=='a'?T('অনুমোদিত','Accepted'):T('বাতিল','Rejected')}</span></div>
   <div class="mut" style="margin-top:6px">${r.s=='p'?T('অনুরোধ অ্যাডমিনের কাছে পাঠানো হয়েছে। অনুমোদন পেলে আপনি মেম্বার হবেন।','Request sent to the admin. You become a member once accepted.'):r.s=='a'?T('অ্যাডমিন আপনাকে মেম্বার করেছেন।','The admin accepted you as a member.'):T('অ্যাডমিন অনুরোধ বাতিল করেছেন।','The admin rejected your request.')}</div></div>
   <button class="btn ghost" onclick="render()">${T('অবস্থা দেখুন','Check status')}</button><div style="height:10px"></div>
@@ -739,9 +746,12 @@ async function search(){
 }
 async function send(){
   const n=document.getElementById('jn').value.trim();
+  const phone=document.getElementById('jp').value.trim();
 
   if(!n)
     return say(T('আপনার নাম লিখুন','Enter your name'));
+  if(!phone)
+    return say(T('মোবাইল নম্বর লিখুন','Enter your mobile number'));
 
   if(!auth.currentUser)
     return say(T('আগে লগইন করুন','Please login first'));
@@ -776,6 +786,7 @@ async function send(){
         name:n,
         email:auth.currentUser.email,
         status:'pending',
+        phone:phone,
         createdAt:firebase.firestore.FieldValue.serverTimestamp()
       });
     });
