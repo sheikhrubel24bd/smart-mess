@@ -1081,6 +1081,8 @@ function hideSplash(){
 }
 
 auth.onAuthStateChanged(async user=>{
+  alert('AUTH CHECK STARTED');
+  
   if(user){
     S.user={
       uid:user.uid,
