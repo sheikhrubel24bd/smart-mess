@@ -218,6 +218,7 @@ const firebaseConfig = {
 };
 alert('FIREBASE STATUS: ' + typeof firebase);
 firebase.initializeApp(firebaseConfig);
+  alert('FIREBASE INITIALIZED');
 
 const auth = firebase.auth();
 const db = firebase.firestore();
