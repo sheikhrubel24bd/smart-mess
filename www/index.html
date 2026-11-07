@@ -553,7 +553,35 @@ async function after(){
     say(T('আগের মেস লোড করা যায়নি। আবার চেষ্টা করুন।','Could not load your previous mess. Please try again.'));
   }
 }
+async function savePhone(){
+  try{
+    const phone=document.getElementById('myPhone').value.trim();
 
+    if(!phone)
+      return say(T('মোবাইল নম্বর লিখুন','Enter your mobile number'));
+
+    const uid=auth.currentUser.uid;
+
+    await db.collection('messes')
+      .doc(M.id)
+      .collection('members')
+      .doc(uid)
+      .update({phone:phone});
+
+    const i=M.memberUids.indexOf(uid);
+
+    if(i>=0){
+      M.memberPhones[i]=phone;
+    }
+
+    say(T('মোবাইল নম্বর সংরক্ষণ হয়েছে','Phone number saved'));
+    render();
+
+  }catch(e){
+    console.error(e);
+    say(T('নম্বর সংরক্ষণ করা যায়নি','Could not save phone number'));
+  }
+}
 
 function welcomeView(){
   return `<h1>🍽️ Smart Mess</h1><div class="mut">${T('হ্যালো, ','Hello, ')}<b>${esc(S.user.name)}</b> · <button class="x" style="font-size:14px;padding:0" onclick="auth.signOut()">${T('লগআউট','Log out')}</button></div><div style="height:22px"></div>
@@ -952,12 +980,29 @@ function whoBlock(c){
   </div>`;
 }
   function memberListView(){
+  const myPhone=(M.memberPhones&&M.memberPhones[M.me])||'';
+
   return `
     <h1>👥 ${T('সদস্য তালিকা','Member List')}</h1>
 
     <button class="btn ghost" onclick="go('settings')">
       ← ${T('সেটিংসে ফিরে যান','Back to Settings')}
     </button>
+
+    <div class="card" style="margin-top:12px">
+      <h3>${T('আমার মোবাইল নম্বর','My Mobile Number')}</h3>
+
+      <input
+        type="tel"
+        id="myPhone"
+        value="${esc(myPhone)}"
+        placeholder="${T('মোবাইল নম্বর লিখুন','Enter mobile number')}"
+      >
+
+      <button class="btn" onclick="savePhone()" style="margin-top:10px">
+        ${T('নম্বর সংরক্ষণ করুন','Save Number')}
+      </button>
+    </div>
 
     <div class="card" style="margin-top:12px">
       ${M.members.map((name,i)=>{
