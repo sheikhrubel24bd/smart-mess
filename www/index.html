@@ -393,7 +393,7 @@ async function resetPassword(){
 }
 
 async function after(){
-  console.log('AFTER STARTED');
+  alert('AFTER STARTED');
   try{
     const uid=auth.currentUser.uid;
     const userSnap=await db.collection('users').doc(uid).get();
@@ -537,7 +537,7 @@ async function after(){
         console.error('MEAL SYNC ERROR:',error);
         say('মিল আপডেট করা যায়নি: '+(error.code||error.message));
       });
-    console.log('AFTER FINISHED');
+    alert('AFTER FINISHED');
 
   }catch(e){
     console.error(e);
