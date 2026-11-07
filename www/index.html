@@ -921,7 +921,7 @@ function whoBlock(c){
 }
 function homeView(){
   const c=calc();const meal=M.type=='meal';const p=pend();
-  return `<h1>${esc(M.name)}</h1><div class="mut">${meal?'🍽️ '+T('মিল মেস','Meal mess'):'🏠 '+T('রেগুলার মেস','Regular mess')} · ${bn(c.n)} ${T('জন','members')}</div>
+  return `<div class="row" style="justify-content:space-between"><h1>${esc(M.name)}</h1><button class="btn ghost" style="width:auto;padding:8px 12px" onclick="go('settings')">⚙️</button></div><div class="mut">${meal?'🍽️ '+T('মিল মেস','Meal mess'):'🏠 '+T('রেগুলার মেস','Regular mess')} · ${bn(c.n)} ${T('জন','members')}</div>
   <div class="card row" style="justify-content:space-between;margin-top:12px"><div><div class="mut">${T('মেসের কোড','Mess code')}</div><div class="code">${M.code}</div></div><button class="btn ghost" style="width:auto;padding:10px 16px" onclick="copy()">${T('কপি','Copy')}</button></div>
   ${meBlock(c)}${p?`<button class="banner" onclick="go('req')">🔔 ${bn(p)} ${T('টি নতুন যোগদানের অনুরোধ','new join request(s)')}</button>`:''}
   <div class="stats"><div class="stat hero"><small>${T('এই মাসের মোট খরচ','Total spent this month')}</small><b>${cs()}${fmt(c.tot)}</b></div>
