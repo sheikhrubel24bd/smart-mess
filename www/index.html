@@ -1031,7 +1031,7 @@ function homeView(){
   <div class="stat"><small class="mut">${T('ফিক্সড','Fixed')}</small><b>${cs()}${fmt(c.fix)}</b></div>
   <div class="stat"><small class="mut">${meal?T('মিল রেট','Meal rate'):T('জনপ্রতি ভাগ','Per person')}</small><b>${cs()}${meal?bn(c.rate.toFixed(2)):fmt(c.per)}</b></div>
   <div class="stat"><small class="mut">${meal?T('মোট মিল','Total meals'):T('মেম্বার','Members')}</small><b>${bn(meal?c.tm:c.n)}</b></div></div>
-  ${whoBlock(c)}<h2>${T('সব মেম্বারের এন্ট্রি','All entries')}</h2><div class="card">${M.exp.length?M.exp.map((e,i)=>({e,i})).reverse().map(({e,i})=>`<div class="li"><span class="e">${IT[e.item][0]}</span><div class="t">${nm(e.item)}<small>${esc(M.members[e.payer])}${e.d?' · '+dt(e.d):''}</small></div>${e.memo?`<button class="x" aria-label="${T('মেমো','Receipt')}" onclick="S.view=${i};render()">🧾</button>`:''}<b>${cs()}${fmt(e.amt)}</b>${e.payer==M.me||M.me==0?`<button class="x" aria-label="${T('মুছুন','Delete')}" onclick="M.exp.splice(${i},1);render()">✕</button>`:''}</div>`).join(''):`<div class="mut">${T('এখনো কোনো খরচ নেই। নিচের ➕ চাপুন।','No expenses yet. Tap ➕ below.')}</div>`}</div>`;
+  ${whoBlock(c)}<h2>${T('সব মেম্বারের এন্ট্রি','All entries')}</h2><div class="card">${M.exp.length?M.exp.map((e,i)=>({e,i})).reverse().map(({e,i})=>`<div class="li"><span class="e">${IT[e.item][0]}</span><div class="t">${nm(e.item)}<small>${esc(M.members[e.payer])}${e.d?' · '+dt(e.d):''}</small></div>${e.memo?`<button class="x" aria-label="${T('মেমো','Receipt')}" onclick="S.view=${i};render()">🧾</button>`:''}<b>${cs()}${fmt(e.amt)}</b>${e.payer==M.me||M.me==0?`<button class="x" aria-label="${T('মুছুন','Delete')}" onclick="deleteExp('${e.id}')">✕</button>`:''}</div>`).join(''):`<div class="mut">${T('এখনো কোনো খরচ নেই। নিচের ➕ চাপুন।','No expenses yet. Tap ➕ below.')}</div>`}</div>`;
 }
 function addView(){
   if(!S.item){
@@ -1090,6 +1090,25 @@ async function saveExp(){
   }catch(e){
     console.error('EXPENSE SAVE ERROR:',e);
     say('খরচ সংরক্ষণ হয়নি: '+(e.code||e.message));
+  }
+  async function deleteExp(id){
+  if(!confirm(T('আপনি কি এই খরচটি মুছতে চান?','Delete this expense?')))
+    return;
+
+  try{
+    say(T('মুছে ফেলা হচ্ছে...','Deleting...'));
+
+    await db.collection('messes')
+      .doc(M.id)
+      .collection('expenses')
+      .doc(id)
+      .delete();
+
+    say(T('খরচ মুছে ফেলা হয়েছে','Expense deleted'));
+
+  }catch(e){
+    console.error('EXPENSE DELETE ERROR:',e);
+    say('মুছতে সমস্যা হয়েছে: '+(e.code||e.message));
   }
 }
 
