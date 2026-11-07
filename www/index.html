@@ -853,6 +853,7 @@ async function decide(i,ok){
           uid:r.uid,
           name:data.name,
           email:data.email,
+          phone:data.phone||'',
           role:'member',
           status:'active',
           joinedAt:firebase.firestore.FieldValue.serverTimestamp()
