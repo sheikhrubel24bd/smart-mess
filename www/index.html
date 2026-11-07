@@ -919,6 +919,13 @@ function whoBlock(c){
   const mx=Math.max(1,...c.paid);
   return `<h2>${T('কে কত খরচ করেছে','Who spent how much')}</h2><div class="card">${M.members.map((m,i)=>`<div style="margin:8px 0"><div class="row" style="justify-content:space-between"><span>${esc(m)}${i==M.me?' ('+T('আমি','me')+')':''}</span><b>${mny(c.paid[i])}</b></div><div class="bar"><i style="width:${c.paid[i]/mx*100}%"></i></div></div>`).join('')}</div>`;
 }
+  function settingsView(){
+  return `<h1>⚙️ ${T('সেটিংস','Settings')}</h1>
+  ${M.role=='admin'&&M.exp.length?`<div class="card">
+    <button class="btn ghost" onclick="M.exp=[];M.meals={};render()">${T('সব মুছে নতুন শুরু করুন','Clear sample data and start fresh')}</button>
+  </div>`:''}`;
+}
+
 function homeView(){
   const c=calc();const meal=M.type=='meal';const p=pend();
   return `<div class="row" style="justify-content:space-between"><h1>${esc(M.name)}</h1><button class="btn ghost" style="width:auto;padding:8px 12px" onclick="go('settings')">⚙️</button></div><div class="mut">${meal?'🍽️ '+T('মিল মেস','Meal mess'):'🏠 '+T('রেগুলার মেস','Regular mess')} · ${bn(c.n)} ${T('জন','members')}</div>
@@ -930,7 +937,7 @@ function homeView(){
   <div class="stat"><small class="mut">${meal?T('মিল রেট','Meal rate'):T('জনপ্রতি ভাগ','Per person')}</small><b>${cs()}${meal?bn(c.rate.toFixed(2)):fmt(c.per)}</b></div>
   <div class="stat"><small class="mut">${meal?T('মোট মিল','Total meals'):T('মেম্বার','Members')}</small><b>${bn(meal?c.tm:c.n)}</b></div></div>
   ${whoBlock(c)}<h2>${T('সব মেম্বারের এন্ট্রি','All entries')}</h2><div class="card">${M.exp.length?M.exp.map((e,i)=>({e,i})).reverse().map(({e,i})=>`<div class="li"><span class="e">${IT[e.item][0]}</span><div class="t">${nm(e.item)}<small>${esc(M.members[e.payer])}${e.d?' · '+dt(e.d):''}</small></div>${e.memo?`<button class="x" aria-label="${T('মেমো','Receipt')}" onclick="S.view=${i};render()">🧾</button>`:''}<b>${cs()}${fmt(e.amt)}</b>${e.payer==M.me||M.me==0?`<button class="x" aria-label="${T('মুছুন','Delete')}" onclick="M.exp.splice(${i},1);render()">✕</button>`:''}</div>`).join(''):`<div class="mut">${T('এখনো কোনো খরচ নেই। নিচের ➕ চাপুন।','No expenses yet. Tap ➕ below.')}</div>`}</div>
-  ${M.exp.length?`<button class="btn ghost" onclick="M.exp=[];M.meals={};render()">${T('সব মুছে নতুন শুরু করুন','Clear sample data and start fresh')}</button>`:''}`;
+  
 }
 function addView(){
   if(!S.item){
@@ -1057,7 +1064,7 @@ function render(){
   if(S.screen=='auth')v=authView();else if(S.screen=='welcome')v=welcomeView();else if(S.screen=='create')v=createView();else if(S.screen=='join')v=joinView();
   else{
     const tabs=[['home','🏠',T('হোম','Home')],['add','➕',T('খরচ','Add')]].concat(M.type=='meal'?[['meal','🍽️',T('মিল','Meals')]]:[]).concat([['rep','📊',T('হিসাব','Report')]]).concat(M.role=='admin'?[['req','🔔',T('অনুরোধ','Requests')]]:[]);
-    v=({home:homeView,add:addView,meal:mealView,rep:reportView,req:reqView}[S.tab]||homeView)();
+    v=({home:homeView,add:addView,meal:mealView,rep:reportView,req:reqView,settings:settingsView}[S.tab]||homeView)();
     nav=`<nav><div>${tabs.map(t=>`<button class="${S.tab==t[0]?'on':''}" onclick="go('${t[0]}')"><span>${t[1]}</span>${t[2]}</button>`).join('')}</div></nav>`;
   }
   document.getElementById('app').innerHTML=topbar()+v+nav+(S.view!=null&&M.exp[S.view]?`<div class="ov" onclick="S.view=null;render()"><img src="${M.exp[S.view].memo}" alt=""></div>`:'')+(S.toast?`<div class="toast">${esc(S.toast)}</div>`:'');
