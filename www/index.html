@@ -1,1 +1,1217 @@
+<!doctype html>
+<html lang="bn">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Smart Mess</title>
 
+<style>
+  /* SMART MESS SPLASH SCREEN */
+#splash{
+  position:fixed;
+  inset:0;
+  z-index:99999;
+  background:#f0fff7;
+  display:flex;
+  flex-direction:column;
+  align-items:center;
+  justify-content:center;
+  overflow:hidden;
+}
+
+.splash-logo{
+  width:200px;
+  height:200px;
+  object-fit:contain;
+  z-index:2;
+}
+
+#splash::before{
+  content:"";
+  position:absolute;
+  width:250px;
+  height:250px;
+  border:2px dashed #218b50;
+  border-radius:50%;
+  top:45%;
+  left:50%;
+  transform:translate(-50%,-50%);
+}
+
+.splash-orbit{
+  position:absolute;
+  top:45%;
+  left:50%;
+  width:250px;
+  height:250px;
+  margin:-125px 0 0 -125px;
+  animation:orbit 5s linear infinite;
+  z-index:3;
+  pointer-events:none;
+}
+  .splash-dot{
+  position:absolute;
+  top:50%;
+  left:50%;
+  width:13px;
+  height:13px;
+  border-radius:50%;
+  box-shadow:0 0 12px currentColor;
+  transform:translate(-50%,-50%) rotate(0deg) translateY(-125px);
+}
+
+.dot-red{
+  color:#ff3030;
+  background:#ff3030;
+}
+
+.dot-blue{
+  color:#2196f3;
+  background:#2196f3;
+  transform:translate(-50%,-50%) rotate(120deg) translateY(-125px);
+}
+
+.dot-orange{
+  color:#ff9800;
+  background:#ff9800;
+  transform:translate(-50%,-50%) rotate(240deg) translateY(-125px);
+}
+
+.splash-plate{
+  position:absolute;
+  top:-22px;
+  left:50%;
+  transform:translateX(-50%) scaleX(-1);
+  font-size:38px;
+}
+
+#splash .splash-orbit:nth-of-type(2){
+  display:none;
+}
+
+.splash-title{
+  margin-top:35px;
+  color:#218b50;
+  font-size:27px;
+  font-weight:800;
+}
+
+.splash-loading{
+  margin-top:8px;
+  color:#638b74;
+  font-size:14px;
+}
+
+@keyframes orbit{
+  from{transform:rotate(0deg)}
+  to{transform:rotate(360deg)}
+}
+:root{--bg:#f4f6f1;--card:#fff;--ink:#17261f;--mut:#667a70;--pri:#16794f;--pri2:#dff1e7;--on:#fff;--bad:#c93d3d;--bad2:#fbe6e6;--bd:#dde4dc;--warm:#f2b134;
+box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){--bg:#121a16;--card:#1b2620;--ink:#e8f0ea;--mut:#92a89b;--pri:#3dbd85;--pri2:#1f3a2e;--on:#0b1a12;--bad:#ff7b7b;--bad2:#3b2222;--bd:#2b3a32}}
+:root[data-theme="dark"]{--bg:#121a16;--card:#1b2620;--ink:#e8f0ea;--mut:#92a89b;--pri:#3dbd85;--pri2:#1f3a2e;--on:#0b1a12;--bad:#ff7b7b;--bad2:#3b2222;--bd:#2b3a32}
+*{box-sizing:border-box}
+html{scroll-padding-top:env(safe-area-inset-top,0px)}
+body{margin:0;background:var(--bg);color:var(--ink);font-family:"Noto Sans Bengali","Hind Siliguri","Kalpurush",system-ui,sans-serif;font-size:16px;line-height:1.5;-webkit-tap-highlight-color:transparent}
+#app{max-width:480px;margin:0 auto;padding:16px 14px 96px}
+h1{font-size:26px;margin:4px 0 2px}h2{font-size:18px;margin:18px 0 8px}
+.mut{color:var(--mut);font-size:14px}
+.card{background:var(--card);border:1px solid var(--bd);border-radius:14px;padding:14px;margin-bottom:10px}
+button{font:inherit;color:inherit;cursor:pointer}
+button:focus-visible,input:focus-visible{outline:3px solid var(--warm);outline-offset:2px}
+.btn{width:100%;border:0;border-radius:12px;background:var(--pri);color:var(--on);font-weight:700;padding:15px;font-size:17px}
+.btn.ghost{background:transparent;color:var(--pri);border:1.5px solid var(--pri)}
+.btn:disabled{opacity:.4}
+input[type=text]{width:100%;border:1.5px solid var(--bd);background:var(--card);color:var(--ink);border-radius:10px;padding:12px;font:inherit}
+.types{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.type{border:2px solid var(--bd);background:var(--card);border-radius:14px;padding:14px 10px;text-align:center}
+.type.on{border-color:var(--pri);background:var(--pri2)}
+.type b{display:block;font-size:17px}.type span{font-size:30px;display:block}.type small{color:var(--mut);font-size:13px;line-height:1.3;display:block}
+.chips{display:flex;flex-wrap:wrap;gap:8px;margin:8px 0}
+.chip{border:1.5px solid var(--bd);background:var(--card);border-radius:99px;padding:7px 14px}
+.chip.on{background:var(--pri);color:var(--on);border-color:var(--pri)}
+.row{display:flex;gap:8px;align-items:center}
+.grid{display:grid;grid-template-columns:repeat(3,1fr);gap:10px}
+.ic{background:var(--card);border:1.5px solid var(--bd);border-radius:14px;padding:12px 4px;text-align:center}
+.ic span{font-size:38px;display:block;line-height:1.2}.ic small{font-size:14px;font-weight:600}
+.ic:active{background:var(--pri2)}
+.stats{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:10px}
+.stat{background:var(--card);border:1px solid var(--bd);border-radius:14px;padding:12px}
+.stat b{display:block;font-size:22px}.stat.hero{grid-column:1/3;background:var(--pri);color:var(--on);border-color:var(--pri)}
+.stat.hero b{font-size:34px}
+.li{display:flex;align-items:center;gap:10px;padding:9px 0;border-bottom:1px solid var(--bd)}
+.li:last-child{border:0}.li .e{font-size:28px}.li .t{flex:1}.li .t small{display:block;color:var(--mut)}
+.x{border:0;background:none;color:var(--mut);font-size:20px;padding:6px 10px}
+.amt{font-size:46px;font-weight:800;text-align:center;padding:8px 0}
+.keys{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin:8px 0}
+.key{border:1px solid var(--bd);background:var(--card);border-radius:12px;padding:14px 0;font-size:24px;font-weight:700}
+.quick{display:grid;grid-template-columns:repeat(4,1fr);gap:8px}
+.quick button{border:1.5px solid var(--pri);background:var(--pri2);border-radius:10px;padding:9px 0;font-weight:700}
+.step{border:1.5px solid var(--bd);background:var(--card);border-radius:50%;width:46px;height:46px;font-size:24px;font-weight:700}
+.cnt{min-width:46px;text-align:center;font-size:22px;font-weight:800}
+.pos{color:var(--pri)}.neg{color:var(--bad)}
+.tag{display:inline-block;border-radius:99px;padding:2px 10px;font-size:13px;font-weight:700}
+.tag.pos{background:var(--pri2)}.tag.neg{background:var(--bad2)}
+nav{position:fixed;left:0;right:0;bottom:0;display:flex;justify-content:center;background:var(--card);border-top:1px solid var(--bd);padding:6px 6px calc(6px + env(safe-area-inset-bottom,0px))}
+nav div{display:flex;width:100%;max-width:480px}
+nav button{flex:1;border:0;background:none;padding:6px 0;font-size:13px;color:var(--mut)}
+nav button span{display:block;font-size:24px}nav button.on{color:var(--pri);font-weight:700}
+.toast{
+  position:fixed;
+  left:50%;
+  transform:translateX(-50%);
+  bottom:96px;
+  width:calc(100% - 36px);
+  max-width:420px;
+  box-sizing:border-box;
+  background:var(--ink);
+  color:var(--bg);
+  padding:14px 18px;
+  border-radius:14px;
+  font-weight:600;
+  font-size:14px;
+  line-height:1.6;
+  text-align:center;
+  white-space:normal;
+  overflow-wrap:anywhere;
+  z-index:50;
+}
+.sample{background:var(--pri2);border-radius:10px;padding:8px 12px;font-size:14px;margin-bottom:10px}
+.top{display:flex;align-items:center;gap:8px;margin-bottom:6px;min-height:40px}.sp{flex:1}
+.lang{border:1.5px solid var(--pri);color:var(--pri);background:var(--card);border-radius:99px;padding:5px 13px;font-weight:700;font-size:14px}
+.bell{position:relative;border:0;background:none;font-size:24px;padding:2px 6px}
+.bell i{position:absolute;top:-4px;right:-2px;background:var(--bad);color:#fff;font-style:normal;font-size:12px;font-weight:700;border-radius:99px;min-width:18px;padding:0 5px;text-align:center}
+.code{font-family:ui-monospace,Menlo,monospace;font-size:24px;font-weight:800;letter-spacing:2px}
+.banner{width:100%;border:0;background:var(--warm);color:#2a1d00;font-weight:700;border-radius:12px;padding:12px;margin-bottom:10px;font-size:15px}
+select{border:1.5px solid var(--bd);background:var(--card);color:var(--ink);border-radius:10px;padding:10px;font:inherit;max-width:60%}
+.bar{height:8px;background:var(--pri2);border-radius:99px;overflow:hidden}.bar i{display:block;height:100%;background:var(--pri)}
+.thumb{width:96px;height:96px;object-fit:cover;border-radius:10px;border:1px solid var(--bd)}
+.ov{position:fixed;inset:0;background:rgba(0,0,0,.85);display:flex;align-items:center;justify-content:center;z-index:9;padding:16px}.ov img{max-width:100%;max-height:100%;border-radius:10px}
+</style>
+</head>
+<body>
+  <div id="splash">
+  <img src="logo.png" class="splash-logo" alt="Smart Mess Logo">
+
+<div class="splash-orbit">
+  <span class="splash-dot dot-red"></span>
+  <span class="splash-dot dot-blue"></span>
+  <span class="splash-dot dot-orange"></span>
+</div>
+
+  <div class="splash-title">Smart-Mess</div>
+  <div class="splash-loading">Loading...</div>
+</div>
+<div id="app"></div>
+  <script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-auth-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-firestore-compat.js"></script>
+
+<script>
+const firebaseConfig = {
+  apiKey: "AIzaSyDE2DGvU1xDVlQC_-_R1hG7SifwbnCN21g",
+  authDomain: "smart-mess-294f3.firebaseapp.com",
+  projectId: "smart-mess-294f3",
+  storageBucket: "smart-mess-294f3.firebasestorage.app",
+  messagingSenderId: "1009030541190",
+  appId: "1:1009030541190:web:c0bbf5f9c054338dc8c607"
+};
+
+firebase.initializeApp(firebaseConfig);
+  
+
+const auth = firebase.auth();
+  
+const db = firebase.firestore();
+  
+</script>
+
+<script>
+
+</script>
+<script>
+
+let L='bn';
+const T=(b,e)=>L=='bn'?b:e;
+const BN='০১২৩৪৫৬৭৮৯';
+const bn=n=>L=='bn'?String(n).replace(/\d/g,d=>BN[d]):String(n);
+const fmt=n=>bn(Math.round(n).toLocaleString('en-US'));
+const esc=s=>String(s).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+const OIL='<svg viewBox="0 0 32 32" width="1em" height="1em" style="vertical-align:-.12em"><rect x="12" y="2" width="8" height="4" rx="1" fill="#2f9e5b"/><path d="M13 6h6v4c0 1 4 3 4 7v11a2 2 0 0 1-2 2H11a2 2 0 0 1-2-2V17c0-4 4-6 4-7z" fill="#f4c430" stroke="#b8860b"/><rect x="10" y="16" width="12" height="9" rx="1.5" fill="#fff8dc"/><ellipse cx="16" cy="20.5" rx="3" ry="2" fill="#7cb342" transform="rotate(-20 16 20.5)"/></svg>';
+const IT={veg:['🥬','সবজি','Vegetables','b'],fish:['🐟','মাছ','Fish','b'],chk:['🍗','মুরগি','Chicken','b'],meat:['🥩','মাংস','Meat','b'],egg:['🥚','ডিম','Eggs','b'],rice:['🍚','চাল','Rice','b'],dal:['🫘','ডাল','Lentils','b'],oil:[OIL,'সয়াবিন তেল','Soybean oil','b'],onion:['🧅','পেঁয়াজ','Onion','b'],pot:['🥔','আলু','Potato','b'],spice:['🧂','মসলা','Spices','b'],milk:['🥛','দুধ','Milk','b'],other:['➕','অন্যান্য','Other','b'],
+gas:['🔥','গ্যাস','Gas','f'],elec:['💡','বিদ্যুৎ','Electricity','f'],net:['📶','ইন্টারনেট','Internet','f'],rent:['🏠','ভাড়া','Rent','f'],maid:['👩','বুয়া','Maid','f'],clean:['🧼','ক্লিনিং','Cleaning','f']};
+const nm=id=>T(IT[id][1],IT[id][2]);
+const CUR={BDT:['৳','টাকা','Taka'],SAR:['SAR ','সৌদি রিয়াল','Saudi Riyal'],USD:['$','ডলার','US Dollar'],AED:['AED ','দিরহাম','UAE Dirham'],KWD:['KD ','কুয়েতি দিনার','Kuwaiti Dinar'],QAR:['QR ','কাতারি রিয়াল','Qatari Riyal'],OMR:['OMR ','ওমানি রিয়াল','Omani Rial'],MYR:['RM ','রিঙ্গিত','Malaysian Ringgit'],INR:['₹','ভারতীয় রুপি','Indian Rupee'],GBP:['£','পাউন্ড','British Pound'],EUR:['€','ইউরো','Euro']};
+const CC=[['+880','🇧🇩'],['+966','🇸🇦'],['+971','🇦🇪'],['+965','🇰🇼'],['+974','🇶🇦'],['+968','🇴🇲'],['+60','🇲🇾'],['+1','🇺🇸'],['+44','🇬🇧'],['+91','🇮🇳']];
+const USERS={};
+const cs=()=>CUR[(M&&M.cur)||'BDT'][0];
+const mny=n=>cs()+fmt(n);
+const dt=d=>new Date(d).toLocaleDateString(L=='bn'?'bn-BD':'en-GB',{day:'numeric',month:'short'});
+let REG=[],M=null;
+let S={screen:'auth',user:null,cur:'BDT',astep:'start',amode:'login',cc:'+880',ph:'',otp:'',via:'phone',memo:null,view:null,tab:'home',type:'meal',name:'',members:[],item:null,amt:'',payer:0,toast:'',jcode:'',found:null,pend:null};
+
+function mk(name,type,members,cur){
+  let code;do code='SM-'+(1000+Math.floor(Math.random()*9000));while(REG.some(m=>m.code==code));
+  const m={code,name,type,members,cur:cur||'BDT',me:0,meals:{},exp:[],reqs:[]};REG.push(m);return m;
+}
+function seed(m){
+  const n=m.members.length;m.members.forEach((_,i)=>m.meals[i]=[48,52,40,56][i%4]);
+  m.exp=[['fish',0,2400],['veg',1,1800],['chk',2,3200],['rice',3,2600],['rent',0,12000],['gas',1,1200],['net',2,800]].map(([item,p,amt],k)=>({item,payer:p%n,amt,d:Date.now()-k*864e5}));
+}
+
+
+function calc(){
+  const n=M.members.length;let baz=0,fix=0;const paid=M.members.map(()=>0);
+  M.exp.forEach(e=>{IT[e.item][3]=='b'?baz+=e.amt:fix+=e.amt;paid[e.payer]+=e.amt});
+  const tm=M.members.reduce((a,_,i)=>a+(M.meals[i]||0),0);
+  const meal=M.type=='meal';const rate=meal&&tm?baz/tm:0;
+  const due=M.members.map((_,i)=>meal?(M.meals[i]||0)*rate+fix/n:(baz+fix)/n);
+  const bal=due.map((d,i)=>paid[i]-d);
+  return{n,baz,fix,paid,tm,rate,due,bal,tot:baz+fix,per:(baz+fix)/n};
+}
+function settle(bal){
+  const d=[],c=[];bal.forEach((b,i)=>{if(b<-0.5)d.push([i,-b]);else if(b>0.5)c.push([i,b])});
+  d.sort((a,b)=>b[1]-a[1]);c.sort((a,b)=>b[1]-a[1]);const r=[];
+  while(d.length&&c.length){const x=Math.min(d[0][1],c[0][1]);r.push([d[0][0],c[0][0],x]);d[0][1]-=x;c[0][1]-=x;if(d[0][1]<.5)d.shift();if(c[0][1]<.5)c.shift()}
+  return r;
+}
+const pend=()=>M?M.reqs.filter(r=>r.s=='p').length:0;
+function say(t){
+  S.toast=t;
+  render();
+  setTimeout(()=>{
+    S.toast='';
+    render();
+  },10000);
+}
+function go(t){S.tab=t;S.item=null;render();window.scrollTo(0,0)}
+function tl(){L=L=='bn'?'en':'bn';render()}
+function to(s){S.screen=s;S.found=null;S.pend=null;render();window.scrollTo(0,0)}
+
+function topbar(){
+  const app=S.screen=='app';const p=pend();
+  return `<div class="top">${S.screen!='welcome'&&S.screen!='auth'&&S.screen!='app'?`<button class="x" onclick="to('welcome')" aria-label="${T('পেছনে','Back')}">←</button>`:''}<span class="sp"></span>${app?`<button class="bell" onclick="go('req')" aria-label="${T('নোটিফিকেশন','Notifications')}">🔔${p?`<i>${bn(p)}</i>`:''}</button>`:''}<button class="lang" onclick="tl()" aria-label="Language">${L=='bn'?'EN':'বাং'}</button>${app?`<button class="lang" onclick="go('settings')" aria-label="${T('সেটিংস','Settings')}">⚙️</button>`:''}</div>`;
+}
+  function authView(){
+  const m=S.amode=='signup';
+  return `
+  <h1>🍽️ Smart Mess</h1>
+  <div class="mut">${T('মেসের হিসাব, সহজে','Mess accounts, made simple')}</div>
+
+  <div class="types" style="margin-top:18px">
+    <button class="type ${!m?'on':''}" onclick="S.amode='login';render()">
+      <b>${T('লগইন','Log in')}</b>
+    </button>
+    <button class="type ${m?'on':''}" onclick="S.amode='signup';render()">
+      <b>${T('সাইন আপ','Sign up')}</b>
+    </button>
+  </div>
+
+  ${m?`
+    <h2>${T('আপনার নাম','Your name')}</h2>
+    <input type="text" id="authName" placeholder="${T('আপনার নাম লিখুন','Enter your name')}" style="width:100%;padding:12px;border:1.5px solid var(--bd);border-radius:10px;background:var(--card);color:var(--ink);font:inherit">
+  `:''}
+
+  <h2>${T('ইমেইল','Email')}</h2>
+  <input type="email" id="authEmail" value="${esc(S.email||'')}" placeholder="example@gmail.com" style="width:100%;padding:12px;border:1.5px solid var(--bd);border-radius:10px;background:var(--card);color:var(--ink);font:inherit" autocomplete="email">
+
+  <h2>${T('পাসওয়ার্ড','Password')}</h2>
+  <input type="password" id="authPass" placeholder="${T('কমপক্ষে ৬ অক্ষর','At least 6 characters')}" style="width:100%;padding:12px;border:1.5px solid var(--bd);border-radius:10px;background:var(--card);color:var(--ink);font:inherit" autocomplete="${m?'new-password':'current-password'}">
+
+  <div style="height:16px"></div>
+  <button class="btn" onclick="authAction()">
+    ${m?T('একাউন্ট তৈরি করুন','Create account'):T('লগইন করুন','Log in')}
+  </button>
+  ${!m?`<button class="btn ghost" style="margin-top:10px" onclick="resetPassword()">${T('পাসওয়ার্ড ভুলে গেছেন?','Forgot password?')}</button>`:''}
+  `;
+}
+
+async function authAction(){
+  const email=document.getElementById('authEmail').value.trim();
+  const pass=document.getElementById('authPass').value;
+  const name=document.getElementById('authName')?.value.trim();
+  const signup=S.amode=='signup';
+
+  if(!email||!email.includes('@'))
+    return say(T('সঠিক ইমেইল দিন','Enter a valid email'));
+
+  if(pass.length<6)
+    return say(T('পাসওয়ার্ড কমপক্ষে ৬ অক্ষরের হতে হবে','Password must be at least 6 characters'));
+
+  if(signup&&!name)
+    return say(T('আপনার নাম লিখুন','Enter your name'));
+
+  try{
+    let result;
+
+    if(signup){
+      result=await auth.createUserWithEmailAndPassword(email,pass);
+      await result.user.updateProfile({displayName:name});
+    }else{
+      result=await auth.signInWithEmailAndPassword(email,pass);
+    }
+
+    S.user={
+      uid:result.user.uid,
+      name:result.user.displayName||email.split('@')[0],
+      email:result.user.email
+    };
+const userRef=db.collection('users').doc(result.user.uid);
+const userSnap=await userRef.get();
+
+if(!userSnap.exists){
+  await userRef.set({
+    uid:result.user.uid,
+    name:S.user.name,
+    email:S.user.email,
+    messId:null,
+    createdAt:firebase.firestore.FieldValue.serverTimestamp()
+  });
+}
+    
+
+  }catch(e){
+    console.log('LOGIN ERROR:', e.code, e.message);
+    const errors={
+      'auth/email-already-in-use':T('এই ইমেইলে আগে থেকেই একাউন্ট আছে','An account already exists with this email'),
+      'auth/invalid-email':T('ইমেইল ঠিকানা সঠিক নয়','Invalid email address'),
+      'auth/weak-password':T('আরও শক্তিশালী পাসওয়ার্ড দিন','Choose a stronger password'),
+      'auth/user-not-found':T('এই ইমেইলে কোনো একাউন্ট নেই','No account found with this email'),
+      'auth/wrong-password':T('পাসওয়ার্ড ভুল হয়েছে','Incorrect password'),
+      'auth/invalid-credential':T('ইমেইল অথবা পাসওয়ার্ড ভুল','Incorrect email or password'),
+      'auth/too-many-requests':T('অনেকবার চেষ্টা হয়েছে। পরে চেষ্টা করুন','Too many attempts. Try again later'),
+      'auth/network-request-failed':T('ইন্টারনেট সংযোগ পরীক্ষা করুন','Check your internet connection')
+    };
+
+    say(errors[e.code]||e.message);
+  }
+}
+
+async function resetPassword(){
+  const email=document.getElementById('authEmail').value.trim();
+  if(!email||!email.includes('@'))
+    return say(T('আগে ইমেইল লিখুন','Enter your email first'));
+
+  try{
+    await auth.sendPasswordResetEmail(email);
+    say(T('পাসওয়ার্ড রিসেট লিংক ইমেইলে পাঠানো হয়েছে','Password reset link sent to your email'));
+  }catch(e){
+    say(e.message);
+  }
+}
+
+async function after(){
+  try{
+    const uid=auth.currentUser.uid;
+    const userSnap=await db.collection('users').doc(uid).get();
+
+    if(!userSnap.exists)
+      throw new Error('USER_NOT_FOUND');
+
+    const messId=userSnap.data().messId;
+
+    S.astep='start';
+
+    if(!messId){
+      if(window._smartMessExpenseUnsub){
+        window._smartMessExpenseUnsub();
+        window._smartMessExpenseUnsub=null;
+      }
+      if(window._smartMessMealUnsub){
+        window._smartMessMealUnsub();
+        window._smartMessMealUnsub=null;
+      }
+      M=null;
+      S.screen='welcome';
+      render();
+      return;
+    }
+
+    const messRef=db.collection('messes').doc(messId);
+
+    const [messSnap,myMemberSnap,membersSnap]=await Promise.all([
+      messRef.get(),
+      messRef.collection('members').doc(uid).get(),
+      messRef.collection('members').where('status','==','active').get()
+    ]);
+
+    let requestsSnap={docs:[]};
+
+    if(myMemberSnap.exists && myMemberSnap.data().role=='admin'){
+      requestsSnap=await messRef.collection('joinRequests').get();
+    }
+
+    if(!messSnap.exists || !myMemberSnap.exists)
+      throw new Error('MESS_NOT_FOUND');
+
+    const myMember=myMemberSnap.data();
+
+    if(myMember.status!='active')
+      throw new Error('MEMBERSHIP_INACTIVE');
+
+    const data=messSnap.data();
+
+    const memberDocs=membersSnap.docs.filter(d=>d.data().status=='active');
+
+    const memberUids=memberDocs.map(d=>d.id);
+    const members=memberDocs.map(d=>d.data().name);
+    const memberPhones=memberDocs.map(d=>d.data().phone||'');
+
+    M={
+      id:messId,
+      code:data.code,
+      name:data.name,
+      type:data.type,
+      cur:data.currency,
+      adminUid:data.adminUid,
+      role:myMember.role,
+      memberUids:memberUids,
+      members:members,
+      memberPhones:memberPhones,
+      me:memberUids.indexOf(uid),
+      meals:{},
+      exp:[],
+      reqs:requestsSnap.docs.map(d=>{
+        const r=d.data();
+        return {
+          uid:d.id,
+          name:r.name,
+          s:r.status=='pending'?'p':r.status=='accepted'?'a':'r'
+        };
+      })
+    };
+
+    S.members=[...members];
+    S.payer=M.me;
+    S.screen='app';
+    S.tab='home';
+
+    if(window._smartMessExpenseUnsub){
+      window._smartMessExpenseUnsub();
+      window._smartMessExpenseUnsub=null;
+    }
+
+    if(window._smartMessMealUnsub){
+      window._smartMessMealUnsub();
+      window._smartMessMealUnsub=null;
+    }
+
+    render();
+
+    // EXPENSE LIVE SYNC
+    window._smartMessExpenseUnsub=
+      messRef.collection('expenses').onSnapshot(snapshot=>{
+
+        if(!M || M.id!=messId) return;
+
+        M.exp=snapshot.docs.map(doc=>{
+          const e=doc.data();
+
+          return {
+            id:doc.id,
+            item:e.item,
+            payer:memberUids.indexOf(e.payerUid),
+            amt:e.amt,
+            d:e.d,
+            memo:e.memo
+          };
+        });
+
+        render();
+
+      },error=>{
+        console.error('EXPENSE SYNC ERROR:',error);
+        say('খরচ আপডেট করা যায়নি: '+(error.code||error.message));
+      });
+
+    // MEAL LIVE SYNC
+    window._smartMessMealUnsub=
+      messRef.collection('mealCounts').onSnapshot(snapshot=>{
+
+        if(!M || M.id!=messId) return;
+
+        M.meals={};
+
+        snapshot.docs.forEach(doc=>{
+          const i=memberUids.indexOf(doc.id);
+
+          if(i>=0){
+            M.meals[i]=Number(doc.data().count)||0;
+          }
+        });
+
+        render();
+
+      },error=>{
+        console.error('MEAL SYNC ERROR:',error);
+        say('মিল আপডেট করা যায়নি: '+(error.code||error.message));
+      });
+    
+
+  }catch(e){
+    console.error(e);
+    say(T('আগের মেস লোড করা যায়নি। আবার চেষ্টা করুন।','Could not load your previous mess. Please try again.'));
+  }
+}
+async function savePhone(){
+  try{
+    const phone=document.getElementById('myPhone').value.trim();
+
+    if(!phone)
+      return say(T('মোবাইল নম্বর লিখুন','Enter your mobile number'));
+
+    const uid=auth.currentUser.uid;
+
+    await db.collection('messes')
+      .doc(M.id)
+      .collection('members')
+      .doc(uid)
+      .update({phone:phone});
+
+    const i=M.memberUids.indexOf(uid);
+
+    if(i>=0){
+      M.memberPhones[i]=phone;
+    }
+
+    say(T('মোবাইল নম্বর সংরক্ষণ হয়েছে','Phone number saved'));
+    render();
+
+  }catch(e){
+    console.error(e);
+    say(T('নম্বর সংরক্ষণ করা যায়নি','Could not save phone number'));
+  }
+}
+
+function welcomeView(){
+  return `<h1>🍽️ Smart Mess</h1><div class="mut">${T('হ্যালো, ','Hello, ')}<b>${esc(S.user.name)}</b> · <button class="x" style="font-size:14px;padding:0" onclick="auth.signOut()">${T('লগআউট','Log out')}</button></div><div style="height:22px"></div>
+  <button class="btn" onclick="to('create')">➕ ${T('নতুন মেস তৈরি করুন','Create a new mess')}</button><div style="height:10px"></div>
+  <button class="btn ghost" onclick="to('join')">🔍 ${T('কোড দিয়ে মেস খুঁজুন','Find a mess by code')}</button>
+  <div class="sample" style="margin-top:16px">${T('ডেমো মেসের কোড: ','Demo mess code: ')}<b>SM-1234</b></div>`;
+}
+function createView(){
+  return `<h1>${T('নতুন মেস','New mess')}</h1>
+  <h2>${T('মেসের নাম','Mess name')}</h2><input type="text" value="${esc(S.name)}" placeholder="${T('যেমন: সবুজ মেস','e.g. Green Mess')}" oninput="S.name=this.value">
+  <h2>${T('মেসের ধরন','Mess type')}</h2><div class="types">
+   <button class="type ${S.type=='meal'?'on':''}" onclick="S.type='meal';render()"><span>🍽️</span><b>${T('মিল মেস','Meal mess')}</b><small>${T('যে যত বেলা খায়, তত দেবে','Pay by meals eaten')}</small></button>
+   <button class="type ${S.type=='regular'?'on':''}" onclick="S.type='regular';render()"><span>🏠</span><b>${T('রেগুলার মেস','Regular mess')}</b><small>${T('সবাই সমান ভাগ করে দেবে','Everyone splits equally')}</small></button></div>
+  <h2>${T('মুদ্রা','Currency')}</h2><div class="chips">${Object.entries(CUR).map(([k,v])=>`<button class="chip ${S.cur==k?'on':''}" onclick="S.cur='${k}';render()">${v[0].trim()} ${T(v[1],v[2])}</button>`).join('')}</div>
+  <h2>${T('মেম্বার','Members')}</h2><div class="mut">${T('প্রথম জন অ্যাডমিন হবেন','The first person is the admin')}</div>
+  <div class="chips">${S.members.map((m,i)=>`<span class="chip">${i==0?'👑 ':''}${esc(m)} <button class="x" style="padding:0 0 0 6px;font-size:16px" aria-label="${T('সরান','Remove')}" onclick="S.members.splice(${i},1);render()">✕</button></span>`).join('')}</div>
+  <div class="row"><input type="text" id="nmem" placeholder="${T('মেম্বারের নাম','Member name')}" onkeydown="if(event.key=='Enter')addMem()"><button class="btn" style="width:auto;padding:12px 18px" onclick="addMem()">${T('যোগ','Add')}</button></div>
+  <div style="height:16px"></div><button class="btn" ${S.members.length<2?'disabled':''} onclick="start()">${T('মেস তৈরি করুন','Create mess')}</button>`;
+}
+function addMem(){const v=document.getElementById('nmem').value.trim();if(v){S.members.push(v);render()}}
+async function start(){
+  if(!auth.currentUser) return say(T('আগে লগইন করুন','Please login first'));
+
+  const name=S.name.trim()||T('আমার মেস','My mess');
+  const uid=auth.currentUser.uid;
+  const userRef=db.collection('users').doc(uid);
+  const messRef=db.collection('messes').doc();
+
+  try{
+    say(T('মেস তৈরি হচ্ছে...','Creating mess...'));
+
+    const result=await db.runTransaction(async tx=>{
+      const userSnap=await tx.get(userRef);
+
+      if(!userSnap.exists)
+        throw new Error('USER_PROFILE_MISSING');
+
+      if(userSnap.data().messId)
+        throw new Error('ALREADY_IN_MESS');
+
+      let code='',codeRef=null;
+
+      for(let i=0;i<10;i++){
+        const candidate='SM-'+(1000+Math.floor(Math.random()*9000));
+        const ref=db.collection('messCodes').doc(candidate);
+        const snap=await tx.get(ref);
+
+        if(!snap.exists){
+          code=candidate;
+          codeRef=ref;
+          break;
+        }
+      }
+
+      if(!code)
+        throw new Error('CODE_GENERATION_FAILED');
+
+      const now=firebase.firestore.FieldValue.serverTimestamp();
+
+      tx.set(messRef,{
+        name:name,
+        code:code,
+        type:S.type,
+        currency:S.cur,
+        adminUid:uid,
+        ownerUid:uid,
+        createdAt:now
+      });
+
+      tx.set(codeRef,{
+        messId:messRef.id
+      });
+
+      tx.set(
+        messRef.collection('members').doc(uid),
+        {
+          uid:uid,
+          name:S.user.name,
+          role:'admin',
+          status:'active',
+          joinedAt:now
+        }
+      );
+
+      tx.update(userRef,{
+        messId:messRef.id
+      });
+
+      return {code:code};
+    });
+
+    M={
+      id:messRef.id,
+      code:result.code,
+      name:name,
+      type:S.type,
+      members:[S.user.name],
+      cur:S.cur,
+      me:0,
+      meals:{},
+      exp:[],
+      reqs:[]
+    };
+
+    S.payer=0;
+    S.screen='app';
+    S.tab='home';
+    render();
+
+    say(T('মেস তৈরি হয়েছে। কোড: ','Mess created. Code: ')+M.code);
+
+  }catch(e){
+    console.error(e);
+
+    const errors={
+      USER_PROFILE_MISSING:T('ইউজার তথ্য পাওয়া যায়নি।','User prof}ile not found.'),
+      ALREADY_IN_MESS:T('আপনি ইতিমধ্যে একটি মেসে আছেন।','You already belong to a mess.'),
+      CODE_GENERATION_FAILED:T('মেস কোড তৈরি করা যায়নি। আবার চেষ্টা করুন।','Could not generate a mess code.')
+    };
+
+    say(errors[e.message]||T('মেস তৈরি হয়নি। আবার চেষ্টা করুন।','Mess creation failed. Please try again.'));
+  }
+}
+function joinView(){
+  let h=`<h1>🔍 ${T('মেস খুঁজুন','Find a mess')}</h1><div class="mut">${T('অ্যাডমিনের দেওয়া মেসের কোড লিখুন','Enter the code from the admin')}</div>
+  <div class="row" style="margin-top:12px"><input type="text" value="${esc(S.jcode)}" placeholder="SM-1234" style="text-transform:uppercase" oninput="S.jcode=this.value" onkeydown="if(event.key=='Enter')search()"><button class="btn" style="width:auto;padding:12px 18px" onclick="search()">${T('খুঁজুন','Search')}</button></div>`;
+  if(S.found===false)return h+`<div class="card neg" style="margin-top:12px">${T('এই কোডে কোনো মেস পাওয়া যায়নি।','No mess found with this code.')}</div>`;
+  const m=S.found;if(!m)return h;
+  h+=`<div class="card" style="margin-top:12px"><b style="font-size:20px">${esc(m.name)}</b><div class="mut">${m.type=='meal'?'🍽️ '+T('মিল মেস','Meal mess'):'🏠 '+T('রেগুলার মেস','Regular mess')}</div></div>`;
+  const r=S.pend;
+  if(!r)return h+`
+<h2>${T('আপনার নাম','Your name')}</h2>
+<input type="text" id="jn" value="${esc(S.user?S.user.name:'')}" placeholder="${T('যেমন: সুমন','e.g. Suman')}">
+<div style="height:12px"></div>
+<h2>${T('মোবাইল নম্বর','Mobile number')}</h2>
+<input type="tel" id="jp" placeholder="${T('আপনার মোবাইল নম্বর','Your mobile number')}">
+<div style="height:12px"></div>
+<button class="btn" onclick="send()">${T('যোগদানের অনুরোধ পাঠান','Send join request')}</button>`;
+  return h+`<div class="card"><div class="row" style="justify-content:space-between"><b>${esc(r.name)}</b><span class="tag ${r.s=='a'?'pos':r.s=='r'?'neg':''}" style="${r.s=='p'?'background:var(--warm);color:#2a1d00':''}">${r.s=='p'?T('অপেক্ষমাণ','Pending'):r.s=='a'?T('অনুমোদিত','Accepted'):T('বাতিল','Rejected')}</span></div>
+  <div class="mut" style="margin-top:6px">${r.s=='p'?T('অনুরোধ অ্যাডমিনের কাছে পাঠানো হয়েছে। অনুমোদন পেলে আপনি মেম্বার হবেন।','Request sent to the admin. You become a member once accepted.'):r.s=='a'?T('অ্যাডমিন আপনাকে মেম্বার করেছেন।','The admin accepted you as a member.'):T('অ্যাডমিন অনুরোধ বাতিল করেছেন।','The admin rejected your request.')}</div></div>
+  <button class="btn ghost" onclick="render()">${T('অবস্থা দেখুন','Check status')}</button><div style="height:10px"></div>
+  <button class="btn" onclick="M=S.found;M.me=0;S.payer=0;S.screen='app';S.tab='req';render()">👑 ${T('অ্যাডমিন হিসেবে দেখুন (ডেমো)','View as admin (demo)')}</button>`;
+}
+async function search(){
+  const c=S.jcode.trim().toUpperCase();
+  S.pend=null;
+  S.found=null;
+
+  if(!c){
+    S.found=false;
+    render();
+    return;
+  }
+
+  try{
+    const codeSnap=await db.collection('messCodes').doc(c).get();
+
+    if(!codeSnap.exists){
+      S.found=false;
+      render();
+      return;
+    }
+
+    const messId=codeSnap.data().messId;
+    const messSnap=await db.collection('messes').doc(messId).get();
+
+    if(!messSnap.exists){
+      S.found=false;
+      render();
+      return;
+    }
+
+    const data=messSnap.data();
+
+    S.found={
+      id:messId,
+      code:data.code,
+      name:data.name,
+      type:data.type,
+      cur:data.currency
+    };
+
+  }catch(e){
+    console.error(e);
+    S.found=false;
+    say('মেস খুঁজতে সমস্যা হয়েছে। আবার চেষ্টা করুন।');
+  }
+
+  render();
+}
+async function send(){
+  const n=document.getElementById('jn').value.trim();
+  const phone=document.getElementById('jp').value.trim();
+
+  if(!n)
+    return say(T('আপনার নাম লিখুন','Enter your name'));
+  if(!phone)
+    return say(T('মোবাইল নম্বর লিখুন','Enter your mobile number'));
+
+  if(!auth.currentUser)
+    return say(T('আগে লগইন করুন','Please login first'));
+
+  const uid=auth.currentUser.uid;
+  const messId=S.found.id;
+
+  try{
+    say(T('অনুরোধ পাঠানো হচ্ছে...','Sending request...'));
+
+    const userRef=db.collection('users').doc(uid);
+    const requestRef=db.collection('messes')
+      .doc(messId)
+      .collection('joinRequests')
+      .doc(uid);
+
+    await db.runTransaction(async tx=>{
+      const userSnap=await tx.get(userRef);
+      const requestSnap=await tx.get(requestRef);
+
+      if(!userSnap.exists)
+        throw new Error('USER_NOT_FOUND');
+
+      if(userSnap.data().messId)
+        throw new Error('ALREADY_IN_MESS');
+
+      if(requestSnap.exists && requestSnap.data().status=='pending')
+        throw new Error('REQUEST_EXISTS');
+
+      tx.set(requestRef,{
+        uid:uid,
+        name:n,
+        email:auth.currentUser.email,
+        status:'pending',
+        phone:phone,
+        createdAt:firebase.firestore.FieldValue.serverTimestamp()
+      });
+    });
+
+    S.pend={name:n,s:'p'};
+    say(T('যোগদানের অনুরোধ পাঠানো হয়েছে।','Join request sent successfully.'));
+    render();
+
+  }catch(e){
+    console.error(e);
+
+    const messages={
+      USER_NOT_FOUND:'ইউজার তথ্য পাওয়া যায়নি।',
+      ALREADY_IN_MESS:'আপনি ইতিমধ্যে একটি মেসে আছেন।',
+      REQUEST_EXISTS:'আপনার অনুরোধ আগেই পাঠানো হয়েছে।'
+    };
+
+    say(messages[e.message]||'অনুরোধ পাঠানো যায়নি। Firebase Rules পরীক্ষা করতে হবে।');
+  }
+}
+function reqView(){
+  const rows=M.reqs.map((r,i)=>({r,i}));const P=rows.filter(x=>x.r.s=='p'),D=rows.filter(x=>x.r.s!='p');
+  return `<h1>🔔 ${T('যোগদানের অনুরোধ','Join requests')}</h1>
+  ${P.length?P.map(({r,i})=>`<div class="card"><b style="font-size:18px">${esc(r.name)}</b><div class="mut">${T('আপনার মেসে যোগ দিতে চায়','wants to join your mess')}</div>
+  <div class="row" style="margin-top:10px"><button class="btn" onclick="decide(${i},true)">✅ ${T('গ্রহণ','Accept')}</button><button class="btn ghost" style="color:var(--bad);border-color:var(--bad)" onclick="decide(${i},false)">❌ ${T('বাতিল','Reject')}</button></div></div>`).join(''):`<div class="card mut">${T('কোনো নতুন অনুরোধ নেই।','No new requests.')}</div>`}
+  ${D.length?`<h2>${T('আগের অনুরোধ','Earlier requests')}</h2><div class="card">${D.map(({r})=>`<div class="li"><div class="t">${esc(r.name)}</div><span class="tag ${r.s=='a'?'pos':'neg'}">${r.s=='a'?T('অনুমোদিত','Accepted'):T('বাতিল','Rejected')}</span></div>`).join('')}</div>`:''}`;
+}
+async function decide(i,ok){
+  const r=M.reqs[i];
+
+  if(!r || !r.uid)
+    return say('অনুরোধের তথ্য পাওয়া যায়নি।');
+
+  const uid=auth.currentUser.uid;
+  const messId=M.id;
+
+  try{
+    say('প্রক্রিয়া চলছে...');
+
+    const messRef=db.collection('messes').doc(messId);
+    const requestRef=messRef.collection('joinRequests').doc(r.uid);
+    const userRef=db.collection('users').doc(r.uid);
+    const memberRef=messRef.collection('members').doc(r.uid);
+    const adminRef=messRef.collection('members').doc(uid);
+
+    await db.runTransaction(async tx=>{
+      const requestSnap=await tx.get(requestRef);
+      
+      const memberSnap=await tx.get(memberRef);
+      const adminSnap=await tx.get(adminRef);
+      const messSnap=await tx.get(messRef);
+
+      if(!requestSnap.exists ||
+         requestSnap.data().status!='pending')
+        throw new Error('REQUEST_NOT_PENDING');
+
+      if(!messSnap.exists ||
+         messSnap.data().adminUid!=uid ||
+         !adminSnap.exists ||
+         adminSnap.data().role!='admin' ||
+         adminSnap.data().status!='active')
+        throw new Error('NOT_ADMIN');
+
+      if(ok){
+        
+
+        
+
+        if(memberSnap.exists)
+          throw new Error('MEMBER_EXISTS');
+
+        const data=requestSnap.data();
+
+        tx.set(memberRef,{
+          uid:r.uid,
+          name:data.name,
+          email:data.email,
+          phone:data.phone||'',
+          role:'member',
+          status:'active',
+          joinedAt:firebase.firestore.FieldValue.serverTimestamp()
+        });
+
+        tx.update(userRef,{
+          messId:messId
+        });
+
+        tx.update(requestRef,{
+          status:'accepted',
+          updatedAt:firebase.firestore.FieldValue.serverTimestamp()
+        });
+
+      }else{
+        tx.update(requestRef,{
+          status:'rejected',
+          updatedAt:firebase.firestore.FieldValue.serverTimestamp()
+        });
+      }
+    });
+
+    r.s=ok?'a':'r';
+
+    if(ok){
+      M.members.push(r.name);
+      M.memberUids.push(r.uid);
+    }
+
+    say(ok?'মেম্বার সফলভাবে যোগ হয়েছে।':'অনুরোধ বাতিল হয়েছে।');
+    render();
+
+  }catch(e){
+    console.error(e);
+
+    const messages={
+      REQUEST_NOT_PENDING:'এই অনুরোধটি আর Pending নেই।',
+      NOT_ADMIN:'শুধু মেসের Admin এই কাজ করতে পারবেন।',
+      USER_NOT_FOUND:'ইউজারের তথ্য পাওয়া যায়নি।',
+      ALREADY_IN_MESS:'এই ইউজার ইতিমধ্যে অন্য মেসে আছেন।',
+      MEMBER_EXISTS:'এই মেম্বার আগে থেকেই যুক্ত আছেন।'
+    };
+
+    say(T(
+  'সমস্যা হয়েছে: '+(e.code||e.message||'অজানা সমস্যা'),
+  'Error: '+(e.code||e.message||'Unknown error')
+));
+}
+}
+function copy(){try{navigator.clipboard.writeText(M.code).catch(()=>{})}catch(e){}say(T('কোড কপি হয়েছে','Code copied'))}
+
+function meBlock(c){
+  const b=c.bal[M.me]||0;
+
+  return `<div class="card">
+  <div class="row" style="justify-content:space-between">
+    <span class="mut">${T('আমার পরিচয়','My account')}</span>
+    <b>${esc(S.user.name)}</b>
+  </div>
+
+  <div class="row" style="justify-content:space-between;margin-top:8px">
+    <span>${T('আমার হিসাব','My balance')}</span>
+    ${Math.abs(b)<.5
+      ?`<span class="tag pos">${T('মিটে গেছে','Settled')}</span>`
+      :`<span class="tag ${b>0?'pos':'neg'}">${b>0?T('পাবে','Gets'):T('দেবে','Owes')} ${mny(Math.abs(b))}</span>`}
+  </div>
+
+  <div class="row" style="justify-content:space-between;margin-top:8px">
+    <span class="mut">${T('মুদ্রা','Currency')}</span>
+    <b>${M.cur}</b>
+  </div>
+  </div>`;
+}
+function whoBlock(c){
+  const mx=Math.max(1,...c.paid);
+  return `<h2>${T('কে কত খরচ করেছে','Who spent how much')}</h2><div class="card">${M.members.map((m,i)=>`<div style="margin:8px 0"><div class="row" style="justify-content:space-between"><span>${esc(m)}${i==M.me?' ('+T('আমি','me')+')':''}</span><b>${mny(c.paid[i])}</b></div><div class="bar"><i style="width:${c.paid[i]/mx*100}%"></i></div></div>`).join('')}</div>`;
+}
+  function settingsView(){
+  return `<h1>⚙️ ${T('সেটিংস','Settings')}</h1>
+
+  <div class="card">
+    <button class="btn ghost" onclick="go('members')">
+      ${T('সদস্য তালিকা','Member List')}
+    </button>
+  </div>`;
+}
+  function memberListView(){
+  const myPhone=(M.memberPhones&&M.memberPhones[M.me])||'';
+
+  return `
+    <h1>👥 ${T('সদস্য তালিকা','Member List')}</h1>
+
+    <button class="btn ghost" onclick="go('settings')">
+      ← ${T('সেটিংসে ফিরে যান','Back to Settings')}
+    </button>
+
+    <div class="card" style="margin-top:12px">
+      <h3>${T('আমার মোবাইল নম্বর','My Mobile Number')}</h3>
+
+      <input
+        type="tel"
+        id="myPhone"
+        value="${esc(myPhone)}"
+        placeholder="${T('মোবাইল নম্বর লিখুন','Enter mobile number')}"
+      >
+
+      <button class="btn" onclick="savePhone()" style="margin-top:10px">
+        ${T('নম্বর সংরক্ষণ করুন','Save Number')}
+      </button>
+    </div>
+
+    <div class="card" style="margin-top:12px">
+      ${M.members.map((name,i)=>{
+        const phone=(M.memberPhones&&M.memberPhones[i])||'';
+
+        return `
+          <div style="padding:12px 0;border-bottom:1px solid var(--bd)">
+            <b>${i+1}. ${esc(name)}</b>
+            <div class="mut" style="margin-top:5px">
+              📞 ${phone?esc(phone):T('নম্বর দেওয়া হয়নি','No phone number')}
+            </div>
+          </div>
+        `;
+      }).join('')}
+    </div>
+  `;
+}
+
+function homeView(){
+  const c=calc();const meal=M.type=='meal';const p=pend();
+  return `<div class="row" style="justify-content:space-between"><h1>${esc(M.name)}</h1></div>
+  <div class="card row" style="justify-content:space-between;margin-top:12px"><div><div class="mut">${T('মেসের কোড','Mess code')}</div><div class="code">${M.code}</div></div><button class="btn ghost" style="width:auto;padding:10px 16px" onclick="copy()">${T('কপি','Copy')}</button></div>
+  ${meBlock(c)}${p?`<button class="banner" onclick="go('req')">🔔 ${bn(p)} ${T('টি নতুন যোগদানের অনুরোধ','new join request(s)')}</button>`:''}
+  <div class="stats"><div class="stat hero"><small>${T('এই মাসের মোট খরচ','Total spent this month')}</small><b>${cs()}${fmt(c.tot)}</b></div>
+  <div class="stat"><small class="mut">${T('বাজার','Groceries')}</small><b>${cs()}${fmt(c.baz)}</b></div>
+  <div class="stat"><small class="mut">${T('ফিক্সড','Fixed')}</small><b>${cs()}${fmt(c.fix)}</b></div>
+  <div class="stat"><small class="mut">${meal?T('মিল রেট','Meal rate'):T('জনপ্রতি ভাগ','Per person')}</small><b>${cs()}${meal?bn(c.rate.toFixed(2)):fmt(c.per)}</b></div>
+  <div class="stat"><small class="mut">${meal?T('মোট মিল','Total meals'):T('মেম্বার','Members')}</small><b>${bn(meal?c.tm:c.n)}</b></div></div>
+  ${whoBlock(c)}<h2>${T('সব মেম্বারের এন্ট্রি','All entries')}</h2><div class="card">${M.exp.length?M.exp.map((e,i)=>({e,i})).reverse().map(({e,i})=>`<div class="li"><span class="e">${IT[e.item][0]}</span><div class="t">${nm(e.item)}<small>${esc(M.members[e.payer])}${e.d?' · '+dt(e.d):''}</small></div>${e.memo?`<button class="x" aria-label="${T('মেমো','Receipt')}" onclick="S.view=${i};render()">🧾</button>`:''}<b>${cs()}${fmt(e.amt)}</b>${e.payer==M.me||M.me==0?`<button class="x" aria-label="${T('মুছুন','Delete')}" onclick="deleteExp('${e.id}')">✕</button>`:''}</div>`).join(''):`<div class="mut">${T('এখনো কোনো খরচ নেই। নিচের ➕ চাপুন।','No expenses yet. Tap ➕ below.')}</div>`}</div>`;
+}
+function addView(){
+  if(!S.item){
+    const g=k=>Object.entries(IT).filter(([_,v])=>v[3]==k).map(([id,v])=>`<button class="ic" onclick="S.item='${id}';S.amt='';render()"><span>${v[0]}</span><small>${nm(id)}</small></button>`).join('');
+    return `<h1>${T('কী কিনলেন?','What did you buy?')}</h1><div class="mut">${T('ছবিতে ট্যাপ করুন','Tap a picture')}</div><h2>${T('বাজার','Groceries')}</h2><div class="grid">${g('b')}</div><h2>${T('ফিক্সড খরচ','Fixed costs')}</h2><div class="grid">${g('f')}</div>`;
+  }
+  const v=IT[S.item];
+  return `<div class="row"><button class="x" onclick="S.item=null;render()" aria-label="${T('পেছনে','Back')}">←</button><div style="font-size:22px;font-weight:700">${v[0]} ${nm(S.item)}</div></div>
+  <div class="amt">${cs()}${S.amt?bn(Number(S.amt).toLocaleString('en-US')):bn(0)}</div>
+  <div class="quick">${[100,200,500,1000].map(q=>`<button onclick="S.amt=String((Number(S.amt)||0)+${q});render()">+${bn(q)}</button>`).join('')}</div>
+  <div class="keys">${[1,2,3,4,5,6,7,8,9].map(k=>`<button class="key" onclick="key('${k}')">${bn(k)}</button>`).join('')}<button class="key" onclick="key('00')">${bn('00')}</button><button class="key" onclick="key('0')">${bn(0)}</button><button class="key" onclick="S.amt=S.amt.slice(0,-1);render()" aria-label="${T('মুছুন','Delete')}">⌫</button></div>
+  <h2>${T('কে কিনেছে?','Who bought it?')}</h2>${M.me==0?`<div class="chips">${M.members.map((m,i)=>`<button class="chip ${S.payer==i?'on':''}" onclick="S.payer=${i};render()">${esc(m)}</button>`).join('')}</div>`:`<div class="mut">${esc(M.members[M.me])} (${T('আপনি','you')})</div>`}
+  <h2>🧾 ${T('মেমো / রসিদ (ঐচ্ছিক)','Receipt (optional)')}</h2>${S.memo?`<div class="row"><img class="thumb" src="${S.memo}" alt=""><button class="x" onclick="S.memo=null;render()" aria-label="${T('সরান','Remove')}">✕</button></div>`:`<label class="btn ghost" style="display:block;text-align:center"><input type="file" accept="image/*" style="display:none" onchange="memo(this)">📷 ${T('মেমোর ছবি তুলুন বা আপলোড করুন','Take or upload a receipt photo')}</label>`}
+  <div style="height:8px"></div><button class="btn" ${Number(S.amt)>0?'':'disabled'} onclick="saveExp()">✅ ${T('খরচ সংরক্ষণ করুন','Save expense')}</button>`;
+}
+function memo(inp){const f=inp.files[0];if(!f)return;const r=new FileReader();r.onload=()=>{const im=new Image();im.onload=()=>{const k=Math.min(1,800/Math.max(im.width,im.height)),c=document.createElement('canvas');c.width=im.width*k;c.height=im.height*k;c.getContext('2d').drawImage(im,0,0,c.width,c.height);S.memo=c.toDataURL('image/jpeg',.7);render()};im.src=r.result};r.readAsDataURL(f)}
+function key(k){if((S.amt+k).length<=6)S.amt=String(Number(S.amt+k));render()}
+async function saveExp(){
+  const item=S.item;
+  const amt=Number(S.amt);
+  const payer=M.role=='admin'
+    ? Math.min(S.payer,M.members.length-1)
+    : M.me;
+
+  if(!item || !amt || amt<=0)
+    return say('সঠিক খরচের পরিমাণ দিন।');
+
+  try{
+    say('খরচ সংরক্ষণ হচ্ছে...');
+
+    const expense={
+      item:item,
+      payerUid:M.memberUids[payer],
+      amt:amt,
+      d:Date.now(),
+      memo:S.memo||null,
+      createdBy:auth.currentUser.uid,
+      createdAt:firebase.firestore.FieldValue.serverTimestamp()
+    };
+
+    const doc=await db.collection('messes')
+      .doc(M.id)
+      .collection('expenses')
+      .add(expense);
+
+    
+
+    S.item=null;
+    S.amt='';
+    S.memo=null;
+    S.tab='home';
+
+    say(T('খরচ সংরক্ষণ হয়েছে','Expense saved'));
+    render();
+
+  }catch(e){
+    console.error('EXPENSE SAVE ERROR:',e);
+    say('খরচ সংরক্ষণ হয়নি: '+(e.code||e.message));
+  }
+}
+async function deleteExp(id){
+  if(!confirm(T('আপনি কি এই খরচটি মুছতে চান?','Delete this expense?')))
+    return;
+
+  try{
+    say(T('মুছে ফেলা হচ্ছে...','Deleting...'));
+
+    await db.collection('messes')
+      .doc(M.id)
+      .collection('expenses')
+      .doc(id)
+      .delete();
+
+    say(T('খরচ মুছে ফেলা হয়েছে','Expense deleted'));
+
+  }catch(e){
+    console.error('EXPENSE DELETE ERROR:',e);
+    say('মুছতে সমস্যা হয়েছে: '+(e.code||e.message));
+  }
+}
+
+async function changeMeal(i,delta){
+  if(i!==M.me) return;
+
+  const uid=M.memberUids[i];
+  const ref=db.collection('messes')
+    .doc(M.id)
+    .collection('mealCounts')
+    .doc(uid);
+
+  const current=Number(M.meals[i])||0;
+  const count=Math.max(0,current+delta);
+
+  if(count===current) return;
+
+  try{
+    await ref.set({
+      count:count,
+      updatedAt:firebase.firestore.FieldValue.serverTimestamp()
+    },{merge:true});
+  }catch(e){
+    console.error('MEAL SAVE ERROR:',e);
+    say('মিল সংরক্ষণ হয়নি: '+(e.code||e.message));
+  }
+}
+
+function mealView(){
+  const c=calc();
+
+  return `<h1>${T('মিল','Meals')}</h1>
+  <div class="mut">${T('মাসে কে কত মিল খেয়েছে','Meals eaten by each member this month')}</div>
+  <h2>${T('মোট মিল: ','Total meals: ')}${bn(c.tm)}</h2>
+
+  <div class="card">${M.members.map((m,i)=>`
+    <div class="li">
+      <div class="t"><b>${esc(m)}</b></div>
+      ${i==M.me?`
+        <button class="step" onclick="changeMeal(${i},-1)" aria-label="−">−</button>
+        <div class="cnt">${bn(M.meals[i]||0)}</div>
+        <button class="step" onclick="changeMeal(${i},1)" aria-label="+">+</button>
+      `:`
+        <div class="cnt">${bn(M.meals[i]||0)}</div>
+      `}
+    </div>`).join('')}
+  </div>
+
+  <div class="card">
+    <div class="mut">${T('মিল রেট','Meal rate')}</div>
+    <b style="font-size:24px">${cs()}${bn(c.rate.toFixed(2))}</b>
+  </div>`;
+}
+function reportView(){
+  const c=calc();const meal=M.type=='meal';const st=settle(c.bal);
+  return `<h1>${T('মাসিক হিসাব','Monthly report')}</h1><div class="mut">${T('মোট খরচ ','Total spent ')}${mny(c.tot)} · ${meal?T('মিল রেট ','Meal rate ')+cs()+bn(c.rate.toFixed(2)):T('জনপ্রতি ','Per person ')+mny(c.per)}</div><h2>${T('কার কত','Who owes what')}</h2>
+  ${M.members.map((m,i)=>{const b=c.bal[i];const ok=Math.abs(b)<.5;return `<div class="card"><div class="row" style="justify-content:space-between"><b style="font-size:18px">${esc(m)}</b>${ok?`<span class="tag pos">${T('মিটে গেছে','Settled')}</span>`:`<span class="tag ${b>0?'pos':'neg'}">${b>0?T('পাবে','Gets'):T('দেবে','Owes')} ${cs()}${fmt(Math.abs(b))}</span>`}</div>
+  <div class="row" style="justify-content:space-between;margin-top:6px"><span class="mut">${T('খরচ করেছে','Spent')}</span><span>${cs()}${fmt(c.paid[i])}</span></div>
+  ${meal?`<div class="row" style="justify-content:space-between"><span class="mut">${T('মিল','Meals')}</span><span>${bn(M.meals[i]||0)}</span></div>`:''}
+  <div class="row" style="justify-content:space-between"><span class="mut">${T('মোট দেয়','Total share')}</span><span>${cs()}${fmt(c.due[i])}</span></div></div>`}).join('')}
+  <h2>${T('কে কাকে দেবে','Who pays whom')}</h2><div class="card">${st.length?st.map(([a,b,x])=>`<div class="li"><div class="t"><b>${esc(M.members[a])}</b> → <b>${esc(M.members[b])}</b></div><b class="neg">${cs()}${fmt(x)}</b></div>`).join(''):`<div class="mut">${T('কারো কিছু দেওয়ার নেই।','Nobody owes anything.')}</div>`}</div>`;
+}
+function render(){
+  document.documentElement.lang=L;
+  let v,nav='';
+  if(S.screen=='auth')v=authView();else if(S.screen=='welcome')v=welcomeView();else if(S.screen=='create')v=createView();else if(S.screen=='join')v=joinView();
+  else{
+    const tabs=[['home','🏠',T('হোম','Home')],['add','➕',T('খরচ','Add')]].concat(M.type=='meal'?[['meal','🍽️',T('মিল','Meals')]]:[]).concat([['rep','📊',T('হিসাব','Report')]]).concat(M.role=='admin'?[['req','🔔',T('অনুরোধ','Requests')]]:[]);
+    v=({home:homeView,add:addView,meal:mealView,rep:reportView,req:reqView,members:memberListView,settings:settingsView}[S.tab]||homeView)();
+    nav=`<nav><div>${tabs.map(t=>`<button class="${S.tab==t[0]?'on':''}" onclick="go('${t[0]}')"><span>${t[1]}</span>${t[2]}</button>`).join('')}</div></nav>`;
+  }
+  document.getElementById('app').innerHTML=topbar()+v+nav+(S.view!=null&&M.exp[S.view]?`<div class="ov" onclick="S.view=null;render()"><img src="${M.exp[S.view].memo}" alt=""></div>`:'')+(S.toast?`<div class="toast">${esc(S.toast)}</div>`:'');
+}
+render();
+
+function hideSplash(){
+  setTimeout(()=>{
+    const splash=document.getElementById('splash');
+    if(splash) splash.remove();
+  },1200);
+}
+
+auth.onAuthStateChanged(async user=>{
+  
+  if(user){
+    S.user={
+      uid:user.uid,
+      name:user.displayName||user.email.split('@')[0],
+      email:user.email
+    };
+
+    await after();
+    hideSplash();
+
+  }else{
+    S.user=null;
+    M=null;
+    S.screen='auth';
+    render();
+    hideSplash();
+  }
+});
+</script>
+</body>
+</html>
