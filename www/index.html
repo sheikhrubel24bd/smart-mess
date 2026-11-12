@@ -358,22 +358,26 @@ async function authAction(){
       name:result.user.displayName||email.split('@')[0],
       email:result.user.email
     };
-const userRef=db.collection('users').doc(result.user.uid);
-const userSnap=await userRef.get();
 
-if(!userSnap.exists){
-  await userRef.set({
-    uid:result.user.uid,
-    name:S.user.name,
-    email:S.user.email,
-    messId:null,
-    createdAt:firebase.firestore.FieldValue.serverTimestamp()
-  });
-}
-    
+    const userRef=db.collection('users').doc(result.user.uid);
+    const userSnap=await userRef.get();
+
+    if(!userSnap.exists){
+      await userRef.set({
+        uid:result.user.uid,
+        name:S.user.name,
+        email:S.user.email,
+        messId:null,
+        createdAt:firebase.firestore.FieldValue.serverTimestamp()
+      });
+    }
+
+    await after();
+    hideSplash();
 
   }catch(e){
-    console.log('LOGIN ERROR:', e.code, e.message);
+    console.error('AUTH ERROR:',e.code,e.message);
+
     const errors={
       'auth/email-already-in-use':T('এই ইমেইলে আগে থেকেই একাউন্ট আছে','An account already exists with this email'),
       'auth/invalid-email':T('ইমেইল ঠিকানা সঠিক নয়','Invalid email address'),
@@ -388,7 +392,6 @@ if(!userSnap.exists){
     say(errors[e.code]||e.message);
   }
 }
-
 async function resetPassword(){
   const email=document.getElementById('authEmail').value.trim();
   if(!email||!email.includes('@'))
