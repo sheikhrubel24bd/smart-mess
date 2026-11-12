@@ -6,7 +6,7 @@
 <title>Smart Mess</title>
 
 <style>
-  /* SMART MESS SPLASH SCREEN */
+  /* SMART MESS RESPONSIVE SPLASH SCREEN */
 #splash{
   position:fixed;
   inset:0;
@@ -17,34 +17,40 @@
   align-items:center;
   justify-content:center;
   overflow:hidden;
+  padding:16px;
+}
+
+.splash-stage{
+  position:relative;
+  width:min(78vw, 34vh, 320px);
+  aspect-ratio:1 / 1;
+  flex:0 0 auto;
+}
+
+.splash-stage::before{
+  content:"";
+  position:absolute;
+  inset:0;
+  border:2px dashed #218b50;
+  border-radius:50%;
 }
 
 .splash-logo{
-  width:200px;
-  height:200px;
+  position:absolute;
+  width:80%;
+  height:80%;
+  top:50%;
+  left:50%;
+  transform:translate(-50%,-50%);
   object-fit:contain;
   z-index:2;
 }
 
-#splash::before{
-  content:"";
-  position:absolute;
-  width:250px;
-  height:250px;
-  border:2px dashed #218b50;
-  border-radius:50%;
-  top:45%;
-  left:50%;
-  transform:translate(-50%,-50%);
-}
-
 .splash-orbit{
   position:absolute;
-  top:45%;
-  left:50%;
-  width:250px;
-  height:250px;
-  margin:-125px 0 0 -125px;
+  inset:0;
+  width:100%;
+  height:100%;
   animation:orbit 5s linear infinite;
   z-index:3;
   pointer-events:none;
@@ -58,8 +64,6 @@
   box-shadow:0 0 12px currentColor;
   transform:translate(-50%,-50%);
 }
-
-/* তিনটি ডট একই অরবিটে সমান দূরত্বে থাকবে */
 
 .dot-red{
   top:0;
@@ -82,35 +86,26 @@
   background:#ff9800;
 }
 
-.splash-plate{
-  position:absolute;
-  top:-22px;
-  left:50%;
-  transform:translateX(-50%) scaleX(-1);
-  font-size:38px;
-}
-
-#splash .splash-orbit:nth-of-type(2){
-  display:none;
-}
-
 .splash-title{
-  margin-top:35px;
+  margin-top:clamp(16px, 3vh, 30px);
   color:#218b50;
-  font-size:27px;
+  font-size:clamp(23px, 6vw, 27px);
   font-weight:800;
+  text-align:center;
 }
 
 .splash-loading{
-  margin-top:8px;
+  margin-top:clamp(4px, 1vh, 8px);
   color:#638b74;
-  font-size:14px;
+  font-size:clamp(13px, 3.5vw, 14px);
+  text-align:center;
 }
 
 @keyframes orbit{
   from{transform:rotate(0deg)}
   to{transform:rotate(360deg)}
 }
+
 :root{--bg:#f4f6f1;--card:#fff;--ink:#17261f;--mut:#667a70;--pri:#16794f;--pri2:#dff1e7;--on:#fff;--bad:#c93d3d;--bad2:#fbe6e6;--bd:#dde4dc;--warm:#f2b134;
 box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}
 @media (prefers-color-scheme:dark){:root:not([data-theme="light"]){--bg:#121a16;--card:#1b2620;--ink:#e8f0ea;--mut:#92a89b;--pri:#3dbd85;--pri2:#1f3a2e;--on:#0b1a12;--bad:#ff7b7b;--bad2:#3b2222;--bd:#2b3a32}}
@@ -196,13 +191,15 @@ select{border:1.5px solid var(--bd);background:var(--card);color:var(--ink);bord
 </head>
 <body>
   <div id="splash">
-  <img src="logo.png" class="splash-logo" alt="Smart Mess Logo">
+  <div class="splash-stage">
+    <img src="logo.png" class="splash-logo" alt="Smart Mess Logo">
 
-<div class="splash-orbit">
-  <span class="splash-dot dot-red"></span>
-  <span class="splash-dot dot-blue"></span>
-  <span class="splash-dot dot-orange"></span>
-</div>
+    <div class="splash-orbit">
+      <span class="splash-dot dot-red"></span>
+      <span class="splash-dot dot-blue"></span>
+      <span class="splash-dot dot-orange"></span>
+    </div>
+  </div>
 
   <div class="splash-title">Smart-Mess</div>
   <div class="splash-loading">Loading...</div>
