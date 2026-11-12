@@ -408,21 +408,7 @@ async function after(){
     const userSnap=await db.collection('users').doc(uid).get();
 
     if(!userSnap.exists){
-  const user=auth.currentUser;
-
-  await db.collection('users').doc(uid).set({
-    uid:uid,
-    name:user.displayName||user.email.split('@')[0],
-    email:user.email,
-    messId:null,
-    createdAt:firebase.firestore.FieldValue.serverTimestamp()
-  });
-
-  M=null;
-  S.astep='start';
-  S.screen='welcome';
-  render();
-  return;
+  throw new Error('USER_PROFILE_MISSING');
 }
 
       const messId=userSnap.data().messId;
