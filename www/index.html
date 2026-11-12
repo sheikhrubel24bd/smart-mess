@@ -606,18 +606,33 @@ function welcomeView(){
   <button class="btn ghost" onclick="to('join')">🔍 ${T('কোড দিয়ে মেস খুঁজুন','Find a mess by code')}</button>
   <div class="sample" style="margin-top:16px">${T('ডেমো মেসের কোড: ','Demo mess code: ')}<b>SM-1234</b></div>`;
 }
+```js
 function createView(){
   return `<h1>${T('নতুন মেস','New mess')}</h1>
-  <h2>${T('মেসের নাম','Mess name')}</h2><input type="text" value="${esc(S.name)}" placeholder="${T('যেমন: সবুজ মেস','e.g. Green Mess')}" oninput="S.name=this.value">
-  <h2>${T('মেসের ধরন','Mess type')}</h2><div class="types">
-   <button class="type ${S.type=='meal'?'on':''}" onclick="S.type='meal';render()"><span>🍽️</span><b>${T('মিল মেস','Meal mess')}</b><small>${T('যে যত বেলা খায়, তত দেবে','Pay by meals eaten')}</small></button>
-   <button class="type ${S.type=='regular'?'on':''}" onclick="S.type='regular';render()"><span>🏠</span><b>${T('রেগুলার মেস','Regular mess')}</b><small>${T('সবাই সমান ভাগ করে দেবে','Everyone splits equally')}</small></button></div>
-  <h2>${T('মুদ্রা','Currency')}</h2><div class="chips">${Object.entries(CUR).map(([k,v])=>`<button class="chip ${S.cur==k?'on':''}" onclick="S.cur='${k}';render()">${v[0].trim()} ${T(v[1],v[2])}</button>`).join('')}</div>
-  <h2>${T('মেম্বার','Members')}</h2><div class="mut">${T('প্রথম জন অ্যাডমিন হবেন','The first person is the admin')}</div>
-  <div class="chips">${S.members.map((m,i)=>`<span class="chip">${i==0?'👑 ':''}${esc(m)} <button class="x" style="padding:0 0 0 6px;font-size:16px" aria-label="${T('সরান','Remove')}" onclick="S.members.splice(${i},1);render()">✕</button></span>`).join('')}</div>
-  <div class="row"><input type="text" id="nmem" placeholder="${T('মেম্বারের নাম','Member name')}" onkeydown="if(event.key=='Enter')addMem()"><button class="btn" style="width:auto;padding:12px 18px" onclick="addMem()">${T('যোগ','Add')}</button></div>
-  <div style="height:16px"></div><button class="btn" ${S.members.length<2?'disabled':''} onclick="start()">${T('মেস তৈরি করুন','Create mess')}</button>`;
+  <h2>${T('মেসের নাম','Mess name')}</h2>
+  <input type="text" value="${esc(S.name)}" placeholder="${T('যেমন: সবুজ মেস','e.g. Green Mess')}" oninput="S.name=this.value">
+
+  <h2>${T('মেসের ধরন','Mess type')}</h2>
+  <div class="types">
+    <button class="type ${S.type=='meal'?'on':''}" onclick="S.type='meal';render()">
+      <span>🍽️</span><b>${T('মিল মেস','Meal mess')}</b>
+      <small>${T('যে যত বেলা খায়, তত দেবে','Pay by meals eaten')}</small>
+    </button>
+    <button class="type ${S.type=='regular'?'on':''}" onclick="S.type='regular';render()">
+      <span>🏠</span><b>${T('রেগুলার মেস','Regular mess')}</b>
+      <small>${T('সবাই সমান ভাগ করে দেবে','Everyone splits equally')}</small>
+    </button>
+  </div>
+
+  <h2>${T('মুদ্রা','Currency')}</h2>
+  <div class="chips">
+    ${Object.entries(CUR).map(([k,v])=>`<button class="chip ${S.cur==k?'on':''}" onclick="S.cur='${k}';render()">${v[0].trim()} ${T(v[1],v[2])}</button>`).join('')}
+  </div>
+
+  <div style="height:16px"></div>
+  <button class="btn" onclick="start()">${T('মেস তৈরি করুন','Create mess')}</button>`;
 }
+```
 function addMem(){const v=document.getElementById('nmem').value.trim();if(v){S.members.push(v);render()}}
 async function start(){
   if(!auth.currentUser) return say(T('আগে লগইন করুন','Please login first'));
