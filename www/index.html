@@ -592,7 +592,7 @@ function welcomeView(){
   <button class="btn ghost" onclick="to('join')">🔍 ${T('কোড দিয়ে মেস খুঁজুন','Find a mess by code')}</button>
   <div class="sample" style="margin-top:16px">${T('ডেমো মেসের কোড: ','Demo mess code: ')}<b>SM-1234</b></div>`;
 }
-```js
+
 function createView(){
   return `<h1>${T('নতুন মেস','New mess')}</h1>
   <h2>${T('মেসের নাম','Mess name')}</h2>
@@ -618,7 +618,7 @@ function createView(){
   <div style="height:16px"></div>
   <button class="btn" onclick="start()">${T('মেস তৈরি করুন','Create mess')}</button>`;
 }
-```
+
 function addMem(){const v=document.getElementById('nmem').value.trim();if(v){S.members.push(v);render()}}
 async function start(){
   if(!auth.currentUser) return say(T('আগে লগইন করুন','Please login first'));
