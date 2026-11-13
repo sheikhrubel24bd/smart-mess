@@ -1478,7 +1478,9 @@ async function saveExp(){
   const e=M.exp.find(x=>x.id===id);
   if(!e)return;
 
-  if(M.role!='admin' && e.payerUid!==auth.currentUser.uid){
+  if(M.role!='admin' &&
+   e.payerUid!==auth.currentUser.uid &&
+   M.memberUids[e.payer]!==auth.currentUser.uid){
     return say('এই খরচ পরিবর্তনের অনুমতি নেই।');
   }
 
@@ -1503,7 +1505,9 @@ async function saveExp(){
     return say('খরচটি খুঁজে পাওয়া যায়নি।');
   }
 
-  if(M.role!='admin' && old.payerUid!==auth.currentUser.uid){
+  if(M.role!='admin' &&
+   old.payerUid!==auth.currentUser.uid &&
+   M.memberUids[old.payer]!==auth.currentUser.uid){
     S.updatingExp=false;
     return say('এই খরচ পরিবর্তনের অনুমতি নেই।');
   }
@@ -1550,8 +1554,9 @@ async function deleteExp(id){
   if(!e)return;
 
   const canDelete=
-    M.role=='admin' ||
-    e.payerUid===auth.currentUser.uid;
+  M.role=='admin' ||
+  e.payerUid===auth.currentUser.uid ||
+  M.memberUids[e.payer]===auth.currentUser.uid;
 
   if(!canDelete){
     return say('এই খরচ মুছার অনুমতি আপনার নেই।');
