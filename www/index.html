@@ -1125,6 +1125,8 @@ function addView(){
 function memo(inp){const f=inp.files[0];if(!f)return;const r=new FileReader();r.onload=()=>{const im=new Image();im.onload=()=>{const k=Math.min(1,800/Math.max(im.width,im.height)),c=document.createElement('canvas');c.width=im.width*k;c.height=im.height*k;c.getContext('2d').drawImage(im,0,0,c.width,c.height);S.memo=c.toDataURL('image/jpeg',.7);render()};im.src=r.result};r.readAsDataURL(f)}
 function key(k){if((S.amt+k).length<=6)S.amt=String(Number(S.amt+k));render()}
 async function saveExp(){
+    if(S.savingExp) return;
+  S.savingExp=true;
   const item=S.item;
   const amt=Number(S.amt);
   const payer=M.role=='admin'
@@ -1162,9 +1164,11 @@ async function saveExp(){
     say(T('খরচ সংরক্ষণ হয়েছে','Expense saved'));
     render();
 
-  }catch(e){
+    }catch(e){
     console.error('EXPENSE SAVE ERROR:',e);
     say('খরচ সংরক্ষণ হয়নি: '+(e.code||e.message));
+  }finally{
+    S.savingExp=false;
   }
 }
 async function deleteExp(id){
