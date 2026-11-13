@@ -408,9 +408,9 @@ async function resetPassword(){
 async function after(){
   try{
     const uid=auth.currentUser.uid;
-    const userSnap=await db.collection('users').doc(uid).get();
+    let userSnap=await db.collection('users').doc(uid).get();
 
-    if(!userSnap.exists){
+if(!userSnap.exists){
   const user=auth.currentUser;
 
   await db.collection('users').doc(uid).set({
@@ -420,9 +420,11 @@ async function after(){
     messId:null,
     createdAt:firebase.firestore.FieldValue.serverTimestamp()
   });
+
+  userSnap=await db.collection('users').doc(uid).get();
 }
 
-      const messId=userSnap.data().messId;
+const messId=userSnap.data().messId;
 
     S.astep='start';
 
