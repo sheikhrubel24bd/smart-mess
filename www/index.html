@@ -581,13 +581,14 @@ const messId=userSnap.data().messId;
           const e=doc.data();
 
           return {
-            id:doc.id,
-            item:e.item,
-            payer:memberUids.indexOf(e.payerUid),
-            amt:e.amt,
-            d:e.d,
-            memo:e.memo
-          };
+  id:doc.id,
+  item:e.item,
+  payer:memberUids.indexOf(e.payerUid),
+  payerUid:e.payerUid,
+  amt:e.amt,
+  d:e.d,
+  memo:e.memo
+};
         });
 
         render();
