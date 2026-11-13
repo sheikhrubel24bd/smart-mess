@@ -1364,11 +1364,10 @@ function whoBlock(c){
     <div class="card">
       ${M.exp.length?M.exp.map((e,i)=>({e,i})).reverse().map(({e,i})=>{
         const canManage=
-          const canManage=
   M.role=='admin' ||
   e.payerUid===auth.currentUser.uid ||
   M.memberUids[e.payer]===auth.currentUser.uid;
-
+        
         return `
           <div class="li">
             <span class="e">${IT[e.item][0]}</span>
