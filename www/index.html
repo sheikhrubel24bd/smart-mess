@@ -1295,11 +1295,10 @@ render();
     refreshing=true;
     indicator.classList.add('loading');
 
-    const oldTab=S.tab;
 
     try{
       await after();
-      if(M) S.tab=oldTab;
+      if(M) S.tab='home';
       render();
       say(T('ডাটা আপডেট হয়েছে','Data refreshed'));
     }catch(err){
