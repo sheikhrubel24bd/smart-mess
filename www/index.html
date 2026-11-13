@@ -1063,119 +1063,136 @@ function whoBlock(c){
 }
   function aboutView(){
   return `
-    <div style="padding:5px 0 20px">
+  <div style="
+    height:calc(100dvh - 140px);
+    box-sizing:border-box;
+    padding:5px 10px 8px;
+    display:flex;
+    flex-direction:column;
+    justify-content:space-between;
+    overflow:hidden;
+  ">
 
-      <button class="btn ghost" onclick="go('settings')"
-        style="width:auto;margin-bottom:15px">
-        ← ${T('সেটিংসে ফিরে যান','Back to Settings')}
-      </button>
+    <button class="btn ghost" onclick="go('settings')"
+      style="width:max-content;padding:6px 12px;font-size:12px">
+      ← ${T('সেটিংসে ফিরে যান','Back to Settings')}
+    </button>
 
-      <div class="card" style="
-        padding:20px;
-        text-align:center;
+    <div style="
+      text-align:center;
+      color:#087a35;
+      font-size:19px;
+      font-weight:800;
+    ">
+      ${T('ডেভেলপার পরিচিতি','About Developer')}
+    </div>
+
+    <!-- PROFILE -->
+    <div style="display:flex;align-items:center;justify-content:center;gap:16px">
+
+      <div style="
+        width:105px;height:105px;
+        border-radius:50%;
+        border:4px solid #159447;
+        background:linear-gradient(135deg,#d1fae5,#86efac);
+        display:flex;align-items:center;justify-content:center;
+        font-size:43px;
+        flex-shrink:0;
+      ">👨‍💻</div>
+
+      <div style="text-align:center">
+        <img src="logo.png" style="width:65px;height:55px;object-fit:contain">
+        <div style="font-size:17px;font-weight:800;color:#07833b">
+          Smart-Mess
+        </div>
+      </div>
+
+    </div>
+
+    <div style="text-align:center">
+      <div style="
+        font-size:21px;
+        font-weight:800;
+        color:var(--text);
+      ">Sheikh Rubel</div>
+
+      <div style="
+        display:inline-block;
+        background:#d1fae5;
+        color:#087a35;
+        padding:5px 13px;
         border-radius:20px;
+        font-size:12px;
+        font-weight:700;
+        margin-top:5px;
       ">
-
-        <h2>${T('ডেভেলপার পরিচিতি','About Developer')}</h2>
-
-        <!-- PROFILE PHOTO -->
-        <div style="
-          width:190px;
-          height:250px;
-          margin:18px auto;
-          position:relative;
-          border-radius:18px;
-          overflow:hidden;
-          background:linear-gradient(145deg,#d1fae5,#bbf7d0);
-          display:flex;
-          align-items:center;
-          justify-content:center;
-          border:3px solid var(--line);
-        ">
-
-          <div style="text-align:center;color:#166534">
-            <div style="font-size:65px">👨‍💻</div>
-            <div style="font-size:13px;font-weight:600">
-              ${T('ছবি পরে যুক্ত হবে','Photo coming soon')}
-            </div>
-          </div>
-
-          <img src="logo.png" style="
-            position:absolute;
-            width:48px;
-            height:48px;
-            object-fit:contain;
-            bottom:10px;
-            right:10px;
-            background:white;
-            border-radius:50%;
-            padding:5px;
-          ">
-        </div>
-
-        <h2 style="margin:10px 0 5px">Sheikh Rubel</h2>
-
-        <div style="color:var(--muted);font-size:14px">
-          ${T('Smart-Mess এর প্রতিষ্ঠাতা ও ডেভেলপার',
-              'Founder & Developer of Smart-Mess')}
-        </div>
-
-        <hr style="border:0;border-top:1px solid var(--line);margin:22px 0">
-
-        <h3>${T('আমার সম্পর্কে','About Me')}</h3>
-
-        <p style="
-          font-size:14px;
-          line-height:1.9;
-          color:var(--text);
-          text-align:center;
-        ">
-          ${T(
-            'আমি একজন সাধারণ প্রযুক্তিপ্রেমী মানুষ। নতুন কিছু শেখা এবং নিজের চিন্তাকে বাস্তবে রূপ দিতে ভালোবাসি। সেই আগ্রহ থেকেই Smart-Mess তৈরির যাত্রা শুরু।',
-            'I am a technology enthusiast who loves learning new things and turning ideas into reality.'
-          )}
-        </p>
-
-        <p style="
-          font-size:14px;
-          line-height:1.9;
-          color:var(--text);
-          text-align:center;
-        ">
-          ${T(
-            'এই অ্যাপ তৈরির উদ্দেশ্য হলো মেসের দৈনন্দিন হিসাব-নিকাশ সহজ, স্বচ্ছ ও সবার জন্য সুবিধাজনক করা।',
-            'Smart-Mess is a project created with the vision of making mess management, expense tracking, and daily accounting easier and more transparent.'
-          )}
-        </p>
-
-        <p style="
-          font-size:14px;
-          line-height:1.9;
-          color:var(--text);
-          text-align:center;
-        ">
-          ${T(
-            'আমার বিশ্বাস, শেখার ইচ্ছা থাকলে সীমাবদ্ধতা কখনো স্বপ্ন পূরণের বাধা হতে পারে না।',
-            'I believe that passion, patience, and continuous learning can turn ideas into reality.'
-          )}
-        </p>
-
-        <div style="
-          margin-top:22px;
-          padding:15px;
-          background:var(--bg);
-          border-radius:13px;
-          font-weight:700;
-          letter-spacing:1px;
-        ">
-          Dream. Learn. Build. Repeat.
-        </div>
-
+        ${T('প্রতিষ্ঠাতা ও ডেভেলপার','Founder & Developer')}
       </div>
     </div>
+
+    <!-- ABOUT ME -->
+    <div class="card" style="padding:10px 12px">
+      <div style="font-weight:800;color:#07833b;font-size:15px;margin-bottom:5px">
+        👤 ${T('আমার সম্পর্কে','About Me')}
+      </div>
+
+      <div style="font-size:12px;line-height:1.65;color:var(--text)">
+        ${T(
+          'আমি একজন সাধারণ প্রযুক্তিপ্রেমী মানুষ। নতুন কিছু শেখা এবং নিজের চিন্তাকে বাস্তবে রূপ দিতে ভালোবাসি। সেই আগ্রহ থেকেই Smart-Mess তৈরির যাত্রা শুরু।',
+          'I am a technology enthusiast who loves learning new things and turning ideas into reality.'
+        )}
+      </div>
+    </div>
+
+    <!-- ABOUT APP -->
+    <div class="card" style="padding:10px 12px">
+      <div style="font-weight:800;color:#07833b;font-size:15px;margin-bottom:5px">
+        🍽️ ${T('Smart-Mess সম্পর্কে','About Smart-Mess')}
+      </div>
+
+      <div style="font-size:12px;line-height:1.65;color:var(--text)">
+        ${T(
+          'মেসের দৈনন্দিন হিসাব-নিকাশ সহজ, স্বচ্ছ ও সবার জন্য সুবিধাজনক করাই এই অ্যাপ তৈরির উদ্দেশ্য।',
+          'Smart-Mess aims to make mess management, expense tracking, and daily accounting easier and more transparent.'
+        )}
+      </div>
+    </div>
+
+    <!-- BELIEF -->
+    <div style="
+      background:#dcfce7;
+      color:#075c2c;
+      border-radius:12px;
+      padding:10px;
+      text-align:center;
+      font-size:12px;
+      font-weight:700;
+      line-height:1.6;
+    ">
+      ${T(
+        'আমার বিশ্বাস, শেখার ইচ্ছা থাকলে সীমাবদ্ধতা কখনো স্বপ্ন পূরণের বাধা হতে পারে না।',
+        'I believe passion, patience, and continuous learning can turn ideas into reality.'
+      )}
+    </div>
+
+    <!-- SLOGAN -->
+    <div style="
+      background:linear-gradient(90deg,#087a35,#16a34a);
+      color:white;
+      border-radius:12px;
+      padding:11px 5px;
+      text-align:center;
+      font-size:14px;
+      font-weight:800;
+      letter-spacing:.5px;
+    ">
+      Dream. Learn. Build. Repeat.
+    </div>
+
+  </div>
   `;
 }
-  function settingsView(){
+    function settingsView(){
   const row=(icon,label,action)=>`
     <button onclick="${action}" style="
       width:100%;
