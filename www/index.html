@@ -1239,6 +1239,136 @@ function whoBlock(c){
     </div>
   `;
 }
+  async function saveName(){
+  try{
+    const name=document.getElementById('newName').value.trim();
+
+    if(!name)
+      return say(T('নাম লিখুন','Enter your name'));
+
+    const uid=auth.currentUser.uid;
+    const i=M.memberUids.indexOf(uid);
+
+    if(i<0)
+      return say(T('সদস্য খুঁজে পাওয়া যায়নি','Member not found'));
+
+    await db.collection('messes')
+      .doc(M.id)
+      .collection('members')
+      .doc(uid)
+      .update({name:name});
+
+    await db.collection('users')
+      .doc(uid)
+      .set({name:name},{merge:true});
+
+    await auth.currentUser.updateProfile({
+      displayName:name
+    });
+
+    M.members[i]=name;
+    S.user.name=name;
+
+    say(T('নাম পরিবর্তন হয়েছে','Name updated'));
+    render();
+
+  }catch(e){
+    console.error('SAVE NAME ERROR:',e);
+    say(T('নাম পরিবর্তন করা যায়নি','Could not update name'));
+  }
+}
+  function editNameView(){
+  const uid=auth.currentUser.uid;
+  const i=M.memberUids.indexOf(uid);
+  const name=i>=0?(M.members[i]||''):'';
+
+  return `
+    <button onclick="go('profile')" style="
+      width:36px;height:36px;
+      border:1px solid #d1d5db;
+      border-radius:10px;
+      background:#fff;
+      color:#159447;
+      font-size:25px;
+      display:flex;
+      align-items:center;
+      justify-content:center;
+      margin-bottom:12px;
+    ">←</button>
+
+    <h1>✏️ ${T('নাম পরিবর্তন','Edit Name')}</h1>
+
+    <div class="card">
+      <input type="text" id="newName"
+        value="${esc(name)}"
+        placeholder="${T('নতুন নাম লিখুন','Enter new name')}">
+
+      <button class="btn" onclick="saveName()" style="margin-top:12px">
+        ${T('নাম সংরক্ষণ করুন','Save Name')}
+      </button>
+    </div>
+  `;
+}
+  function editNumberView(){
+  const uid=auth.currentUser.uid;
+  const i=M.memberUids.indexOf(uid);
+  const phone=i>=0?(M.memberPhones[i]||''):'';
+
+  return `
+    <button onclick="go('profile')" style="
+      width:36px;height:36px;
+      border:1px solid #d1d5db;
+      border-radius:10px;
+      background:#fff;
+      color:#159447;
+      font-size:25px;
+      display:flex;
+      align-items:center;
+      justify-content:center;
+      margin-bottom:12px;
+    ">←</button>
+
+    <h1>📱 ${T('নম্বর পরিবর্তন','Edit Number')}</h1>
+
+    <div class="card">
+      <input type="tel" id="myPhone"
+        value="${esc(phone)}"
+        placeholder="${T('মোবাইল নম্বর লিখুন','Enter mobile number')}">
+
+      <button class="btn" onclick="savePhone()" style="margin-top:12px">
+        ${T('নম্বর সংরক্ষণ করুন','Save Number')}
+      </button>
+    </div>
+  `;
+}
+  function profileView(){
+  return `
+    <button onclick="go('settings')" style="
+      width:36px;height:36px;
+      border:1px solid #d1d5db;
+      border-radius:10px;
+      background:#fff;
+      color:#159447;
+      font-size:25px;
+      display:flex;
+      align-items:center;
+      justify-content:center;
+      margin-bottom:12px;
+    ">←</button>
+
+    <h1>👤 ${T('এডিট প্রোফাইল','Edit Profile')}</h1>
+
+    <div style="padding:5px 0">
+      <button class="btn ghost" onclick="go('editname')">
+        ✏️ ${T('নাম পরিবর্তন','Edit Name')}
+      </button>
+
+      <button class="btn ghost" onclick="go('editnumber')">
+        📱 ${T('মোবাইল নম্বর পরিবর্তন','Edit Number')}
+      </button>
+    </div>
+  `;
+}
   function memberListView(){
   const myPhone=(M.memberPhones&&M.memberPhones[M.me])||'';
 
@@ -1453,7 +1583,7 @@ function render(){
   if(S.screen=='auth')v=authView();else if(S.screen=='welcome')v=welcomeView();else if(S.screen=='create')v=createView();else if(S.screen=='join')v=joinView();
   else{
     const tabs=[['home','🏠',T('হোম','Home')],['add','➕',T('খরচ','Add')]].concat(M.type=='meal'?[['meal','🍽️',T('মিল','Meals')]]:[]).concat([['rep','📊',T('হিসাব','Report')]]).concat(M.role=='admin'?[['req','🔔',T('অনুরোধ','Requests')]]:[]);
-    v=({home:homeView,add:addView,meal:mealView,rep:reportView,req:reqView,members:memberListView,settings:settingsView,about:aboutView}[S.tab]||homeView)();
+    v=({home:homeView,add:addView,meal:mealView,rep:reportView,req:reqView,members:memberListView,settings:settingsView,about:aboutView,profile:profileView,editnumber:editNumberView,editname:editNameView}[S.tab]||homeView)();
     nav=`<nav><div>${tabs.map(t=>`<button class="${S.tab==t[0]?'on':''}" onclick="go('${t[0]}')"><span>${t[1]}</span>${t[2]}</button>`).join('')}</div></nav>`;
   }
   document.getElementById('app').innerHTML=topbar()+v+nav+(S.view!=null&&M.exp[S.view]?`<div class="ov" onclick="S.view=null;render()"><img src="${M.exp[S.view].memo}" alt=""></div>`:'')+(S.toast?`<div class="toast">${esc(S.toast)}</div>`:'');
