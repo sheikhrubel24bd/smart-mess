@@ -1062,18 +1062,38 @@ function whoBlock(c){
   }
 }
   function settingsView(){
-  return `<h1>⚙️ ${T('সেটিংস','Settings')}</h1>
+  const row=(icon,label,action)=>`
+    <button onclick="${action}" style="
+      width:100%;
+      display:flex;
+      align-items:center;
+      gap:14px;
+      padding:15px;
+      margin-bottom:9px;
+      background:var(--card);
+      border:1px solid var(--line);
+      border-radius:13px;
+      text-align:left;
+      color:var(--text);
+      font-size:15px;
+      font-weight:600;
+    ">
+      <span style="font-size:22px;width:28px;text-align:center">${icon}</span>
+      <span style="flex:1">${label}</span>
+      <span style="color:var(--muted);font-size:19px">›</span>
+    </button>`;
 
-  <div class="card">
-    <button class="btn ghost" onclick="go('members')">
-      👥 ${T('সদস্য তালিকা','Member List')}
-    </button>
+  return `
+    <h1>⚙️ ${T('সেটিংস','Settings')}</h1>
 
-    <button class="btn ghost" style="margin-top:10px;color:var(--bad);border-color:var(--bad)"
-      onclick="logout()">
-      🚪 ${T('লগআউট','Logout')}
-    </button>
-  </div>`;
+    <div style="padding:5px 0">
+      ${row('👥',T('সদস্য তালিকা','Member List'),"go('members')")}
+
+      <div style="height:12px"></div>
+
+      ${row('🚪',T('লগআউট','Logout'),'logout()')}
+    </div>
+  `;
 }
   function memberListView(){
   const myPhone=(M.memberPhones&&M.memberPhones[M.me])||'';
