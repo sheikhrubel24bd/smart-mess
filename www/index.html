@@ -1366,12 +1366,25 @@ auth.onAuthStateChanged(async user=>{
     hideSplash();
 
   }else{
-    S.user=null;
-    M=null;
-    S.screen='auth';
-    render();
-    hideSplash();
+
+  if(window._smartMessExpenseUnsub){
+    window._smartMessExpenseUnsub();
+    window._smartMessExpenseUnsub=null;
   }
+
+  if(window._smartMessMealUnsub){
+    window._smartMessMealUnsub();
+    window._smartMessMealUnsub=null;
+  }
+
+  S.user=null;
+  M=null;
+  S.members=[];
+  S.screen='auth';
+
+  render();
+  hideSplash();
+}
 });
 </script>
 </body>
