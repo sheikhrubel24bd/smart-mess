@@ -1045,12 +1045,28 @@ function whoBlock(c){
   const mx=Math.max(1,...c.paid);
   return `<h2>${T('কে কত খরচ করেছে','Who spent how much')}</h2><div class="card">${M.members.map((m,i)=>`<div style="margin:8px 0"><div class="row" style="justify-content:space-between"><span>${esc(m)}${i==M.me?' ('+T('আমি','me')+')':''}</span><b>${mny(c.paid[i])}</b></div><div class="bar"><i style="width:${c.paid[i]/mx*100}%"></i></div></div>`).join('')}</div>`;
 }
+  async function logout(){
+  if(!confirm(T('আপনি কি লগআউট করতে চান?','Are you sure you want to log out?')))
+    return;
+
+  try{
+    await auth.signOut();
+  }catch(e){
+    console.error('LOGOUT ERROR:',e);
+    say(T('লগআউট করা যায়নি','Logout failed'));
+  }
+}
   function settingsView(){
   return `<h1>⚙️ ${T('সেটিংস','Settings')}</h1>
 
   <div class="card">
     <button class="btn ghost" onclick="go('members')">
-      ${T('সদস্য তালিকা','Member List')}
+      👥 ${T('সদস্য তালিকা','Member List')}
+    </button>
+
+    <button class="btn ghost" style="margin-top:10px;color:var(--bad);border-color:var(--bad)"
+      onclick="logout()">
+      🚪 ${T('লগআউট','Logout')}
     </button>
   </div>`;
 }
