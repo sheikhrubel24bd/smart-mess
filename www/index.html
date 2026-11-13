@@ -1273,9 +1273,9 @@ function whoBlock(c){
     render();
 
   }catch(e){
-    console.error('SAVE NAME ERROR:',e);
-    say(T('নাম পরিবর্তন করা যায়নি','Could not update name'));
-  }
+  console.error('SAVE NAME ERROR:',e);
+  say('নাম পরিবর্তন ব্যর্থ: '+(e.code||e.message));
+}
 }
   function editNameView(){
   const uid=auth.currentUser.uid;
