@@ -702,17 +702,22 @@ async function start(){
     });
 
     M={
-      id:messRef.id,
-      code:result.code,
-      name:name,
-      type:S.type,
-      members:[S.user.name],
-      cur:S.cur,
-      me:0,
-      meals:{},
-      exp:[],
-      reqs:[]
-    };
+  id:messRef.id,
+  code:result.code,
+  name:name,
+  type:S.type,
+  currency:S.cur,
+  cur:S.cur,
+  adminUid:uid,
+  role:'admin',
+  memberUids:[uid],
+  members:[S.user.name],
+  memberPhones:[''],
+  me:0,
+  meals:{},
+  exp:[],
+  reqs:[]
+};
 
     S.payer=0;
     S.screen='app';
