@@ -563,9 +563,9 @@ async function after(){
     
 
   }catch(e){
-    console.error(e);
-    say(T('আগের মেস লোড করা যায়নি। আবার চেষ্টা করুন।','Could not load your previous mess. Please try again.'));
-  }
+  console.error('AFTER ERROR:',e.code,e.message,e);
+  say('ERROR: '+(e.code||'unknown')+' - '+e.message);
+}
 }
 async function savePhone(){
   try{
