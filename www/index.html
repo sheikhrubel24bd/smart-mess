@@ -1244,9 +1244,20 @@ function whoBlock(c){
   return `
     <h1>👥 ${T('সদস্য তালিকা','Member List')}</h1>
 
-    <button class="btn ghost" onclick="go('settings')">
-      ← ${T('সেটিংসে ফিরে যান','Back to Settings')}
-    </button>
+    <button onclick="go('settings')"
+  style="
+    width:36px;height:36px;
+    border:1px solid #d1d5db;
+    border-radius:10px;
+    background:#fff;
+    color:#159447;
+    font-size:25px;
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    cursor:pointer;
+    margin-bottom:12px;
+  ">←</button>
 
     <div class="card" style="margin-top:12px">
       <h3>${T('আমার মোবাইল নম্বর','My Mobile Number')}</h3>
