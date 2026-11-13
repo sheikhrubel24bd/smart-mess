@@ -1357,6 +1357,46 @@ function whoBlock(c){
     </div>
   `;
 }
+  function expenseListView(){
+  return `
+    <h1>🧾 ${T('খরচের তালিকা','Expense List')}</h1>
+
+    <div class="card">
+      ${M.exp.length?M.exp.map((e,i)=>({e,i})).reverse().map(({e,i})=>{
+        const canManage=
+          M.role=='admin' ||
+          e.payerUid===auth.currentUser.uid;
+
+        return `
+          <div class="li">
+            <span class="e">${IT[e.item][0]}</span>
+
+            <div class="t">
+              ${nm(e.item)}
+              <small>${esc(M.members[e.payer])}${e.d?' · '+dt(e.d):''}</small>
+            </div>
+
+            ${e.memo?`<button class="x" onclick="S.view=${i};render()">🧾</button>`:''}
+
+            <b>${cs()}${fmt(e.amt)}</b>
+
+            ${canManage?`
+              <button class="x" onclick="S.expMenu=S.expMenu=='${e.id}'?null:'${e.id}';render()">⋮</button>
+            `:''}
+          </div>
+
+          ${canManage&&S.expMenu==e.id?`
+            <div class="row" style="justify-content:flex-end;padding:8px">
+              <button class="btn ghost" style="width:auto" onclick="S.expMenu=null;editExpense('${e.id}')">✏️ ${T('এডিট','Edit')}</button>
+
+              <button class="btn ghost" style="width:auto" onclick="S.expMenu=null;deleteExp('${e.id}')">🗑️ ${T('মুছুন','Delete')}</button>
+            </div>
+          `:''}
+        `;
+      }).join(''):`<div class="mut">${T('এখনো কোনো খরচ নেই','No expenses yet')}</div>`}
+    </div>
+  `;
+}
 
 function homeView(){
   const c=calc();const meal=M.type=='meal';const p=pend();
@@ -1368,7 +1408,7 @@ function homeView(){
   <div class="stat"><small class="mut">${T('ফিক্সড','Fixed')}</small><b>${cs()}${fmt(c.fix)}</b></div>
   <div class="stat"><small class="mut">${meal?T('মিল রেট','Meal rate'):T('জনপ্রতি ভাগ','Per person')}</small><b>${cs()}${meal?bn(c.rate.toFixed(2)):fmt(c.per)}</b></div>
   <div class="stat"><small class="mut">${meal?T('মোট মিল','Total meals'):T('মেম্বার','Members')}</small><b>${bn(meal?c.tm:c.n)}</b></div></div>
-  ${whoBlock(c)}<h2>${T('সব মেম্বারের এন্ট্রি','All entries')}</h2><div class="card">${M.exp.length?M.exp.map((e,i)=>({e,i})).reverse().map(({e,i})=>`<div class="li"><span class="e">${IT[e.item][0]}</span><div class="t">${nm(e.item)}<small>${esc(M.members[e.payer])}${e.d?' · '+dt(e.d):''}</small></div>${e.memo?`<button class="x" aria-label="${T('মেমো','Receipt')}" onclick="S.view=${i};render()">🧾</button>`:''}<b>${cs()}${fmt(e.amt)}</b>${e.payer==M.me||M.me==0?`<button class="x" aria-label="${T('মুছুন','Delete')}" onclick="deleteExp('${e.id}')">✕</button>`:''}</div>`).join(''):`<div class="mut">${T('এখনো কোনো খরচ নেই। নিচের ➕ চাপুন।','No expenses yet. Tap ➕ below.')}</div>`}</div>`;
+  ${whoBlock(c)}`;
 }
 function addView(){
   if(!S.item){
@@ -1382,7 +1422,7 @@ function addView(){
   <div class="keys">${[1,2,3,4,5,6,7,8,9].map(k=>`<button class="key" onclick="key('${k}')">${bn(k)}</button>`).join('')}<button class="key" onclick="key('00')">${bn('00')}</button><button class="key" onclick="key('0')">${bn(0)}</button><button class="key" onclick="S.amt=S.amt.slice(0,-1);render()" aria-label="${T('মুছুন','Delete')}">⌫</button></div>
   <h2>${T('কে কিনেছে?','Who bought it?')}</h2>${M.me==0?`<div class="chips">${M.members.map((m,i)=>`<button class="chip ${S.payer==i?'on':''}" onclick="S.payer=${i};render()">${esc(m)}</button>`).join('')}</div>`:`<div class="mut">${esc(M.members[M.me])} (${T('আপনি','you')})</div>`}
   <h2>🧾 ${T('মেমো / রসিদ (ঐচ্ছিক)','Receipt (optional)')}</h2>${S.memo?`<div class="row"><img class="thumb" src="${S.memo}" alt=""><button class="x" onclick="S.memo=null;render()" aria-label="${T('সরান','Remove')}">✕</button></div>`:`<label class="btn ghost" style="display:block;text-align:center"><input type="file" accept="image/*" style="display:none" onchange="memo(this)">📷 ${T('মেমোর ছবি তুলুন বা আপলোড করুন','Take or upload a receipt photo')}</label>`}
-  <div style="height:8px"></div><button class="btn" ${Number(S.amt)>0?'':'disabled'} onclick="saveExp()">✅ ${T('খরচ সংরক্ষণ করুন','Save expense')}</button>`;
+  <div style="height:8px"></div><button class="btn" ${Number(S.amt)>0?'':'disabled'} onclick="S.editExp?updateExp():saveExp()">✅ ${S.editExp?T('পরিবর্তন সংরক্ষণ করুন','Update expense'):T('খরচ সংরক্ষণ করুন','Save expense')}</button>`;
 }
 function memo(inp){const f=inp.files[0];if(!f)return;const r=new FileReader();r.onload=()=>{const im=new Image();im.onload=()=>{const k=Math.min(1,800/Math.max(im.width,im.height)),c=document.createElement('canvas');c.width=im.width*k;c.height=im.height*k;c.getContext('2d').drawImage(im,0,0,c.width,c.height);S.memo=c.toDataURL('image/jpeg',.7);render()};im.src=r.result};r.readAsDataURL(f)}
 function key(k){if((S.amt+k).length<=6)S.amt=String(Number(S.amt+k));render()}
@@ -1433,7 +1473,89 @@ async function saveExp(){
     S.savingExp=false;
   }
 }
+  function editExpense(id){
+  const e=M.exp.find(x=>x.id===id);
+  if(!e)return;
+
+  if(M.role!='admin' && e.payerUid!==auth.currentUser.uid){
+    return say('এই খরচ পরিবর্তনের অনুমতি নেই।');
+  }
+
+  S.editExp=id;
+  S.item=e.item;
+  S.amt=String(e.amt);
+  S.memo=e.memo||null;
+  S.tab='add';
+
+  render();
+  window.scrollTo(0,0);
+}
+  async function updateExp(){
+  if(S.updatingExp)return;
+  S.updatingExp=true;
+
+  const id=S.editExp;
+  const old=M.exp.find(e=>e.id===id);
+
+  if(!old){
+    S.updatingExp=false;
+    return say('খরচটি খুঁজে পাওয়া যায়নি।');
+  }
+
+  if(M.role!='admin' && old.payerUid!==auth.currentUser.uid){
+    S.updatingExp=false;
+    return say('এই খরচ পরিবর্তনের অনুমতি নেই।');
+  }
+
+  const item=S.item;
+  const amt=Number(S.amt);
+
+  if(!item || !amt || amt<=0){
+    S.updatingExp=false;
+    return say('সঠিক খরচের পরিমাণ দিন।');
+  }
+
+  try{
+    say('খরচ আপডেট হচ্ছে...');
+
+    await db.collection('messes')
+      .doc(M.id)
+      .collection('expenses')
+      .doc(id)
+      .update({
+        item:item,
+        amt:amt,
+        memo:S.memo||null
+      });
+
+    S.editExp=null;
+    S.item=null;
+    S.amt='';
+    S.memo=null;
+    S.tab='expenses';
+
+    say('খরচ সফলভাবে পরিবর্তন হয়েছে।');
+    render();
+
+  }catch(e){
+    console.error('EXPENSE UPDATE ERROR:',e);
+    say('পরিবর্তন করা যায়নি: '+(e.code||e.message));
+  }finally{
+    S.updatingExp=false;
+  }
+}
 async function deleteExp(id){
+  const e=M.exp.find(x=>x.id===id);
+  if(!e)return;
+
+  const canDelete=
+    M.role=='admin' ||
+    e.payerUid===auth.currentUser.uid;
+
+  if(!canDelete){
+    return say('এই খরচ মুছার অনুমতি আপনার নেই।');
+  }
+
   if(!confirm(T('আপনি কি এই খরচটি মুছতে চান?','Delete this expense?')))
     return;
 
@@ -1518,8 +1640,8 @@ function render(){
   let v,nav='';
   if(S.screen=='auth')v=authView();else if(S.screen=='welcome')v=welcomeView();else if(S.screen=='create')v=createView();else if(S.screen=='join')v=joinView();
   else{
-    const tabs=[['home','🏠',T('হোম','Home')],['add','➕',T('খরচ','Add')]].concat(M.type=='meal'?[['meal','🍽️',T('মিল','Meals')]]:[]).concat([['rep','📊',T('হিসাব','Report')]]).concat(M.role=='admin'?[['req','🔔',T('অনুরোধ','Requests')]]:[]);
-    v=({home:homeView,add:addView,meal:mealView,rep:reportView,req:reqView,members:memberListView,settings:settingsView,about:aboutView,profile:profileView,editnumber:editNumberView,editname:editNameView}[S.tab]||homeView)();
+    const tabs=[['home','🏠',T('হোম','Home')],['add','➕',T('খরচ যোগ','Add')],['expenses','🧾',T('খরচের তালিকা','Expenses')]].concat(M.type=='meal'?[['meal','🍽️',T('মিল','Meals')]]:[]).concat([['rep','📊',T('হিসাব','Report')]]).concat(M.role=='admin'?[['req','🔔',T('অনুরোধ','Requests')]]:[]);
+    v=({home:homeView,add:addView,meal:mealView,rep:reportView,req:reqView,expenses:expenseListView,members:memberListView,settings:settingsView,about:aboutView,profile:profileView,editnumber:editNumberView,editname:editNameView}[S.tab]||homeView)();
     nav=`<nav><div>${tabs.map(t=>`<button class="${S.tab==t[0]?'on':''}" onclick="go('${t[0]}')"><span>${t[1]}</span>${t[2]}</button>`).join('')}</div></nav>`;
   }
   document.getElementById('app').innerHTML=topbar()+v+nav+(S.view!=null&&M.exp[S.view]?`<div class="ov" onclick="S.view=null;render()"><img src="${M.exp[S.view].memo}" alt=""></div>`:'')+(S.toast?`<div class="toast">${esc(S.toast)}</div>`:'');
