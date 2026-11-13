@@ -333,8 +333,26 @@ function tl(){L=L=='bn'?'en':'bn';render()}
 function to(s){S.screen=s;S.found=null;S.pend=null;render();window.scrollTo(0,0)}
 
 function topbar(){
-  const app=S.screen=='app';const p=pend();
-  return `<div class="top">${S.screen!='welcome'&&S.screen!='auth'&&S.screen!='app'?`<button class="x" onclick="to('welcome')" aria-label="${T('পেছনে','Back')}">←</button>`:''}<span class="sp"></span>${app?`<button class="bell" onclick="go('req')" aria-label="${T('নোটিফিকেশন','Notifications')}">🔔${p?`<i>${bn(p)}</i>`:''}</button>`:''}<button class="lang" onclick="tl()" aria-label="Language">${L=='bn'?'EN':'বাং'}</button>${app?`<button class="lang" onclick="go('settings')" aria-label="${T('সেটিংস','Settings')}">⚙️</button>`:''}</div>`;
+  const app=S.screen=='app';
+  const p=pend();
+
+  const backTo={
+    members:'settings',
+    about:'settings',
+    profile:'settings',
+    editnumber:'profile',
+    editname:'profile'
+  }[S.tab];
+
+  return `<div class="top">
+    ${app&&backTo?`
+      <button class="x" onclick="go('${backTo}')" aria-label="Back">←</button>
+    `:''}
+    <span class="sp"></span>
+    ${app?`<button class="bell" onclick="go('req')" aria-label="${T('নোটিফিকেশন','Notifications')}">🔔${p?`<i>${bn(p)}</i>`:''}</button>`:''}
+    <button class="lang" onclick="tl()" aria-label="Language">${L=='bn'?'EN':'বাং'}</button>
+    ${app?`<button class="lang" onclick="go('settings')" aria-label="${T('সেটিংস','Settings')}">⚙️</button>`:''}
+  </div>`;
 }
   function authView(){
   const m=S.amode=='signup';
@@ -1073,21 +1091,6 @@ function whoBlock(c){
     overflow:hidden;
   ">
 
-    <button onclick="go('settings')" 
-  style="
-    width:36px;height:36px;
-    border:1px solid #d1d5db;
-    border-radius:10px;
-    background:#fff;
-    color:#159447;
-    font-size:25px;
-    display:flex;
-    align-items:center;
-    justify-content:center;
-    cursor:pointer;
-    margin-bottom:12px;
-  ">←</button>
-
     <div style="
       text-align:center;
       color:#087a35;
@@ -1283,19 +1286,7 @@ function whoBlock(c){
   const name=i>=0?(M.members[i]||''):'';
 
   return `
-    <button onclick="go('profile')" style="
-      width:36px;height:36px;
-      border:1px solid #d1d5db;
-      border-radius:10px;
-      background:#fff;
-      color:#159447;
-      font-size:25px;
-      display:flex;
-      align-items:center;
-      justify-content:center;
-      margin-bottom:12px;
-    ">←</button>
-
+    
     <h1>✏️ ${T('নাম পরিবর্তন','Edit Name')}</h1>
 
     <div class="card">
@@ -1315,19 +1306,7 @@ function whoBlock(c){
   const phone=i>=0?(M.memberPhones[i]||''):'';
 
   return `
-    <button onclick="go('profile')" style="
-      width:36px;height:36px;
-      border:1px solid #d1d5db;
-      border-radius:10px;
-      background:#fff;
-      color:#159447;
-      font-size:25px;
-      display:flex;
-      align-items:center;
-      justify-content:center;
-      margin-bottom:12px;
-    ">←</button>
-
+    
     <h1>📱 ${T('নম্বর পরিবর্তন','Edit Number')}</h1>
 
     <div class="card">
@@ -1343,18 +1322,7 @@ function whoBlock(c){
 }
   function profileView(){
   return `
-    <button onclick="go('settings')" style="
-      width:36px;height:36px;
-      border:1px solid #d1d5db;
-      border-radius:10px;
-      background:#fff;
-      color:#159447;
-      font-size:25px;
-      display:flex;
-      align-items:center;
-      justify-content:center;
-      margin-bottom:12px;
-    ">←</button>
+    
 
     <h1>👤 ${T('এডিট প্রোফাইল','Edit Profile')}</h1>
 
@@ -1370,40 +1338,8 @@ function whoBlock(c){
   `;
 }
   function memberListView(){
-  const myPhone=(M.memberPhones&&M.memberPhones[M.me])||'';
-
   return `
     <h1>👥 ${T('সদস্য তালিকা','Member List')}</h1>
-
-    <button onclick="go('settings')"
-  style="
-    width:36px;height:36px;
-    border:1px solid #d1d5db;
-    border-radius:10px;
-    background:#fff;
-    color:#159447;
-    font-size:25px;
-    display:flex;
-    align-items:center;
-    justify-content:center;
-    cursor:pointer;
-    margin-bottom:12px;
-  ">←</button>
-
-    <div class="card" style="margin-top:12px">
-      <h3>${T('আমার মোবাইল নম্বর','My Mobile Number')}</h3>
-
-      <input
-        type="tel"
-        id="myPhone"
-        value="${esc(myPhone)}"
-        placeholder="${T('মোবাইল নম্বর লিখুন','Enter mobile number')}"
-      >
-
-      <button class="btn" onclick="savePhone()" style="margin-top:10px">
-        ${T('নম্বর সংরক্ষণ করুন','Save Number')}
-      </button>
-    </div>
 
     <div class="card" style="margin-top:12px">
       ${M.members.map((name,i)=>{
