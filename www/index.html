@@ -1629,6 +1629,48 @@ function historyView(){
     </button>
   `;
 }
+  async function cleanupOldHistory(){
+  const historyRef=db.collection('messes')
+    .doc(M.id)
+    .collection('history');
+
+  const snap=await historyRef.get();
+
+  const completed=snap.docs
+    .filter(doc=>doc.data().status==='complete')
+    .sort((a,b)=>{
+      const ta=a.data().createdAt?.toMillis?.()||0;
+      const tb=b.data().createdAt?.toMillis?.()||0;
+      return tb-ta;
+    });
+
+  // সর্বশেষ ৩টি বাদে বাকিগুলো মুছে ফেলবে
+  const oldHistory=completed.slice(3);
+
+  for(const historyDoc of oldHistory){
+    const [expenses,meals]=await Promise.all([
+      historyDoc.ref.collection('expenses').get(),
+      historyDoc.ref.collection('mealCounts').get()
+    ]);
+
+    const deletes=[
+      ...expenses.docs.map(d=>d.ref),
+      ...meals.docs.map(d=>d.ref)
+    ];
+
+    for(let i=0;i<deletes.length;i+=400){
+      const batch=db.batch();
+
+      deletes.slice(i,i+400).forEach(ref=>{
+        batch.delete(ref);
+      });
+
+      await batch.commit();
+    }
+
+    await historyDoc.ref.delete();
+  }
+}
   
     function settingsView(){
   const row=(icon,label,action)=>`
