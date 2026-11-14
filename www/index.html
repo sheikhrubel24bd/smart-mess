@@ -1330,6 +1330,7 @@ async function resetMess(){
 
       await batch.commit();
     }
+      await cleanupOldHistory();
 
     S.tab='home';
     say('মেস রিসেট সম্পন্ন হয়েছে। পুরোনো হিসাব History-তে আছে।');
