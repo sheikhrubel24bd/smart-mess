@@ -313,11 +313,23 @@ function seed(m){
   m.exp=[['fish',0,2400],['veg',1,1800],['chk',2,3200],['rice',3,2600],['rent',0,12000],['gas',1,1200],['net',2,800]].map(([item,p,amt],k)=>({item,payer:p%n,amt,d:Date.now()-k*864e5}));
 }
 
-
 function calc(){
   const n=M.members.length;
   let baz=0,fix=0;
+
+  const deposited=M.members.map(()=>0);
   const paid=M.members.map(()=>0);
+
+  // প্রত্যেক সদস্যের মোট জমা
+  (M.deposits||[]).forEach(d=>{
+    const i=M.memberUids.indexOf(d.uid);
+    if(i>=0) deposited[i]+=Number(d.amt)||0;
+  });
+
+  // জমা + পকেট থেকে বাজার
+  M.members.forEach((_,i)=>{
+    paid[i]=deposited[i];
+  });
 
   M.exp.forEach(e=>{
     IT[e.item][3]=='b'?baz+=e.amt:fix+=e.amt;
@@ -340,11 +352,12 @@ function calc(){
   const bal=due.map((d,i)=>paid[i]-d);
 
   return{
-    n,baz,fix,paid,tm,rate,due,bal,
+    n,baz,fix,paid,deposited,tm,rate,due,bal,
     tot:baz+fix,
     per:(baz+fix)/n
   };
 }
+
 function settle(bal){
   const d=[],c=[];bal.forEach((b,i)=>{if(b<-0.5)d.push([i,-b]);else if(b>0.5)c.push([i,b])});
   d.sort((a,b)=>b[1]-a[1]);c.sort((a,b)=>b[1]-a[1]);const r=[];
@@ -645,6 +658,7 @@ const messId=userSnap.data().messId;
   otherName:e.otherName||'',          
   payer:memberUids.indexOf(e.payerUid),
   payerUid:e.payerUid,
+  source:e.source||'pocket',         
   amt:e.amt,
   d:e.d,
   memo:e.memo
@@ -2358,13 +2372,83 @@ function mealView(){
   </div>`;
 }
 function reportView(){
-  const c=calc();const meal=M.type=='meal';const st=settle(c.bal);
-  return `<h1>${T('মাসিক হিসাব','Monthly report')}</h1><div class="mut">${T('মোট খরচ ','Total spent ')}${mny(c.tot)} · ${meal?T('মিল রেট ','Meal rate ')+cs()+bn(c.rate.toFixed(2)):T('জনপ্রতি ','Per person ')+mny(c.per)}</div><h2>${T('কার কত','Who owes what')}</h2>
-  ${M.members.map((m,i)=>{const b=c.bal[i];const ok=Math.abs(b)<.5;return `<div class="card"><div class="row" style="justify-content:space-between"><b style="font-size:18px">${esc(m)}</b>${ok?`<span class="tag pos">${T('মিটে গেছে','Settled')}</span>`:`<span class="tag ${b>0?'pos':'neg'}">${b>0?T('পাবে','Gets'):T('দেবে','Owes')} ${cs()}${fmt(Math.abs(b))}</span>`}</div>
-  <div class="row" style="justify-content:space-between;margin-top:6px"><span class="mut">${T('খরচ করেছে','Spent')}</span><span>${cs()}${fmt(c.paid[i])}</span></div>
-  ${meal?`<div class="row" style="justify-content:space-between"><span class="mut">${T('মিল','Meals')}</span><span>${bn(M.meals[i]||0)}</span></div>`:''}
-  <div class="row" style="justify-content:space-between"><span class="mut">${T('মোট দেয়','Total share')}</span><span>${cs()}${fmt(c.due[i])}</span></div></div>`}).join('')}
-  <h2>${T('কে কাকে দেবে','Who pays whom')}</h2><div class="card">${st.length?st.map(([a,b,x])=>`<div class="li"><div class="t"><b>${esc(M.members[a])}</b> → <b>${esc(M.members[b])}</b></div><b class="neg">${cs()}${fmt(x)}</b></div>`).join(''):`<div class="mut">${T('কারো কিছু দেওয়ার নেই।','Nobody owes anything.')}</div>`}</div>`;
+  const c=calc();
+  const meal=M.type=='meal';
+  const st=settle(c.bal);
+
+  return `
+  <h1>${T('মাসিক হিসাব','Monthly report')}</h1>
+
+  <div class="mut">
+    ${T('মোট খরচ ','Total spent ')}${mny(c.tot)}
+    ·
+    ${meal
+      ?T('মিল রেট ','Meal rate ')+cs()+bn(c.rate.toFixed(2))
+      :T('জনপ্রতি ','Per person ')+mny(c.per)}
+  </div>
+
+  <h2>${T('কার কত','Who owes what')}</h2>
+
+  ${M.members.map((m,i)=>{
+    const b=c.bal[i];
+    const ok=Math.abs(b)<.5;
+
+    return `
+    <div class="card">
+      <div class="row" style="justify-content:space-between">
+        <b style="font-size:18px">${esc(m)}</b>
+
+        ${ok
+          ?`<span class="tag pos">${T('মিটে গেছে','Settled')}</span>`
+          :`<span class="tag ${b>0?'pos':'neg'}">
+            ${b>0?T('ফেরত পাবে','Gets refund'):T('দিতে হবে','Owes')}
+            ${cs()}${fmt(Math.abs(b))}
+          </span>`
+        }
+      </div>
+
+      <div class="row" style="justify-content:space-between;margin-top:8px">
+        <span class="mut">${T('মোট জমা','Total deposit')}</span>
+        <span>${cs()}${fmt(c.deposited[i])}</span>
+      </div>
+
+      <div class="row" style="justify-content:space-between">
+        <span class="mut">${T('পকেট থেকে বাজার','Pocket expenses')}</span>
+        <span>${cs()}${fmt(c.paid[i]-c.deposited[i])}</span>
+      </div>
+
+      ${meal?`
+      <div class="row" style="justify-content:space-between">
+        <span class="mut">${T('মিল','Meals')}</span>
+        <span>${bn(M.meals[i]||0)}</span>
+      </div>`:''}
+
+      <div class="row" style="justify-content:space-between">
+        <span class="mut">${T('মাথাপিছু মোট খরচ','Total share')}</span>
+        <span>${cs()}${fmt(c.due[i])}</span>
+      </div>
+    </div>`;
+  }).join('')}
+
+  <h2>${T('কে কাকে দেবে','Who pays whom')}</h2>
+
+  <div class="card">
+    ${st.length
+      ?st.map(([a,b,x])=>`
+        <div class="li">
+          <div class="t">
+            <b>${esc(M.members[a])}</b>
+            →
+            <b>${esc(M.members[b])}</b>
+          </div>
+          <b class="neg">${cs()}${fmt(x)}</b>
+        </div>
+      `).join('')
+      :`<div class="mut">
+        ${T('কারো কিছু দেওয়ার নেই।','Nobody owes anything.')}
+      </div>`
+    }
+  </div>`;
 }
 function render(){
   document.documentElement.lang=L;
