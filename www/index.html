@@ -303,8 +303,7 @@ const cs=()=>CUR[(M&&M.cur)||'BDT'][0];
 const mny=n=>cs()+fmt(n);
 const dt=d=>new Date(d).toLocaleString(L=='bn'?'bn-BD':'en-GB',{day:'numeric',month:'short',hour:'numeric',minute:'2-digit',hour12:true});
 let REG=[],M=null;
-let S={screen:'auth',user:null,cur:'BDT',astep:'start',amode:'login',cc:'+880',ph:'',otp:'',via:'phone',memo:null,view:null,tab:'home',type:'meal',name:'',members:[],item:null,amt:'',payer:0,toast:'',jcode:'',found:null,pend:null};
-
+let S={screen:'auth',user:null,cur:'BDT',astep:'start',amode:'login',cc:'+880',ph:'',otp:'',via:'phone',memo:null,view:null,tab:'home',type:'meal',name:'',members:[],item:null,amt:'',payer:0,toast:'',jcode:'',found:null,pend:null,historyDetail:null};
 function mk(name,type,members,cur){
   let code;do code='SM-'+(1000+Math.floor(Math.random()*9000));while(REG.some(m=>m.code==code));
   const m={code,name,type,members,cur:cur||'BDT',me:0,meals:{},exp:[],reqs:[]};REG.push(m);return m;
@@ -1239,6 +1238,179 @@ function whoBlock(c){
   </div>
   `;
 }
+async function resetMess(){
+  if(!M || M.role!=='admin'){
+    return say('শুধু অ্যাডমিন মেস রিসেট করতে পারবেন।');
+  }
+
+  if(S.resetting)return;
+
+  if(!confirm('আপনি কি মেসের বর্তমান হিসাব রিসেট করতে চান? পুরোনো খরচ ও মিল History-তে সংরক্ষণ হবে।')){
+    return;
+  }
+
+  S.resetting=true;
+  let archiveComplete=false;
+
+  try{
+    say('পুরোনো হিসাব সংরক্ষণ করা হচ্ছে...');
+
+    const messRef=db.collection('messes').doc(M.id);
+    const historyRef=messRef.collection('history').doc();
+
+    const [expensesSnap,mealsSnap]=await Promise.all([
+      messRef.collection('expenses').get(),
+      messRef.collection('mealCounts').get()
+    ]);
+
+    await historyRef.set({
+      status:'preparing',
+      messName:M.name,
+      messType:M.type,
+      currency:M.cur,
+      monthLabel:new Date().toLocaleDateString('bn-BD',{
+        month:'long',
+        year:'numeric'
+      }),
+      members:M.memberUids.map((uid,i)=>({
+        uid:uid,
+        name:M.members[i],
+        phone:M.memberPhones[i]||''
+      })),
+      expenseCount:expensesSnap.size,
+      mealCount:mealsSnap.size,
+      createdAt:firebase.firestore.FieldValue.serverTimestamp()
+    });
+
+    const writes=[];
+
+    expensesSnap.docs.forEach(doc=>{
+      writes.push({
+        ref:historyRef.collection('expenses').doc(doc.id),
+        data:doc.data()
+      });
+    });
+
+    mealsSnap.docs.forEach(doc=>{
+      writes.push({
+        ref:historyRef.collection('mealCounts').doc(doc.id),
+        data:doc.data()
+      });
+    });
+
+    for(let i=0;i<writes.length;i+=400){
+      const batch=db.batch();
+
+      writes.slice(i,i+400).forEach(item=>{
+        batch.set(item.ref,item.data);
+      });
+
+      await batch.commit();
+    }
+
+    await historyRef.update({
+      status:'complete'
+    });
+
+    archiveComplete=true;
+
+    say('History সংরক্ষিত। নতুন হিসাব শুরু হচ্ছে...');
+
+    const deletes=[
+      ...expensesSnap.docs.map(doc=>doc.ref),
+      ...mealsSnap.docs.map(doc=>doc.ref)
+    ];
+
+    for(let i=0;i<deletes.length;i+=400){
+      const batch=db.batch();
+
+      deletes.slice(i,i+400).forEach(ref=>{
+        batch.delete(ref);
+      });
+
+      await batch.commit();
+    }
+
+    S.tab='home';
+    say('মেস রিসেট সম্পন্ন হয়েছে। পুরোনো হিসাব History-তে আছে।');
+
+  }catch(e){
+    console.error('MESS RESET ERROR:',e);
+
+    if(archiveComplete){
+      say('History নিরাপদে সংরক্ষিত হয়েছে, তবে পুরোনো হিসাব পরিষ্কার করতে সমস্যা হয়েছে। অ্যাডমিনের সাহায্য নিন।');
+    }else{
+      say('History সংরক্ষণ সম্পূর্ণ হয়নি। কোনো পুরোনো হিসাব মুছে ফেলা হয়নি। আবার চেষ্টা করুন।');
+    }
+
+  }finally{
+    S.resetting=false;
+  }
+}
+
+  async function openHistory(){
+  if(S.loadingHistory)return;
+
+  S.loadingHistory=true;
+  S.history=[];
+
+  S.tab='history';
+  render();
+
+  try{
+    const snap=await db.collection('messes')
+      .doc(M.id)
+      .collection('history')
+      .get();
+
+    S.history=snap.docs
+      .map(doc=>({id:doc.id,...doc.data()}))
+      .filter(h=>h.status==='complete')
+      .sort((a,b)=>{
+        const ta=a.createdAt?.toMillis?.()||0;
+        const tb=b.createdAt?.toMillis?.()||0;
+        return tb-ta;
+      });
+
+  }catch(e){
+    console.error('HISTORY LOAD ERROR:',e);
+    say('পুরোনো হিসাব লোড করা যায়নি।');
+  }finally{
+    S.loadingHistory=false;
+    render();
+  }
+}
+
+function historyView(){
+  if(S.loadingHistory){
+    return '<h1>📚 আগের হিসাব</h1><div class="card">লোড হচ্ছে...</div>';
+  }
+
+  const list=S.history||[];
+
+  return `
+    <h1>📚 ${T('আগের হিসাব','History')}</h1>
+
+    <div class="mut">
+      ${T('রিসেট করা পুরোনো হিসাবগুলো এখানে থাকবে।','Previous accounting periods are stored here.')}
+    </div>
+
+    <div class="card" style="margin-top:12px">
+      ${list.length?list.map(h=>`
+        <div class="li" onclick="openHistoryDetail('${h.id}')">
+  <span class="e">📅</span>
+  <div class="t">
+    <b>${esc(h.monthLabel||'পুরোনো হিসাব')}</b>
+    <small>${bn(h.expenseCount||0)} ${T('টি খরচ','expenses')} · ${bn(h.mealCount||0)} ${T('টি মিল রেকর্ড','meal records')}</small>
+  </div>
+  <span>›</span>
+</div>
+        </div>
+      `).join(''):`<div class="mut">${T('এখনো কোনো History নেই।','No history available yet.')}</div>`}
+    </div>
+  `;
+}
+  
     function settingsView(){
   const row=(icon,label,action)=>`
     <button onclick="${action}" style="
@@ -1267,6 +1439,8 @@ function whoBlock(c){
     <div style="padding:5px 0">
       ${row('👤',T('প্রোফাইল এডিট','Edit Profile'),"go('profile')")}
       ${row('👥',T('সদস্য তালিকা','Member List'),"go('members')")}
+      ${row('📚',T('আগের হিসাব','History'),'openHistory()')}
+      ${M.role=='admin'?row('♻️',T('মেস রিসেট','Reset Mess'),'resetMess()'):''}
 
       ${row('👨‍💻',T('ডেভেলপার পরিচিতি','About Developer'),"go('about')")}
 
@@ -1701,7 +1875,7 @@ function render(){
   if(S.screen=='auth')v=authView();else if(S.screen=='welcome')v=welcomeView();else if(S.screen=='create')v=createView();else if(S.screen=='join')v=joinView();
   else{
     const tabs=[['home','🏠',T('হোম','Home')],['add','➕',T('খরচ যোগ','Add')],['expenses','🧾',T('খরচের তালিকা','Expenses')]].concat(M.type=='meal'?[['meal','🍽️',T('মিল','Meals')]]:[]).concat([['rep','📊',T('হিসাব','Report')]]).concat(M.role=='admin'?[['req','🔔',T('অনুরোধ','Requests')]]:[]);
-    v=({home:homeView,add:addView,meal:mealView,rep:reportView,req:reqView,expenses:expenseListView,members:memberListView,settings:settingsView,about:aboutView,profile:profileView,editnumber:editNumberView,editname:editNameView}[S.tab]||homeView)();
+     v=({home:homeView,add:addView,meal:mealView,rep:reportView,req:reqView,expenses:expenseListView,members:memberListView,settings:settingsView,history:historyView,historyDetail:historyDetailView,about:aboutView,profile:profileView,editnumber:editNumberView,editname:editNameView}[S.tab]||homeView)(); 
     nav=`<nav><div>${tabs.map(t=>`<button class="${S.tab==t[0]?'on':''}" onclick="go('${t[0]}')"><span>${t[1]}</span>${t[2]}</button>`).join('')}</div></nav>`;
   }
   document.getElementById('app').innerHTML=topbar()+v+nav+(S.view!=null&&M.exp[S.view]?`<div class="ov" onclick="S.view=null;render()"><img src="${M.exp[S.view].memo}" alt=""></div>`:'')+(S.toast?`<div class="toast">${esc(S.toast)}</div>`:'');
