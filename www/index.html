@@ -544,6 +544,10 @@ const messId=userSnap.data().messId;
         window._smartMessMealUnsub();
         window._smartMessMealUnsub=null;
       }
+            if(window._smartMessDepositUnsub){
+        window._smartMessDepositUnsub();
+        window._smartMessDepositUnsub=null;
+      }
       M=null;
       S.screen='welcome';
       render();
@@ -593,6 +597,7 @@ const messId=userSnap.data().messId;
       memberPhones:memberPhones,
       me:memberUids.indexOf(uid),
       meals:{},
+      deposits:[],
       exp:[],
       reqs:requestsSnap.docs.map(d=>{
         const r=d.data();
@@ -617,6 +622,10 @@ const messId=userSnap.data().messId;
     if(window._smartMessMealUnsub){
       window._smartMessMealUnsub();
       window._smartMessMealUnsub=null;
+    }
+        if(window._smartMessDepositUnsub){
+      window._smartMessDepositUnsub();
+      window._smartMessDepositUnsub=null;
     }
 
     render();
@@ -671,6 +680,23 @@ const messId=userSnap.data().messId;
       },error=>{
         console.error('MEAL SYNC ERROR:',error);
         say('মিল আপডেট করা যায়নি: '+(error.code||error.message));
+      });
+        // DEPOSIT LIVE SYNC
+    window._smartMessDepositUnsub=
+      messRef.collection('deposits').onSnapshot(snapshot=>{
+
+        if(!M || M.id!=messId) return;
+
+        M.deposits=snapshot.docs.map(doc=>({
+          id:doc.id,
+          ...doc.data()
+        }));
+
+        render();
+
+      },error=>{
+        console.error('DEPOSIT SYNC ERROR:',error);
+        say('জমার হিসাব আপডেট করা যায়নি।');
       });
     
 
@@ -1280,10 +1306,11 @@ async function resetMess(){
     const messRef=db.collection('messes').doc(M.id);
     const historyRef=messRef.collection('history').doc();
 
-    const [expensesSnap,mealsSnap]=await Promise.all([
-      messRef.collection('expenses').get(),
-      messRef.collection('mealCounts').get()
-    ]);
+    const [expensesSnap,mealsSnap,depositsSnap]=await Promise.all([
+  messRef.collection('expenses').get(),
+  messRef.collection('mealCounts').get(),
+  messRef.collection('deposits').get()
+]);
 
     await historyRef.set({
       status:'preparing',
@@ -1299,8 +1326,9 @@ async function resetMess(){
         name:M.members[i],
         phone:M.memberPhones[i]||''
       })),
-      expenseCount:expensesSnap.size,
+            expenseCount:expensesSnap.size,
       mealCount:mealsSnap.size,
+      depositCount:depositsSnap.size,
       createdAt:firebase.firestore.FieldValue.serverTimestamp()
     });
 
@@ -1313,9 +1341,15 @@ async function resetMess(){
       });
     });
 
-    mealsSnap.docs.forEach(doc=>{
+        mealsSnap.docs.forEach(doc=>{
       writes.push({
         ref:historyRef.collection('mealCounts').doc(doc.id),
+        data:doc.data()
+      });
+    });
+        depositsSnap.docs.forEach(doc=>{
+      writes.push({
+        ref:historyRef.collection('deposits').doc(doc.id),
         data:doc.data()
       });
     });
@@ -1339,9 +1373,10 @@ async function resetMess(){
     say('History সংরক্ষিত। নতুন হিসাব শুরু হচ্ছে...');
 
     const deletes=[
-      ...expensesSnap.docs.map(doc=>doc.ref),
-      ...mealsSnap.docs.map(doc=>doc.ref)
-    ];
+  ...expensesSnap.docs.map(doc=>doc.ref),
+  ...mealsSnap.docs.map(doc=>doc.ref),
+  ...depositsSnap.docs.map(doc=>doc.ref)
+];
 
     for(let i=0;i<deletes.length;i+=400){
       const batch=db.batch();
@@ -1671,15 +1706,17 @@ function historyView(){
   const oldHistory=completed.slice(3);
 
   for(const historyDoc of oldHistory){
-    const [expenses,meals]=await Promise.all([
-      historyDoc.ref.collection('expenses').get(),
-      historyDoc.ref.collection('mealCounts').get()
-    ]);
+    const [expenses,meals,deposits]=await Promise.all([
+  historyDoc.ref.collection('expenses').get(),
+  historyDoc.ref.collection('mealCounts').get(),
+  historyDoc.ref.collection('deposits').get()
+]);
 
     const deletes=[
-      ...expenses.docs.map(d=>d.ref),
-      ...meals.docs.map(d=>d.ref)
-    ];
+  ...expenses.docs.map(d=>d.ref),
+  ...meals.docs.map(d=>d.ref),
+  ...deposits.docs.map(d=>d.ref)
+];
 
     for(let i=0;i<deletes.length;i+=400){
       const batch=db.batch();
@@ -1693,6 +1730,148 @@ function historyView(){
 
     await historyDoc.ref.delete();
   }
+}
+  async function saveDeposit(){
+  if(S.savingDeposit)return;
+
+  const memberIndex=Number(document.getElementById('depositMember').value);
+  const amt=Number(document.getElementById('depositAmount').value);
+
+  if(!Number.isFinite(amt)||amt<=0){
+    return say(T('সঠিক টাকার পরিমাণ দিন','Enter a valid amount'));
+  }
+
+  if(M.role!=='admin' && memberIndex!==M.me){
+    return say(T('শুধু নিজের জমা যোগ করতে পারবেন','You can only add your own deposit'));
+  }
+
+  S.savingDeposit=true;
+
+  try{
+    await db.collection('messes')
+      .doc(M.id)
+      .collection('deposits')
+      .add({
+        uid:M.memberUids[memberIndex],
+        amt:amt,
+        addedBy:auth.currentUser.uid,
+        date:firebase.firestore.FieldValue.serverTimestamp()
+      });
+
+    document.getElementById('depositAmount').value='';
+    say(T('জমা সফলভাবে সংরক্ষণ হয়েছে','Deposit saved successfully'));
+
+  }catch(e){
+    console.error('SAVE DEPOSIT ERROR:',e);
+    say(T('জমা সংরক্ষণ করা যায়নি','Could not save deposit'));
+  }finally{
+    S.savingDeposit=false;
+  }
+}
+  function depositDetailView(){
+  const i=S.depositMemberIndex;
+
+  if(i==null || !M.members[i]){
+    return `<div class="card">সদস্য পাওয়া যায়নি।</div>`;
+  }
+
+  const uid=M.memberUids[i];
+
+  const records=M.deposits
+    .filter(d=>d.uid===uid)
+    .sort((a,b)=>{
+      const da=a.date?.toMillis?.()||0;
+      const db=b.date?.toMillis?.()||0;
+      return db-da;
+    });
+
+  const total=records.reduce((s,d)=>s+(Number(d.amt)||0),0);
+
+  return `
+    <h1>💰 ${esc(M.members[i])}</h1>
+
+    <div class="card">
+      <h2>${T('মোট জমা','Total Deposit')}</h2>
+      <h1 style="color:var(--green)">${total.toFixed(2)} ${M.cur}</h1>
+    </div>
+
+    <div class="card">
+      <h2>${T('জমার ইতিহাস','Deposit History')}</h2>
+
+      ${records.length?records.map(d=>`
+        <div style="padding:12px 0;border-bottom:1px solid var(--bd)">
+          <b>+${Number(d.amt).toFixed(2)} ${M.cur}</b>
+          <div class="mut">
+            ${d.date?.toDate?.().toLocaleString('bn-BD')||T('তারিখ পাওয়া যায়নি','Date unavailable')}
+          </div>
+        </div>
+      `).join(''):T('এখনো কোনো জমা নেই','No deposits yet')}
+    </div>
+
+    <button class="secondary" onclick="go('members')">
+      ${T('সদস্য তালিকায় ফিরুন','Back to Members')}
+    </button>
+  `;
+}
+  function depositView(){
+  const total=M.deposits.reduce((s,d)=>s+(Number(d.amt)||0),0);
+
+  return `
+    <h1>💰 ${T('ডিপোজিট ম্যানেজমেন্ট','Deposit Management')}</h1>
+
+    <div class="card">
+      <h2>${T('মোট জমা','Total Deposit')}</h2>
+      <h1 style="color:var(--green)">
+        ${total.toFixed(2)} ${M.cur}
+      </h1>
+    </div>
+
+    <div class="card">
+      <h2>${T('নতুন জমা যোগ করুন','Add New Deposit')}</h2>
+
+      <label>${T('সদস্য নির্বাচন','Select Member')}</label>
+
+      <select id="depositMember">
+        ${M.members.map((name,i)=>`
+          <option value="${i}" ${i===M.me?'selected':''}>
+            ${esc(name)}
+          </option>
+        `).join('')}
+      </select>
+
+      <label>${T('জমার পরিমাণ','Deposit Amount')}</label>
+
+      <input id="depositAmount"
+        type="number"
+        min="1"
+        step="0.01"
+        placeholder="0">
+
+      <button class="primary" onclick="saveDeposit()">
+        ${T('জমা সংরক্ষণ','Save Deposit')}
+      </button>
+    </div>
+
+    <div class="card">
+      <h2>${T('সদস্যভিত্তিক জমা','Member Deposits')}</h2>
+
+      ${M.members.map((name,i)=>{
+        const amount=M.deposits
+          .filter(d=>d.uid===M.memberUids[i])
+          .reduce((s,d)=>s+(Number(d.amt)||0),0);
+
+        return `
+          <div style="padding:12px 0;border-bottom:1px solid var(--bd)">
+            <b>${esc(name)}</b>
+            <div class="mut">
+              ${T('মোট জমা','Total Deposit')}:
+              ${amount.toFixed(2)} ${M.cur}
+            </div>
+          </div>
+        `;
+      }).join('')}
+    </div>
+  `;
 }
   
     function settingsView(){
@@ -1723,6 +1902,7 @@ function historyView(){
     <div style="padding:5px 0">
       ${row('👤',T('প্রোফাইল এডিট','Edit Profile'),"go('profile')")}
       ${row('👥',T('সদস্য তালিকা','Member List'),"go('members')")}
+      ${row('💰',T('ডিপোজিট ম্যানেজমেন্ট','Deposit Management'),"go('deposits')")}
       ${row('📚',T('আগের হিসাব','History'),'openHistory()')}
       ${M.role=='admin'?row('♻️',T('মেস রিসেট','Reset Mess'),'resetMess()'):''}
 
@@ -1827,6 +2007,12 @@ function historyView(){
     </div>
   `;
 }
+  function openMemberDeposit(i){
+  S.depositMemberIndex=i;
+  S.tab='depositDetail';
+  render();
+  window.scrollTo(0,0);
+}
   function memberListView(){
   return `
     <h1>👥 ${T('সদস্য তালিকা','Member List')}</h1>
@@ -1835,11 +2021,23 @@ function historyView(){
       ${M.members.map((name,i)=>{
         const phone=(M.memberPhones&&M.memberPhones[i])||'';
 
+        const deposit=M.deposits
+          .filter(d=>d.uid===M.memberUids[i])
+          .reduce((sum,d)=>sum+(Number(d.amt)||0),0);
+
         return `
           <div style="padding:12px 0;border-bottom:1px solid var(--bd)">
-            <b>${i+1}. ${esc(name)}</b>
+            <b onclick="openMemberDeposit(${i})" style="cursor:pointer">
+  ${i+1}. ${esc(name)}
+</b>
+
             <div class="mut" style="margin-top:5px">
               📞 ${phone?esc(phone):T('নম্বর দেওয়া হয়নি','No phone number')}
+            </div>
+
+            <div style="margin-top:7px;color:var(--green);font-weight:600">
+              💰 ${T('মোট জমা','Total Deposit')}:
+              ${deposit.toFixed(2)} ${M.cur}
             </div>
           </div>
         `;
@@ -2174,7 +2372,7 @@ function render(){
   if(S.screen=='auth')v=authView();else if(S.screen=='welcome')v=welcomeView();else if(S.screen=='create')v=createView();else if(S.screen=='join')v=joinView();
   else{
     const tabs=[['home','🏠',T('হোম','Home')],['add','➕',T('খরচ যোগ','Add')],['expenses','🧾',T('খরচের তালিকা','Expenses')]].concat(M.type=='meal'?[['meal','🍽️',T('মিল','Meals')]]:[]).concat([['rep','📊',T('হিসাব','Report')]]).concat(M.role=='admin'?[['req','🔔',T('অনুরোধ','Requests')]]:[]);
-     v=({home:homeView,add:addView,meal:mealView,rep:reportView,req:reqView,expenses:expenseListView,members:memberListView,settings:settingsView,history:historyView,historyDetail:historyDetailView,about:aboutView,profile:profileView,editnumber:editNumberView,editname:editNameView}[S.tab]||homeView)(); 
+    v=({home:homeView,add:addView,meal:mealView,rep:reportView,req:reqView,expenses:expenseListView,members:memberListView,settings:settingsView,deposits:depositView,depositDetail:depositDetailView,history:historyView,historyDetail:historyDetailView,about:aboutView,profile:profileView,editnumber:editNumberView,editname:editNameView}[S.tab]||homeView)();  
     nav=`<nav><div>${tabs.map(t=>`<button class="${S.tab==t[0]?'on':''}" onclick="go('${t[0]}')"><span>${t[1]}</span>${t[2]}</button>`).join('')}</div></nav>`;
   }
   document.getElementById('app').innerHTML=topbar()+v+nav+(S.view!=null&&M.exp[S.view]?`<div class="ov" onclick="S.view=null;render()"><img src="${M.exp[S.view].memo}" alt=""></div>`:'')+(S.toast?`<div class="toast">${esc(S.toast)}</div>`:'');
@@ -2271,6 +2469,10 @@ auth.onAuthStateChanged(async user=>{
   if(window._smartMessMealUnsub){
     window._smartMessMealUnsub();
     window._smartMessMealUnsub=null;
+  }
+      if(window._smartMessDepositUnsub){
+    window._smartMessDepositUnsub();
+    window._smartMessDepositUnsub=null;
   }
 
   S.user=null;
