@@ -392,7 +392,7 @@ function topbar(){
   <input type="password" id="authPass" placeholder="${T('কমপক্ষে ৬ অক্ষর','At least 6 characters')}" style="width:100%;padding:12px;border:1.5px solid var(--bd);border-radius:10px;background:var(--card);color:var(--ink);font:inherit" autocomplete="${m?'new-password':'current-password'}">
 
   <div style="height:16px"></div>
-  <button class="btn" onclick="authAction()">
+  <button class="btn" id="authBtn" onclick="authAction()">
     ${m?T('একাউন্ট তৈরি করুন','Create account'):T('লগইন করুন','Log in')}
   </button>
   ${!m?`<button class="btn ghost" style="margin-top:10px" onclick="resetPassword()">${T('পাসওয়ার্ড ভুলে গেছেন?','Forgot password?')}</button>`:''}
@@ -414,6 +414,18 @@ async function authAction(){
   if(signup&&!name)
     return say(T('আপনার নাম লিখুন','Enter your name'));
 
+    const btn=document.getElementById('authBtn');
+  if(btn?.disabled)return;
+
+  const oldText=btn?.innerHTML;
+  if(btn)btn.disabled=true;
+
+  const loadingTimer=setTimeout(()=>{
+    if(btn){
+      btn.innerHTML='<span style="display:inline-block;animation:refreshSpin .8s linear infinite">⟳</span> '+T('লোড হচ্ছে...','Loading...');
+    }
+  },500);
+  
   try{
     let result;
 
@@ -457,7 +469,13 @@ async function authAction(){
       'auth/network-request-failed':T('ইন্টারনেট সংযোগ পরীক্ষা করুন','Check your internet connection')
     };
 
-    say(errors[e.code]||e.message);
+        say(errors[e.code]||e.message);
+  }finally{
+    clearTimeout(loadingTimer);
+    if(btn){
+      btn.disabled=false;
+      btn.innerHTML=oldText;
+    }
   }
 }
 async function resetPassword(){
