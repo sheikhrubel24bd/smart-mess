@@ -594,6 +594,7 @@ const messId=userSnap.data().messId;
           return {
   id:doc.id,
   item:e.item,
+  otherName:e.otherName||'',          
   payer:memberUids.indexOf(e.payerUid),
   payerUid:e.payerUid,
   amt:e.amt,
