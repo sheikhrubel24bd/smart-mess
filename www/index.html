@@ -315,13 +315,35 @@ function seed(m){
 
 
 function calc(){
-  const n=M.members.length;let baz=0,fix=0;const paid=M.members.map(()=>0);
-  M.exp.forEach(e=>{IT[e.item][3]=='b'?baz+=e.amt:fix+=e.amt;paid[e.payer]+=e.amt});
+  const n=M.members.length;
+  let baz=0,fix=0;
+  const paid=M.members.map(()=>0);
+
+  M.exp.forEach(e=>{
+    IT[e.item][3]=='b'?baz+=e.amt:fix+=e.amt;
+
+    if((e.source||'pocket')==='pocket'){
+      const i=M.memberUids.indexOf(e.payerUid);
+      if(i>=0)paid[i]+=e.amt;
+      else if(e.payer!=null)paid[e.payer]+=e.amt;
+    }
+  });
+
   const tm=M.members.reduce((a,_,i)=>a+(M.meals[i]||0),0);
-  const meal=M.type=='meal';const rate=meal&&tm?baz/tm:0;
-  const due=M.members.map((_,i)=>meal?(M.meals[i]||0)*rate+fix/n:(baz+fix)/n);
+  const meal=M.type=='meal';
+  const rate=meal&&tm?baz/tm:0;
+
+  const due=M.members.map((_,i)=>
+    meal?(M.meals[i]||0)*rate+fix/n:(baz+fix)/n
+  );
+
   const bal=due.map((d,i)=>paid[i]-d);
-  return{n,baz,fix,paid,tm,rate,due,bal,tot:baz+fix,per:(baz+fix)/n};
+
+  return{
+    n,baz,fix,paid,tm,rate,due,bal,
+    tot:baz+fix,
+    per:(baz+fix)/n
+  };
 }
 function settle(bal){
   const d=[],c=[];bal.forEach((b,i)=>{if(b<-0.5)d.push([i,-b]);else if(b>0.5)c.push([i,b])});
@@ -1894,6 +1916,18 @@ ${[1,2,3,4,5,6,7,8,9].map(k=>`<button class="key" onclick="key('${k}')">${bn(k)}
 <button class="key" onclick="key('0')">${bn(0)}</button>
 <button class="key" onclick="S.amt=S.amt.slice(0,-1);render()" aria-label="${T('মুছুন','Delete')}">⌫</button>
 </div>
+  <h2>💰 ${T('টাকা কোথা থেকে দিয়েছেন?','Payment source')}</h2>
+  <div class="chips">
+    <button class="chip ${S.expSource==='pocket'?'on':''}"
+      onclick="S.expSource='pocket';render()">
+      ${T('নিজের পকেট','Own pocket')}
+    </button>
+
+    <button class="chip ${S.expSource==='deposit'?'on':''}"
+      onclick="S.expSource='deposit';render()">
+      ${T('মেসের জমা','Mess deposit')}
+    </button>
+  </div>
     <h2>${T('কে কিনেছে?','Who bought it?')}</h2>${M.me==0?`<div class="chips">${M.members.map((m,i)=>`<button class="chip ${S.payer==i?'on':''}" onclick="S.payer=${i};render()">${esc(m)}</button>`).join('')}</div>`:`<div class="mut">${esc(M.members[M.me])} (${T('আপনি','you')})</div>`}
   <h2>🧾 ${T('মেমো / রসিদ (ঐচ্ছিক)','Receipt (optional)')}</h2>${S.memo?`<div class="row"><img class="thumb" src="${S.memo}" alt=""><button class="x" onclick="S.memo=null;render()" aria-label="${T('সরান','Remove')}">✕</button></div>`:`<label class="btn ghost" style="display:block;text-align:center"><input type="file" accept="image/*" style="display:none" onchange="memo(this)">📷 ${T('মেমোর ছবি তুলুন বা আপলোড করুন','Take or upload a receipt photo')}</label>`}
   <div style="height:8px"></div><button class="btn" ${Number(S.amt)>0?'':'disabled'} onclick="S.editExp?updateExp():saveExp()">✅ ${S.editExp?T('পরিবর্তন সংরক্ষণ করুন','Update expense'):T('খরচ সংরক্ষণ করুন','Save expense')}</button>`;
@@ -1932,6 +1966,7 @@ if(item==='other' && !(S.otherName||'').trim()){
       item:item,
       otherName:item==='other'?(S.otherName||'').trim():null,
       payerUid:M.memberUids[payer],
+      source:S.expSource||'pocket',
       amt:amt,
       d:Date.now(),
       memo:S.memo||null,
@@ -1976,6 +2011,7 @@ if(item==='other' && !(S.otherName||'').trim()){
   S.item=e.item;
   S.otherName=e.otherName||''; 
   S.amt=String(e.amt);
+  S.expSource=e.source||'pocket';
   S.memo=e.memo||null;
   S.tab='add';
 
@@ -2017,10 +2053,11 @@ if(item==='other' && !(S.otherName||'').trim()){
       .collection('expenses')
       .doc(id)
       .update({
-        item:item,
-otherName:item==='other'?(S.otherName||'').trim():null,
-amt:amt,
-memo:S.memo||null
+                item:item,
+        otherName:item==='other'?(S.otherName||'').trim():null,
+        source:S.expSource||'pocket',
+        amt:amt,
+        memo:S.memo||null
       });
 
     S.editExp=null;
