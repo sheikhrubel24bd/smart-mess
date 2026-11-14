@@ -2376,6 +2376,26 @@ function reportView(){
   const meal=M.type=='meal';
   const st=settle(c.bal);
 
+  const totalDeposit=c.deposited.reduce((a,b)=>a+b,0);
+
+  const depositSpent=M.exp
+    .filter(e=>(e.source||'pocket')==='deposit')
+    .reduce((a,e)=>a+(Number(e.amt)||0),0);
+
+  const pocketSpent=M.exp
+    .filter(e=>(e.source||'pocket')==='pocket')
+    .reduce((a,e)=>a+(Number(e.amt)||0),0);
+
+  const cashLeft=totalDeposit-depositSpent;
+
+  const totalReceivable=c.bal
+    .filter(b=>b>0)
+    .reduce((a,b)=>a+b,0);
+
+  const totalOwed=c.bal
+    .filter(b=>b<0)
+    .reduce((a,b)=>a+Math.abs(b),0);
+
   return `
   <h1>${T('মাসিক হিসাব','Monthly report')}</h1>
 
@@ -2387,14 +2407,58 @@ function reportView(){
       :T('জনপ্রতি ','Per person ')+mny(c.per)}
   </div>
 
-  <h2>${T('কার কত','Who owes what')}</h2>
+  <h2>${T('মেসের সারসংক্ষেপ','Mess summary')}</h2>
+
+  <div class="card">
+
+    <div class="row" style="justify-content:space-between">
+      <span class="mut">${T('মোট জমা','Total deposit')}</span>
+      <b>${mny(totalDeposit)}</b>
+    </div>
+
+    <div class="row" style="justify-content:space-between">
+      <span class="mut">${T('জমা থেকে বাজার','Spent from deposit')}</span>
+      <span>${mny(depositSpent)}</span>
+    </div>
+
+    <div class="row" style="justify-content:space-between">
+      <span class="mut">${T('পকেট থেকে বাজার','Spent from pocket')}</span>
+      <span>${mny(pocketSpent)}</span>
+    </div>
+
+    <div class="row" style="justify-content:space-between">
+      <span class="mut">${T('মোট বাজার খরচ','Total expenses')}</span>
+      <b>${mny(c.tot)}</b>
+    </div>
+
+    <hr>
+
+    <div class="row" style="justify-content:space-between">
+      <b>${T('মেসে নগদ অবশিষ্ট','Cash remaining')}</b>
+      <b class="pos">${mny(cashLeft)}</b>
+    </div>
+
+    <div class="row" style="justify-content:space-between;margin-top:8px">
+      <span class="mut">${T('সদস্যদের মোট পাওনা','Total member credits')}</span>
+      <b>${mny(totalReceivable)}</b>
+    </div>
+
+    <div class="row" style="justify-content:space-between">
+      <span class="mut">${T('সদস্যদের কাছ থেকে আদায়','Amount to collect')}</span>
+      <b class="neg">${mny(totalOwed)}</b>
+    </div>
+
+  </div>
+
+  <h2>${T('সদস্যভিত্তিক হিসাব','Member accounts')}</h2>
 
   ${M.members.map((m,i)=>{
     const b=c.bal[i];
-    const ok=Math.abs(b)<.5;
+    const ok=Math.abs(b)<.005;
 
     return `
     <div class="card">
+
       <div class="row" style="justify-content:space-between">
         <b style="font-size:18px">${esc(m)}</b>
 
@@ -2424,13 +2488,14 @@ function reportView(){
       </div>`:''}
 
       <div class="row" style="justify-content:space-between">
-        <span class="mut">${T('মাথাপিছু মোট খরচ','Total share')}</span>
+        <span class="mut">${T('নিজের খরচের ভাগ','Personal share')}</span>
         <span>${cs()}${fmt(c.due[i])}</span>
       </div>
+
     </div>`;
   }).join('')}
 
-  <h2>${T('কে কাকে দেবে','Who pays whom')}</h2>
+  <h2>${T('টাকা সমন্বয়','Settlement')}</h2>
 
   <div class="card">
     ${st.length
@@ -2445,10 +2510,18 @@ function reportView(){
         </div>
       `).join('')
       :`<div class="mut">
-        ${T('কারো কিছু দেওয়ার নেই।','Nobody owes anything.')}
+        ${T('কারো কিছু দেওয়ার নেই।','Nobody owes anything.')}
       </div>`
     }
-  </div>`;
+  </div>
+
+  <div class="mut" style="margin-top:8px;font-size:13px">
+    ${T(
+      'মেসে নগদ অবশিষ্ট টাকা এবং সদস্যদের পাওনা আলাদা হিসাব। আদায়যোগ্য টাকা পাওয়া গেলে তা মেসের নগদ টাকার সঙ্গে যোগ হবে।',
+      'Cash remaining and member credits are separate. Collected amounts will be added to the mess cash.'
+    )}
+  </div>
+  `;
 }
 function render(){
   document.documentElement.lang=L;
