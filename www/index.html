@@ -190,6 +190,17 @@ input[type=text]{
 .stat{background:var(--card);border:1px solid var(--bd);border-radius:14px;padding:12px}
 .stat b{display:block;font-size:22px}.stat.hero{grid-column:1/3;background:var(--pri);color:var(--on);border-color:var(--pri)}
 .stat.hero b{font-size:34px}
+ .stat.deposit-stat{
+  background:#e5f4f5;
+  border:1px solid #b5dfe1;
+  color:#176b70;
+}
+.stat.deposit-stat small{
+  color:#287f84;
+}
+.stat.deposit-stat b{
+  font-size:26px;
+}
 .li{display:flex;align-items:center;gap:10px;padding:9px 0;border-bottom:1px solid var(--bd)}
 .li:last-child{border:0}.li .e{font-size:28px}.li .t{flex:1}.li .t small{display:block;color:var(--mut)}
 .x{border:0;background:none;color:var(--mut);font-size:20px;padding:6px 10px}
@@ -2103,14 +2114,52 @@ function historyView(){
 
 function homeView(){
   const c=calc();const meal=M.type=='meal';const p=pend();
+  const totalDeposit=c.deposited.reduce((a,b)=>a+b,0);
+
   return `<div class="row" style="justify-content:space-between"><h1>${esc(M.name)}</h1></div>
-  <div class="card row" style="justify-content:space-between;margin-top:12px"><div><div class="mut">${T('মেসের কোড','Mess code')}</div><div class="code">${M.code}</div></div><button class="btn ghost" style="width:auto;padding:10px 16px" onclick="copy()">${T('কপি','Copy')}</button></div>
-  ${meBlock(c)}${p?`<button class="banner" onclick="go('req')">🔔 ${bn(p)} ${T('টি নতুন যোগদানের অনুরোধ','new join request(s)')}</button>`:''}
-  <div class="stats"><div class="stat hero"><small>${T('এই মাসের মোট খরচ','Total spent this month')}</small><b>${cs()}${fmt(c.tot)}</b></div>
-  <div class="stat"><small class="mut">${T('বাজার','Groceries')}</small><b>${cs()}${fmt(c.baz)}</b></div>
-  <div class="stat"><small class="mut">${T('ফিক্সড','Fixed')}</small><b>${cs()}${fmt(c.fix)}</b></div>
-  <div class="stat"><small class="mut">${meal?T('মিল রেট','Meal rate'):T('জনপ্রতি ভাগ','Per person')}</small><b>${cs()}${meal?bn(c.rate.toFixed(2)):fmt(c.per)}</b></div>
-  <div class="stat"><small class="mut">${meal?T('মোট মিল','Total meals'):T('মেম্বার','Members')}</small><b>${bn(meal?c.tm:c.n)}</b></div></div>
+
+  <div class="card row" style="justify-content:space-between;margin-top:12px">
+    <div><div class="mut">${T('মেসের কোড','Mess code')}</div><div class="code">${M.code}</div></div>
+    <button class="btn ghost" style="width:auto;padding:10px 16px" onclick="copy()">${T('কপি','Copy')}</button>
+  </div>
+
+  ${meBlock(c)}
+  ${p?`<button class="banner" onclick="go('req')">🔔 ${bn(p)} ${T('টি নতুন যোগদানের অনুরোধ','new join request(s)')}</button>`:''}
+
+  <div class="stats">
+
+    <div class="stat hero">
+      <small>${T('এই মাসের মোট খরচ','Total spent this month')}</small>
+      <b>${cs()}${fmt(c.tot)}</b>
+    </div>
+
+    <div class="stat deposit-stat">
+      <small>${T('এই মাসের মোট জমা','Total deposits this month')}</small>
+      <b>${cs()}${fmt(totalDeposit)}</b>
+    </div>
+
+    <div class="stat">
+      <small class="mut">🛒 ${T('বাজার','Groceries')}</small>
+      <b>${cs()}${fmt(c.baz)}</b>
+    </div>
+
+    <div class="stat">
+      <small class="mut">🧾 ${T('ফিক্সড','Fixed')}</small>
+      <b>${cs()}${fmt(c.fix)}</b>
+    </div>
+
+    <div class="stat">
+      <small class="mut">📊 ${meal?T('মিল রেট','Meal rate'):T('জনপ্রতি ভাগ','Per person')}</small>
+      <b>${cs()}${meal?bn(c.rate.toFixed(2)):fmt(c.per)}</b>
+    </div>
+
+    <div class="stat">
+      <small class="mut">👥 ${meal?T('মোট মিল','Total meals'):T('মেম্বার','Members')}</small>
+      <b>${bn(meal?c.tm:c.n)}</b>
+    </div>
+
+  </div>
+
   ${whoBlock(c)}`;
 }
 function addView(){
