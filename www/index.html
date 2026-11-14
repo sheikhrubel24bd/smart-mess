@@ -1451,6 +1451,33 @@ function historyView(){
     render();
   }
 }
+  function historyDetailView(){
+  if(S.loadingHistoryDetail){
+    return '<h1>📚 পুরোনো হিসাব</h1><div class="card">লোড হচ্ছে...</div>';
+  }
+
+  const h=S.historyDetail;
+
+  if(!h){
+    return `
+      <h1>📚 পুরোনো হিসাব</h1>
+      <div class="card">হিসাব পাওয়া যায়নি।</div>
+      <button class="btn" onclick="S.tab='history';render()">ফিরে যান</button>
+    `;
+  }
+
+  return `
+    <h1>📚 ${esc(h.monthLabel||'পুরোনো হিসাব')}</h1>
+
+    <div class="card">
+      <div class="mut">মেস: ${esc(h.messName||'')}</div>
+      <div class="mut">মোট খরচ: ${bn(h.expenseCount||0)} টি</div>
+      <div class="mut">মিল রেকর্ড: ${bn(h.mealCount||0)} টি</div>
+    </div>
+
+    <button class="btn" onclick="S.tab='history';render()">← History-তে ফিরে যান</button>
+  `;
+}
   
     function settingsView(){
   const row=(icon,label,action)=>`
