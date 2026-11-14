@@ -1431,9 +1431,14 @@ function addView(){
   const v=IT[S.item];
   return `<div class="row"><button class="x" onclick="S.item=null;render()" aria-label="${T('পেছনে','Back')}">←</button><div style="font-size:22px;font-weight:700">${v[0]} ${nm(S.item)}</div></div>
   <div class="amt">${cs()}${S.amt?bn(S.amt):bn(0)}</div>
-  <div class="quick">${[100,200,500,1000].map(q=>`<button onclick="S.amt=String((Number(S.amt)||0)+${q});render()">+${bn(q)}</button>`).join('')}</div>
-  <div class="keys">${[1,2,3,4,5,6,7,8,9].map(k=>`<button class="key" onclick="key('${k}')">${bn(k)}</button>`).join('')}<button class="key" onclick="key('00')">${bn('00')}</button><button class="key" onclick="key('0')">${bn(0)}</button><button class="key" onclick="S.amt=S.amt.slice(0,-1);render()" aria-label="${T('মুছুন','Delete')}">⌫</button></div>
-  <h2>${T('কে কিনেছে?','Who bought it?')}</h2>${M.me==0?`<div class="chips">${M.members.map((m,i)=>`<button class="chip ${S.payer==i?'on':''}" onclick="S.payer=${i};render()">${esc(m)}</button>`).join('')}</div>`:`<div class="mut">${esc(M.members[M.me])} (${T('আপনি','you')})</div>`}
+  <div class="quick">${[10,20,50,100].map(q=>`<button onclick="S.amt=String((Number(S.amt)||0)+${q});render()">+${bn(q)}</button>`).join('')}</div>
+  <div class="keys">
+${[1,2,3,4,5,6,7,8,9].map(k=>`<button class="key" onclick="key('${k}')">${bn(k)}</button>`).join('')}
+<button class="key" onclick="key('.')">.</button>
+<button class="key" onclick="key('0')">${bn(0)}</button>
+<button class="key" onclick="S.amt=S.amt.slice(0,-1);render()" aria-label="${T('মুছুন','Delete')}">⌫</button>
+</div>
+    <h2>${T('কে কিনেছে?','Who bought it?')}</h2>${M.me==0?`<div class="chips">${M.members.map((m,i)=>`<button class="chip ${S.payer==i?'on':''}" onclick="S.payer=${i};render()">${esc(m)}</button>`).join('')}</div>`:`<div class="mut">${esc(M.members[M.me])} (${T('আপনি','you')})</div>`}
   <h2>🧾 ${T('মেমো / রসিদ (ঐচ্ছিক)','Receipt (optional)')}</h2>${S.memo?`<div class="row"><img class="thumb" src="${S.memo}" alt=""><button class="x" onclick="S.memo=null;render()" aria-label="${T('সরান','Remove')}">✕</button></div>`:`<label class="btn ghost" style="display:block;text-align:center"><input type="file" accept="image/*" style="display:none" onchange="memo(this)">📷 ${T('মেমোর ছবি তুলুন বা আপলোড করুন','Take or upload a receipt photo')}</label>`}
   <div style="height:8px"></div><button class="btn" ${Number(S.amt)>0?'':'disabled'} onclick="S.editExp?updateExp():saveExp()">✅ ${S.editExp?T('পরিবর্তন সংরক্ষণ করুন','Update expense'):T('খরচ সংরক্ষণ করুন','Save expense')}</button>`;
 }
