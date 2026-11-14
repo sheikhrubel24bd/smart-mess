@@ -1466,16 +1466,167 @@ function historyView(){
     `;
   }
 
+  const members=h.members||[];
+  const expenses=h.expenses||[];
+  const mealRecords=h.mealRecords||[];
+
+  const n=members.length;
+  const paid=members.map(()=>0);
+  const meals=members.map(()=>0);
+
+  let baz=0,fix=0;
+
+  const money=x=>`${esc(h.currency||'')} ${fmt(x)}`;
+
+  // পুরোনো খরচের হিসাব
+  expenses.forEach(e=>{
+    const item=IT[e.item];
+    const index=members.findIndex(m=>m.uid===e.payerUid);
+
+    if(index>=0)paid[index]+=Number(e.amt)||0;
+
+    if(item&&item[3]=='b'){
+      baz+=Number(e.amt)||0;
+    }else{
+      fix+=Number(e.amt)||0;
+    }
+  });
+
+  // পুরোনো মিলের হিসাব
+  mealRecords.forEach(r=>{
+    const uid=r.uid||r.id;
+    const index=members.findIndex(m=>m.uid===uid);
+
+    if(index>=0){
+      meals[index]=Number(r.count)||0;
+    }
+  });
+
+  const tm=meals.reduce((a,b)=>a+b,0);
+  const meal=h.messType=='meal';
+  const rate=meal&&tm?baz/tm:0;
+
+  const due=members.map((m,i)=>
+    meal
+      ?meals[i]*rate+(n?fix/n:0)
+      :(n?(baz+fix)/n:0)
+  );
+
+  const bal=due.map((d,i)=>paid[i]-d);
+  const total=baz+fix;
+  const st=settle(bal);
+
   return `
     <h1>📚 ${esc(h.monthLabel||'পুরোনো হিসাব')}</h1>
 
     <div class="card">
-      <div class="mut">মেস: ${esc(h.messName||'')}</div>
-      <div class="mut">মোট খরচ: ${bn(h.expenseCount||0)} টি</div>
-      <div class="mut">মিল রেকর্ড: ${bn(h.mealCount||0)} টি</div>
+      <h2>${esc(h.messName||'মেস')}</h2>
+
+      <div class="row" style="justify-content:space-between">
+        <span class="mut">মোট খরচ</span>
+        <b>${money(total)}</b>
+      </div>
+
+      <div class="row" style="justify-content:space-between">
+        <span class="mut">বাজার খরচ</span>
+        <b>${money(baz)}</b>
+      </div>
+
+      <div class="row" style="justify-content:space-between">
+        <span class="mut">অন্যান্য খরচ</span>
+        <b>${money(fix)}</b>
+      </div>
+
+      <div class="row" style="justify-content:space-between">
+        <span class="mut">মোট মিল</span>
+        <b>${bn(tm)}</b>
+      </div>
+
+      ${meal?`
+        <div class="row" style="justify-content:space-between">
+          <span class="mut">মিল রেট</span>
+          <b>${money(rate)}</b>
+        </div>
+      `:''}
     </div>
 
-    <button class="btn" onclick="S.tab='history';render()">← History-তে ফিরে যান</button>
+    <h2>👥 সদস্যভিত্তিক হিসাব</h2>
+
+    ${members.map((m,i)=>{
+      const b=bal[i];
+      const ok=Math.abs(b)<.5;
+
+      return `
+        <div class="card">
+          <div class="row" style="justify-content:space-between">
+            <b style="font-size:18px">${esc(m.name||'সদস্য')}</b>
+
+            ${ok
+              ?'<span class="tag pos">মিটে গেছে</span>'
+              :`<span class="tag ${b>0?'pos':'neg'}">${b>0?'পাবে':'দেবে'} ${money(Math.abs(b))}</span>`
+            }
+          </div>
+
+          <div class="row" style="justify-content:space-between">
+            <span class="mut">মিল</span>
+            <span>${bn(meals[i])}</span>
+          </div>
+
+          <div class="row" style="justify-content:space-between">
+            <span class="mut">খরচ করেছে</span>
+            <span>${money(paid[i])}</span>
+          </div>
+
+          <div class="row" style="justify-content:space-between">
+            <span class="mut">মোট খরচের ভাগ</span>
+            <span>${money(due[i])}</span>
+          </div>
+        </div>
+      `;
+    }).join('')}
+
+    <h2>💰 কে কাকে দেবে</h2>
+
+    <div class="card">
+      ${st.length?st.map(([a,b,x])=>`
+        <div class="li">
+          <div class="t">
+            <b>${esc(members[a].name)}</b>
+            →
+            <b>${esc(members[b].name)}</b>
+          </div>
+          <b class="neg">${money(x)}</b>
+        </div>
+      `).join(''):`
+        <div class="mut">কারো কিছু দেওয়ার নেই।</div>
+      `}
+    </div>
+
+    <h2>🧾 পুরোনো খরচের তালিকা</h2>
+
+    <div class="card">
+      ${expenses.length?expenses.map(e=>{
+        const index=members.findIndex(m=>m.uid===e.payerUid);
+        const payer=index>=0?members[index].name:'অজানা সদস্য';
+
+        return `
+          <div class="li">
+            <span class="e">${IT[e.item]?IT[e.item][0]:'🧾'}</span>
+            <div class="t">
+              ${e.item==='other'
+                ?esc(e.otherName||'অন্যান্য')
+                :esc(nm(e.item))}
+              <small>${esc(payer)} ${e.d?' · '+dt(e.d):''}</small>
+            </div>
+            <b>${money(Number(e.amt)||0)}</b>
+          </div>
+        `;
+      }).join(''):`<div class="mut">কোনো খরচ নেই।</div>`}
+    </div>
+
+    <button class="btn" onclick="S.tab='history';render()">
+      ← History-তে ফিরে যান
+    </button>
   `;
 }
   
