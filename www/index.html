@@ -162,7 +162,18 @@ button:focus-visible,input:focus-visible{outline:3px solid var(--warm);outline-o
 .btn{width:100%;border:0;border-radius:12px;background:var(--pri);color:var(--on);font-weight:700;padding:15px;font-size:17px}
 .btn.ghost{background:transparent;color:var(--pri);border:1.5px solid var(--pri)}
 .btn:disabled{opacity:.4}
-input[type=text]{width:100%;border:1.5px solid var(--bd);background:var(--card);color:var(--ink);border-radius:10px;padding:12px;font:inherit}
+input[type=text]{
+  width:100%;
+  border:1.5px solid var(--bd);
+  background:var(--card);
+  color:var(--ink);
+  border-radius:10px;
+  padding:12px;
+  font:inherit;
+  caret-color:#159447;
+  cursor:text;
+  outline-color:#159447;
+}
 .types{display:grid;grid-template-columns:1fr 1fr;gap:10px}
 .type{border:2px solid var(--bd);background:var(--card);border-radius:14px;padding:14px 10px;text-align:center}
 .type.on{border-color:var(--pri);background:var(--pri2)}
@@ -183,8 +194,8 @@ input[type=text]{width:100%;border:1.5px solid var(--bd);background:var(--card);
 .li:last-child{border:0}.li .e{font-size:28px}.li .t{flex:1}.li .t small{display:block;color:var(--mut)}
 .x{border:0;background:none;color:var(--mut);font-size:20px;padding:6px 10px}
 .amt{font-size:46px;font-weight:800;text-align:center;padding:8px 0}
-.keys{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin:8px 0}
-.key{border:1px solid var(--bd);background:var(--card);border-radius:12px;padding:14px 0;font-size:24px;font-weight:700}
+.keys{display:grid;grid-template-columns:repeat(3,1fr);gap:6px;margin:6px 0}
+.key{border:1px solid var(--bd);background:var(--card);border-radius:10px;padding:9px 0;font-size:20px;font-weight:700}
 .quick{display:grid;grid-template-columns:repeat(4,1fr);gap:8px}
 .quick button{border:1.5px solid var(--pri);background:var(--pri2);border-radius:10px;padding:9px 0;font-weight:700}
 .step{border:1.5px solid var(--bd);background:var(--card);border-radius:50%;width:46px;height:46px;font-size:24px;font-weight:700}
@@ -1419,7 +1430,7 @@ function addView(){
   }
   const v=IT[S.item];
   return `<div class="row"><button class="x" onclick="S.item=null;render()" aria-label="${T('পেছনে','Back')}">←</button><div style="font-size:22px;font-weight:700">${v[0]} ${nm(S.item)}</div></div>
-  <div class="amt">${cs()}${S.amt?bn(Number(S.amt).toLocaleString('en-US')):bn(0)}</div>
+  <div class="amt">${cs()}${S.amt?bn(S.amt):bn(0)}</div>
   <div class="quick">${[100,200,500,1000].map(q=>`<button onclick="S.amt=String((Number(S.amt)||0)+${q});render()">+${bn(q)}</button>`).join('')}</div>
   <div class="keys">${[1,2,3,4,5,6,7,8,9].map(k=>`<button class="key" onclick="key('${k}')">${bn(k)}</button>`).join('')}<button class="key" onclick="key('00')">${bn('00')}</button><button class="key" onclick="key('0')">${bn(0)}</button><button class="key" onclick="S.amt=S.amt.slice(0,-1);render()" aria-label="${T('মুছুন','Delete')}">⌫</button></div>
   <h2>${T('কে কিনেছে?','Who bought it?')}</h2>${M.me==0?`<div class="chips">${M.members.map((m,i)=>`<button class="chip ${S.payer==i?'on':''}" onclick="S.payer=${i};render()">${esc(m)}</button>`).join('')}</div>`:`<div class="mut">${esc(M.members[M.me])} (${T('আপনি','you')})</div>`}
@@ -1427,7 +1438,16 @@ function addView(){
   <div style="height:8px"></div><button class="btn" ${Number(S.amt)>0?'':'disabled'} onclick="S.editExp?updateExp():saveExp()">✅ ${S.editExp?T('পরিবর্তন সংরক্ষণ করুন','Update expense'):T('খরচ সংরক্ষণ করুন','Save expense')}</button>`;
 }
 function memo(inp){const f=inp.files[0];if(!f)return;const r=new FileReader();r.onload=()=>{const im=new Image();im.onload=()=>{const k=Math.min(1,800/Math.max(im.width,im.height)),c=document.createElement('canvas');c.width=im.width*k;c.height=im.height*k;c.getContext('2d').drawImage(im,0,0,c.width,c.height);S.memo=c.toDataURL('image/jpeg',.7);render()};im.src=r.result};r.readAsDataURL(f)}
-function key(k){if((S.amt+k).length<=6)S.amt=String(Number(S.amt+k));render()}
+function key(k){
+  if(k==='.'){
+    if(!S.amt.includes('.')) S.amt=S.amt||'0',S.amt+='.';
+  }else{
+    if((S.amt+k).length<=8){
+      S.amt+=k;
+    }
+  }
+  render();
+}
 async function saveExp(){
     if(S.savingExp) return;
   S.savingExp=true;
