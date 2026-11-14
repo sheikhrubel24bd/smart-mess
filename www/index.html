@@ -1385,7 +1385,7 @@ function whoBlock(c){
             <span class="e">${IT[e.item][0]}</span>
 
             <div class="t">
-              ${nm(e.item)}
+              ${e.item==='other'?(e.otherName||nm(e.item)):nm(e.item)}
               <small>${esc(M.members[e.payer])}${e.d?' · '+dt(e.d):''}</small>
             </div>
 
@@ -1429,7 +1429,7 @@ function addView(){
     return `<h1>${T('কী কিনলেন?','What did you buy?')}</h1><div class="mut">${T('ছবিতে ট্যাপ করুন','Tap a picture')}</div><h2>${T('বাজার','Groceries')}</h2><div class="grid">${g('b')}</div><h2>${T('ফিক্সড খরচ','Fixed costs')}</h2><div class="grid">${g('f')}</div>`;
   }
   const v=IT[S.item];
-  return `<div class="row"><button class="x" onclick="S.item=null;render()" aria-label="${T('পেছনে','Back')}">←</button><div style="font-size:22px;font-weight:700">${v[0]} ${nm(S.item)}</div></div>
+  return `<div class="row"><button class="x" onclick="S.item=null;render()" aria-label="${T('পেছনে','Back')}">←</button>${S.item==='other'?`<input type="text" value="${esc(S.otherName||'')}" placeholder="${T('পণ্যের নাম লিখুন','Enter product name')}" oninput="S.otherName=this.value" style="flex:1;min-width:0;font-size:20px;font-weight:700">`:`<div style="font-size:22px;font-weight:700">${v[0]} ${nm(S.item)}</div>`}</div>
   <div class="amt">${cs()}${S.amt?bn(S.amt):bn(0)}</div>
   <div class="quick">${[10,20,50,100].map(q=>`<button onclick="S.amt=String((Number(S.amt)||0)+${q});render()">+${bn(q)}</button>`).join('')}</div>
   <div class="keys">
@@ -1464,12 +1464,17 @@ async function saveExp(){
 
   if(!item || !amt || amt<=0)
     return say('সঠিক খরচের পরিমাণ দিন।');
-
+  
+if(item==='other' && !(S.otherName||'').trim()){
+  S.savingExp=false;
+  return say('পণ্যের নাম লিখুন।');
+}
   try{
     say('খরচ সংরক্ষণ হচ্ছে...');
 
     const expense={
       item:item,
+      otherName:item==='other'?(S.otherName||'').trim():null,
       payerUid:M.memberUids[payer],
       amt:amt,
       d:Date.now(),
@@ -1486,6 +1491,7 @@ async function saveExp(){
     
 
     S.item=null;
+    S.otherName='';
     S.amt='';
     S.memo=null;
     S.tab='home';
@@ -1512,6 +1518,7 @@ async function saveExp(){
 
   S.editExp=id;
   S.item=e.item;
+  S.otherName=e.otherName||''; 
   S.amt=String(e.amt);
   S.memo=e.memo||null;
   S.tab='add';
@@ -1555,8 +1562,9 @@ async function saveExp(){
       .doc(id)
       .update({
         item:item,
-        amt:amt,
-        memo:S.memo||null
+otherName:item==='other'?(S.otherName||'').trim():null,
+amt:amt,
+memo:S.memo||null
       });
 
     S.editExp=null;
