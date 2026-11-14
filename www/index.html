@@ -1410,6 +1410,47 @@ function historyView(){
     </div>
   `;
 }
+  async function openHistoryDetail(id){
+  if(S.loadingHistoryDetail)return;
+
+  S.loadingHistoryDetail=true;
+  S.historyDetail=null;
+  S.tab='historyDetail';
+  render();
+
+  try{
+    const ref=db.collection('messes')
+      .doc(M.id)
+      .collection('history')
+      .doc(id);
+
+    const [historySnap,expensesSnap,mealsSnap]=await Promise.all([
+      ref.get(),
+      ref.collection('expenses').get(),
+      ref.collection('mealCounts').get()
+    ]);
+
+    if(!historySnap.exists){
+      throw new Error('History not found');
+    }
+
+    S.historyDetail={
+      id,
+      ...historySnap.data(),
+      expenses:expensesSnap.docs.map(d=>({id:d.id,...d.data()})),
+      mealRecords:mealsSnap.docs.map(d=>({id:d.id,...d.data()}))
+    };
+
+  }catch(e){
+    console.error('HISTORY DETAIL ERROR:',e);
+    S.historyDetail=null;
+    S.tab='history';
+    say('পুরোনো হিসাব লোড করা যায়নি।');
+  }finally{
+    S.loadingHistoryDetail=false;
+    render();
+  }
+}
   
     function settingsView(){
   const row=(icon,label,action)=>`
