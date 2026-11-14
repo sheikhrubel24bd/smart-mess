@@ -290,7 +290,7 @@ let L='bn';
 const T=(b,e)=>L=='bn'?b:e;
 const BN='০১২৩৪৫৬৭৮৯';
 const bn=n=>L=='bn'?String(n).replace(/\d/g,d=>BN[d]):String(n);
-const fmt=n=>bn(Math.round(n).toLocaleString('en-US'));
+const fmt=n=>bn(Number(n).toLocaleString('en-US',{minimumFractionDigits:Number(n)%1?2:0,maximumFractionDigits:2}));
 const esc=s=>String(s).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
 const OIL='<svg viewBox="0 0 32 32" width="1em" height="1em" style="vertical-align:-.12em"><rect x="12" y="2" width="8" height="4" rx="1" fill="#2f9e5b"/><path d="M13 6h6v4c0 1 4 3 4 7v11a2 2 0 0 1-2 2H11a2 2 0 0 1-2-2V17c0-4 4-6 4-7z" fill="#f4c430" stroke="#b8860b"/><rect x="10" y="16" width="12" height="9" rx="1.5" fill="#fff8dc"/><ellipse cx="16" cy="20.5" rx="3" ry="2" fill="#7cb342" transform="rotate(-20 16 20.5)"/></svg>';
 const IT={veg:['🥬','সবজি','Vegetables','b'],fish:['🐟','মাছ','Fish','b'],chk:['🍗','মুরগি','Chicken','b'],meat:['🥩','মাংস','Meat','b'],egg:['🥚','ডিম','Eggs','b'],rice:['🍚','চাল','Rice','b'],dal:['🫘','ডাল','Lentils','b'],oil:[OIL,'সয়াবিন তেল','Soybean oil','b'],onion:['🧅','পেঁয়াজ','Onion','b'],pot:['🥔','আলু','Potato','b'],spice:['🧂','মসলা','Spices','b'],milk:['🥛','দুধ','Milk','b'],other:['➕','অন্যান্য','Other','b'],
