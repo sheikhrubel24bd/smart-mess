@@ -2746,9 +2746,7 @@ function reportView(){
       isDone:true,
       completedBy:auth.currentUser.uid,
       completedAt:firebase.firestore.FieldValue.serverTimestamp(),
-      deleteAt:firebase.firestore.Timestamp.fromDate(
-        new Date(Date.now()+7*24*60*60*1000)
-      )
+      deleteAt:null
     }:{
       isDone:false,
       completedBy:null,
@@ -2756,8 +2754,32 @@ function reportView(){
       deleteAt:null
     };
 
-    await db.collection('messes').doc(M.id)
-      .collection('tasks').doc(id).update(data);
+    const ref=db.collection('messes').doc(M.id)
+      .collection('tasks');
+
+    await ref.doc(id).update(data);
+
+    if(done){
+      const snapshot=await ref
+        .where('isDone','==',true)
+        .get();
+
+      const completed=snapshot.docs.sort((a,b)=>{
+        const ta=a.data().completedAt?.toMillis()||0;
+        const tb=b.data().completedAt?.toMillis()||0;
+        return tb-ta;
+      });
+
+      if(completed.length>5){
+        const batch=db.batch();
+
+        completed.slice(5).forEach(doc=>{
+          batch.delete(doc.ref);
+        });
+
+        await batch.commit();
+      }
+    }
 
     say(done?'টাস্ক সম্পন্ন হয়েছে।':'টাস্ক আবার চালু হয়েছে।');
 
@@ -2766,6 +2788,7 @@ function reportView(){
     say('টাস্ক আপডেট করা যায়নি।');
   }
 }
+  
   function taskMenu(id){
   S.taskMenu=S.taskMenu==id?null:id;
   render();
