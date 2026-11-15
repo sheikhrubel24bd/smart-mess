@@ -723,7 +723,24 @@ const messId=userSnap.data().messId;
         console.error('DEPOSIT SYNC ERROR:',error);
         say('জমার হিসাব আপডেট করা যায়নি।');
       });
-    
+
+    // TASK LIVE SYNC
+    window._smartMessTaskUnsub=
+      messRef.collection('tasks').onSnapshot(snapshot=>{
+
+        if(!M || M.id!=messId) return;
+
+        M.tasks=snapshot.docs.map(doc=>({
+          id:doc.id,
+          ...doc.data()
+        }));
+
+        render();
+
+      },error=>{
+        console.error('TASK SYNC ERROR:',error);
+        say('টাস্ক আপডেট করা যায়নি।');
+      });
 
   }catch(e){
   console.error('AFTER ERROR:',e.code,e.message,e);
@@ -1928,6 +1945,7 @@ function historyView(){
       ${row('👤',T('প্রোফাইল এডিট','Edit Profile'),"go('profile')")}
       ${row('👥',T('সদস্য তালিকা','Member List'),"go('members')")}
       ${row('💰',T('ডিপোজিট ম্যানেজমেন্ট','Deposit Management'),"go('deposits')")}
+      ${row('📊',T('মাসিক রিপোর্ট','Monthly Report'),"go('rep')")}
       ${row('📚',T('আগের হিসাব','History'),'openHistory()')}
       ${M.role=='admin'?row('♻️',T('মেস রিসেট','Reset Mess'),'resetMess()'):''}
 
@@ -2604,13 +2622,218 @@ function reportView(){
   `;
 }
 
+ function taskView(){
+  const tasks=M.tasks||[];
+
+  return `
+    <h1>📝 ${T('মেসের টাস্ক','Mess Tasks')}</h1>
+
+    <div class="card">
+      <h3>${T('নতুন টাস্ক যোগ করুন','Add New Task')}</h3>
+
+      <input id="taskTitle"
+        placeholder="${T('কী কিনতে হবে?','What needs to be bought?')}">
+
+      <input id="taskQty"
+        placeholder="${T('পরিমাণ (ঐচ্ছিক)','Quantity (optional)')}">
+
+      <input id="taskNote"
+        placeholder="${T('অতিরিক্ত তথ্য (ঐচ্ছিক)','Additional note (optional)')}">
+
+      <button class="btn" onclick="addTask()">
+        ➕ ${T('টাস্ক যোগ করুন','Add Task')}
+      </button>
+    </div>
+
+    <h3>${T('টাস্কের তালিকা','Task List')}</h3>
+
+    ${tasks.length?tasks.map(t=>{
+      const creator=M.members[M.memberUids.indexOf(t.createdBy)]||'';
+      const completer=M.members[M.memberUids.indexOf(t.completedBy)]||'';
+
+      const canEdit=
+        M.role=='admin' ||
+        (t.createdBy===auth.currentUser.uid&&!t.isDone);
+
+      return `
+        <div class="card" style="margin-bottom:10px">
+
+          <div class="row" style="justify-content:space-between">
+            <b>${esc(t.title||'')}</b>
+            <span>${t.isDone?'✅':'⏳'}</span>
+          </div>
+
+          ${t.quantity?`<div class="mut">${T('পরিমাণ','Quantity')}: ${esc(t.quantity)}</div>`:''}
+
+          ${t.note?`<div class="mut">${esc(t.note)}</div>`:''}
+
+          <div class="mut" style="font-size:12px;margin-top:8px">
+            ${T('যোগ করেছেন','Added by')}: ${esc(creator)}
+          </div>
+
+          ${t.isDone?`
+            <div class="mut" style="font-size:12px">
+              ${T('সম্পন্ন করেছেন','Completed by')}: ${esc(completer)}
+            </div>
+            <button class="btn ghost" onclick="toggleTask('${t.id}',false)">
+              ↩️ ${T('আবার চালু করুন','Undo')}
+            </button>
+          `:`
+            <button class="btn" onclick="toggleTask('${t.id}',true)">
+              ✅ ${T('কাজ শেষ হয়েছে','Mark Completed')}
+            </button>
+          `}
+
+          ${canEdit?`
+            <button class="btn ghost" onclick="taskMenu('${t.id}')">
+              ⋮ ${T('আরও','More')}
+            </button>
+          `:''}
+
+          ${canEdit&&S.taskMenu==t.id?`
+            <div class="row">
+              ${!t.isDone?`
+                <button class="btn ghost" onclick="editTask('${t.id}')">
+                  ✏️ ${T('এডিট','Edit')}
+                </button>
+              `:''}
+              <button class="btn ghost" onclick="deleteTask('${t.id}')">
+                🗑️ ${T('মুছুন','Delete')}
+              </button>
+            </div>
+          `:''}
+
+        </div>
+      `;
+    }).join(''):`<div class="card mut">${T('এখনো কোনো টাস্ক নেই','No tasks yet')}</div>`}
+  `;
+} 
+
+  async function addTask(){
+  const title=document.getElementById('taskTitle').value.trim();
+  const quantity=document.getElementById('taskQty').value.trim();
+  const note=document.getElementById('taskNote').value.trim();
+
+  if(!title){
+    say('টাস্কের নাম লিখুন।');
+    return;
+  }
+
+  try{
+    await db.collection('messes').doc(M.id)
+      .collection('tasks').add({
+        title,
+        quantity,
+        note,
+        createdBy:auth.currentUser.uid,
+        createdAt:firebase.firestore.FieldValue.serverTimestamp(),
+        isDone:false,
+        completedBy:null,
+        completedAt:null,
+        deleteAt:null
+      });
+
+    say('টাস্ক সফলভাবে যোগ হয়েছে।');
+
+  }catch(error){
+    console.error('ADD TASK ERROR:',error);
+    say('টাস্ক যোগ করা যায়নি।');
+  }
+}
+  async function toggleTask(id,done){
+  try{
+    const data=done?{
+      isDone:true,
+      completedBy:auth.currentUser.uid,
+      completedAt:firebase.firestore.FieldValue.serverTimestamp(),
+      deleteAt:firebase.firestore.Timestamp.fromDate(
+        new Date(Date.now()+7*24*60*60*1000)
+      )
+    }:{
+      isDone:false,
+      completedBy:null,
+      completedAt:null,
+      deleteAt:null
+    };
+
+    await db.collection('messes').doc(M.id)
+      .collection('tasks').doc(id).update(data);
+
+    say(done?'টাস্ক সম্পন্ন হয়েছে।':'টাস্ক আবার চালু হয়েছে।');
+
+  }catch(error){
+    console.error('TASK UPDATE ERROR:',error);
+    say('টাস্ক আপডেট করা যায়নি।');
+  }
+}
+  function taskMenu(id){
+  S.taskMenu=S.taskMenu==id?null:id;
+  render();
+}
+
+async function deleteTask(id){
+  if(!confirm('এই টাস্কটি মুছে ফেলতে চান?'))return;
+
+  try{
+    await db.collection('messes').doc(M.id)
+      .collection('tasks').doc(id).delete();
+
+    S.taskMenu=null;
+    say('টাস্ক মুছে ফেলা হয়েছে।');
+
+  }catch(error){
+    console.error('DELETE TASK ERROR:',error);
+    say('টাস্ক মুছে ফেলা যায়নি।');
+  }
+}
+async function editTask(id){
+  const t=(M.tasks||[]).find(x=>x.id===id);
+  if(!t)return;
+
+  if(t.createdBy!==auth.currentUser.uid||t.isDone){
+    say('শুধু নিজের অসম্পন্ন টাস্ক এডিট করা যাবে।');
+    return;
+  }
+
+  const title=prompt('টাস্কের নাম:',t.title||'');
+  if(title===null)return;
+
+  if(!title.trim()||title.trim().length>100){
+    say('সঠিক টাস্কের নাম লিখুন।');
+    return;
+  }
+
+  const quantity=prompt('পরিমাণ:',t.quantity||'');
+  if(quantity===null)return;
+
+  const note=prompt('অতিরিক্ত তথ্য:',t.note||'');
+  if(note===null)return;
+
+  try{
+    await db.collection('messes').doc(M.id)
+      .collection('tasks').doc(id).update({
+        title:title.trim(),
+        quantity:quantity.trim(),
+        note:note.trim()
+      });
+
+    S.taskMenu=null;
+    say('টাস্ক এডিট হয়েছে।');
+
+  }catch(error){
+    console.error('EDIT TASK ERROR:',error);
+    say('টাস্ক এডিট করা যায়নি।');
+  }
+}
+  
+
 function render(){
   document.documentElement.lang=L;
   let v,nav='';
   if(S.screen=='auth')v=authView();else if(S.screen=='welcome')v=welcomeView();else if(S.screen=='create')v=createView();else if(S.screen=='join')v=joinView();
   else{
-    const tabs=[['home','🏠',T('হোম','Home')],['add','➕',T('খরচ যোগ','Add')],['expenses','🧾',T('খরচের তালিকা','Expenses')]].concat(M.type=='meal'?[['meal','🍽️',T('মিল','Meals')]]:[]).concat([['rep','📊',T('হিসাব','Report')]]).concat(M.role=='admin'?[['req','🔔',T('অনুরোধ','Requests')]]:[]);
-    v=({home:homeView,add:addView,meal:mealView,rep:reportView,req:reqView,expenses:expenseListView,members:memberListView,settings:settingsView,deposits:depositView,depositDetail:depositDetailView,history:historyView,historyDetail:historyDetailView,about:aboutView,profile:profileView,editnumber:editNumberView,editname:editNameView}[S.tab]||homeView)();  
+      const tabs=[['home','🏠',T('হোম','Home')],['add','➕',T('খরচ যোগ','Add')],['expenses','🧾',T('খরচের তালিকা','Expenses')],['task','📝',T('টাস্ক','Tasks')]].concat(M.type=='meal'?[['meal','🍽️',T('মিল','Meals')]]:[]);   
+     v=({home:homeView,add:addView,meal:mealView,rep:reportView,task:taskView,req:reqView,expenses:expenseListView,members:memberListView,settings:settingsView,deposits:depositView,depositDetail:depositDetailView,history:historyView,historyDetail:historyDetailView,about:aboutView,profile:profileView,editnumber:editNumberView,editname:editNameView}[S.tab]||homeView)();  
     nav=`<nav><div>${tabs.map(t=>`<button class="${S.tab==t[0]?'on':''}" onclick="go('${t[0]}')"><span>${t[1]}</span>${t[2]}</button>`).join('')}</div></nav>`;
   }
   document.getElementById('app').innerHTML=topbar()+v+nav+(S.view!=null&&M.exp[S.view]?`<div class="ov" onclick="S.view=null;render()"><img src="${M.exp[S.view].memo}" alt=""></div>`:'')+(S.toast?`<div class="toast">${esc(S.toast)}</div>`:'');
