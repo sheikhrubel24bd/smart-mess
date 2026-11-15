@@ -2692,7 +2692,7 @@ function reportView(){
 
           ${canEdit&&S.taskMenu==t.id?`
             <div class="row">
-              ${!t.isDone?`
+              ${t.createdBy===auth.currentUser.uid&&!t.isDone?`
                 <button class="btn ghost" onclick="editTask('${t.id}')">
                   ✏️ ${T('এডিট','Edit')}
                 </button>
@@ -2742,44 +2742,15 @@ function reportView(){
 }
   async function toggleTask(id,done){
   try{
-    const data=done?{
-      isDone:true,
-      completedBy:auth.currentUser.uid,
-      completedAt:firebase.firestore.FieldValue.serverTimestamp(),
-      deleteAt:null
-    }:{
-      isDone:false,
-      completedBy:null,
-      completedAt:null,
-      deleteAt:null
-    };
-
-    const ref=db.collection('messes').doc(M.id)
-      .collection('tasks');
-
-    await ref.doc(id).update(data);
-
-    if(done){
-      const snapshot=await ref
-        .where('isDone','==',true)
-        .get();
-
-      const completed=snapshot.docs.sort((a,b)=>{
-        const ta=a.data().completedAt?.toMillis()||0;
-        const tb=b.data().completedAt?.toMillis()||0;
-        return tb-ta;
+    await db.collection('messes').doc(M.id)
+      .collection('tasks').doc(id).update({
+        isDone:done,
+        completedBy:done?auth.currentUser.uid:null,
+        completedAt:done
+          ?firebase.firestore.FieldValue.serverTimestamp()
+          :null,
+        deleteAt:null
       });
-
-      if(completed.length>5){
-        const batch=db.batch();
-
-        completed.slice(5).forEach(doc=>{
-          batch.delete(doc.ref);
-        });
-
-        await batch.commit();
-      }
-    }
 
     say(done?'টাস্ক সম্পন্ন হয়েছে।':'টাস্ক আবার চালু হয়েছে।');
 
