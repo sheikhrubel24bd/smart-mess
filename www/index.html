@@ -2621,9 +2621,29 @@ function reportView(){
   </div>
   `;
 }
+function taskView(){
 
- function taskView(){
-  const tasks=M.tasks||[];
+  const allTasks=M.tasks||[];
+
+  const getTaskTime=v=>{
+    if(!v)return 0;
+    if(typeof v.toMillis==='function')return v.toMillis();
+    if(v instanceof Date)return v.getTime();
+
+    const n=Date.parse(v);
+    return Number.isFinite(n)?n:0;
+  };
+
+  const pendingTasks=allTasks.filter(t=>!t.isDone);
+
+  const completedTasks=allTasks
+    .filter(t=>t.isDone)
+    .sort((a,b)=>
+      getTaskTime(b.completedAt)-getTaskTime(a.completedAt)
+    )
+    .slice(0,3);
+
+  const tasks=[...pendingTasks,...completedTasks];
 
   return `
     <h1>📝 ${T('মেসের টাস্ক','Mess Tasks')}</h1>
@@ -2648,67 +2668,101 @@ function reportView(){
     <h3>${T('টাস্কের তালিকা','Task List')}</h3>
 
     ${tasks.length?tasks.map(t=>{
+
       const creator=M.members[M.memberUids.indexOf(t.createdBy)]||'';
       const completer=M.members[M.memberUids.indexOf(t.completedBy)]||'';
 
-      const canEdit=
-        M.role=='admin' ||
-        (t.createdBy===auth.currentUser.uid&&!t.isDone);
+      const isDone=t.isDone===true;
+      const isOwner=t.createdBy===auth.currentUser.uid;
+
+      const canEdit=!isDone&&isOwner;
+
+      const canDelete=
+        !isDone&&(M.role==='admin'||isOwner);
+
+      const completedDate=
+        t.completedAt&&typeof t.completedAt.toDate==='function'
+        ?t.completedAt.toDate().toLocaleString()
+        :t.completedAt instanceof Date
+        ?t.completedAt.toLocaleString()
+        :'';
 
       return `
         <div class="card" style="margin-bottom:10px">
 
           <div class="row" style="justify-content:space-between">
             <b>${esc(t.title||'')}</b>
-            <span>${t.isDone?'✅':'⏳'}</span>
+            <span>${isDone?'✅':'⏳'}</span>
           </div>
 
-          ${t.quantity?`<div class="mut">${T('পরিমাণ','Quantity')}: ${esc(t.quantity)}</div>`:''}
+          ${t.quantity?`
+            <div class="mut">
+              ${T('পরিমাণ','Quantity')}: ${esc(t.quantity)}
+            </div>
+          `:''}
 
-          ${t.note?`<div class="mut">${esc(t.note)}</div>`:''}
+          ${t.note?`
+            <div class="mut">${esc(t.note)}</div>
+          `:''}
 
           <div class="mut" style="font-size:12px;margin-top:8px">
             ${T('যোগ করেছেন','Added by')}: ${esc(creator)}
           </div>
 
-          ${t.isDone?`
+          ${isDone?`
+
             <div class="mut" style="font-size:12px">
               ${T('সম্পন্ন করেছেন','Completed by')}: ${esc(completer)}
             </div>
-            <button class="btn ghost" onclick="toggleTask('${t.id}',false)">
-              ↩️ ${T('আবার চালু করুন','Undo')}
-            </button>
+
+            ${completedDate?`
+              <div class="mut" style="font-size:12px">
+                ${esc(completedDate)}
+              </div>
+            `:''}
+
           `:`
-            <button class="btn" onclick="toggleTask('${t.id}',true)">
+
+            <button class="btn" onclick="toggleTask('${t.id}')">
               ✅ ${T('কাজ শেষ হয়েছে','Mark Completed')}
             </button>
+
           `}
 
-          ${canEdit?`
+          ${canEdit||canDelete?`
             <button class="btn ghost" onclick="taskMenu('${t.id}')">
               ⋮ ${T('আরও','More')}
             </button>
           `:''}
 
-          ${canEdit&&S.taskMenu==t.id?`
+          ${(canEdit||canDelete)&&S.taskMenu==t.id?`
             <div class="row">
-              ${t.createdBy===auth.currentUser.uid&&!t.isDone?`
+
+              ${canEdit?`
                 <button class="btn ghost" onclick="editTask('${t.id}')">
                   ✏️ ${T('এডিট','Edit')}
                 </button>
               `:''}
-              <button class="btn ghost" onclick="deleteTask('${t.id}')">
-                🗑️ ${T('মুছুন','Delete')}
-              </button>
+
+              ${canDelete?`
+                <button class="btn ghost" onclick="deleteTask('${t.id}')">
+                  🗑️ ${T('মুছুন','Delete')}
+                </button>
+              `:''}
+
             </div>
           `:''}
 
         </div>
       `;
-    }).join(''):`<div class="card mut">${T('এখনো কোনো টাস্ক নেই','No tasks yet')}</div>`}
-  `;
-} 
 
+    }).join(''):`<div class="card mut">
+      ${T('এখনো কোনো টাস্ক নেই','No tasks yet')}
+    </div>`}
+
+  `;
+}
+ 
   async function addTask(){
   const title=document.getElementById('taskTitle').value.trim();
   const quantity=document.getElementById('taskQty').value.trim();
