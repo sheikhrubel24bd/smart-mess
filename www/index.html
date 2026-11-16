@@ -2848,22 +2848,52 @@ function taskView(){
   S.taskMenu=S.taskMenu==id?null:id;
   render();
 }
-
 async function deleteTask(id){
-  if(!confirm('এই টাস্কটি মুছে ফেলতে চান?'))return;
 
   try{
-    await db.collection('messes').doc(M.id)
-      .collection('tasks').doc(id).delete();
+
+    const taskRef=db.collection('messes').doc(M.id)
+      .collection('tasks').doc(id);
+
+    const taskSnap=await taskRef.get();
+
+    if(!taskSnap.exists){
+      say('টাস্কটি পাওয়া যায়নি।');
+      return;
+    }
+
+    const task=taskSnap.data();
+
+    if(task.isDone===true){
+      say('সম্পন্ন টাস্ক মুছে ফেলা যাবে না।');
+      return;
+    }
+
+    const isOwner=task.createdBy===auth.currentUser.uid;
+    const isAdmin=M.role==='admin';
+
+    if(!isOwner&&!isAdmin){
+      say('শুধু নিজের টাস্ক অথবা Admin টাস্ক মুছতে পারবেন।');
+      return;
+    }
+
+    if(!confirm('এই টাস্কটি মুছে ফেলতে চান?'))return;
+
+    await taskRef.delete();
 
     S.taskMenu=null;
+
     say('টাস্ক মুছে ফেলা হয়েছে।');
 
   }catch(error){
+
     console.error('DELETE TASK ERROR:',error);
+
     say('টাস্ক মুছে ফেলা যায়নি।');
+
   }
 }
+
 async function editTask(id){
   const t=(M.tasks||[]).find(x=>x.id===id);
   if(!t)return;
