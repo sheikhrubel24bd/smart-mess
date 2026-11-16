@@ -2716,7 +2716,7 @@ function taskView(){
       :'';
 
     return `
-      <div class="task-item">
+      <div class="task-item ${isDone?'done':''}">
 
         <button class="task-check"
           ${isDone?'disabled':`onclick="toggleTask('${t.id}')"`}>
