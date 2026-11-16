@@ -249,6 +249,30 @@ select{border:1.5px solid var(--bd);background:var(--card);color:var(--ink);bord
 .bar{height:8px;background:var(--pri2);border-radius:99px;overflow:hidden}.bar i{display:block;height:100%;background:var(--pri)}
 .thumb{width:96px;height:96px;object-fit:cover;border-radius:10px;border:1px solid var(--bd)}
 .ov{position:fixed;inset:0;background:rgba(0,0,0,.85);display:flex;align-items:center;justify-content:center;z-index:9;padding:16px}.ov img{max-width:100%;max-height:100%;border-radius:10px}
+  /* NEW TASK VIEW DESIGN */
+.task-page{padding-bottom:18px}
+.task-head{display:flex;align-items:center;justify-content:space-between;gap:10px;margin:8px 0 18px}
+.task-heading{display:flex;align-items:center;gap:10px}
+.task-heading-icon{width:44px;height:44px;border-radius:12px;background:#dff2e6;color:#087344;display:grid;place-items:center;font-size:24px}
+.task-heading h2{margin:0;font-size:21px;color:#111}
+.task-subtitle{font-size:12px;color:#444;margin-top:3px}
+.task-add-toggle{border:0;border-radius:25px;background:#d9f2df;color:#087344;padding:10px 13px;font-weight:800;white-space:nowrap}
+.task-form{background:#fff;border:1px solid #b9dfc7;border-radius:16px;padding:14px;margin-bottom:18px}
+.task-section{display:flex;align-items:center;justify-content:space-between;background:#e3f4e9;border-radius:12px;padding:10px 12px;margin:18px 0 10px;font-weight:800;color:#075c36}
+.task-count{background:#168653;color:#fff;border-radius:20px;padding:3px 10px;font-size:12px}
+.task-item{display:grid;grid-template-columns:42px minmax(0,1fr) auto;gap:10px;align-items:center;background:#fff;border:1px solid #b9dfc7;border-radius:15px;padding:12px;margin-bottom:10px;box-shadow:0 2px 5px #0873440d}
+.task-item.done{background:#f0faf3}
+.task-check{width:38px;height:38px;border-radius:50%;display:grid;place-items:center;background:#e4f4e9;color:#087344;font-size:21px}
+.task-info{min-width:0}
+.task-title{font-size:15px;font-weight:800;color:#111;overflow-wrap:anywhere}
+.task-meta{font-size:11px;color:#4b554e;margin-top:5px;line-height:1.5}
+.task-status{font-size:11px;font-weight:800;border-radius:20px;padding:6px 9px;white-space:nowrap}
+.task-status.pending{background:#fff0dc;color:#a85b00}
+.task-status.completed{background:#dff3e5;color:#087344}
+.task-actions{display:flex;gap:7px;flex-wrap:wrap;margin-top:9px}
+.task-actions .btn{width:auto;padding:8px 12px;font-size:13px}
+.task-more{border:0;background:transparent;color:#087344;font-size:22px;padding:3px 7px}
+.task-empty{text-align:center;background:#fff;border:1px dashed #9ac9aa;border-radius:14px;padding:20px;color:#52645a;font-size:14px}
 </style>
 </head>
 <body>
