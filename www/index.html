@@ -2893,47 +2893,74 @@ async function deleteTask(id){
 
   }
 }
-
-async function editTask(id){
-  const t=(M.tasks||[]).find(x=>x.id===id);
-  if(!t)return;
-
-  if(t.createdBy!==auth.currentUser.uid||t.isDone){
-    say('শুধু নিজের অসম্পন্ন টাস্ক এডিট করা যাবে।');
-    return;
-  }
-
-  const title=prompt('টাস্কের নাম:',t.title||'');
-  if(title===null)return;
-
-  if(!title.trim()||title.trim().length>100){
-    say('সঠিক টাস্কের নাম লিখুন।');
-    return;
-  }
-
-  const quantity=prompt('পরিমাণ:',t.quantity||'');
-  if(quantity===null)return;
-
-  const note=prompt('অতিরিক্ত তথ্য:',t.note||'');
-  if(note===null)return;
+ async function editTask(id){
 
   try{
-    await db.collection('messes').doc(M.id)
-      .collection('tasks').doc(id).update({
-        title:title.trim(),
-        quantity:quantity.trim(),
-        note:note.trim()
-      });
+
+    const taskRef=db.collection('messes').doc(M.id)
+      .collection('tasks').doc(id);
+
+    const taskSnap=await taskRef.get();
+
+    if(!taskSnap.exists){
+      say('টাস্কটি পাওয়া যায়নি।');
+      return;
+    }
+
+    const t=taskSnap.data();
+
+    if(t.createdBy!==auth.currentUser.uid||t.isDone===true){
+      say('শুধু নিজের অসম্পন্ন টাস্ক এডিট করা যাবে।');
+      return;
+    }
+
+    const title=prompt('টাস্কের নাম:',t.title||'');
+
+    if(title===null)return;
+
+    if(!title.trim()||title.trim().length>100){
+      say('সঠিক টাস্কের নাম লিখুন।');
+      return;
+    }
+
+    const quantity=prompt('পরিমাণ:',t.quantity||'');
+    if(quantity===null)return;
+
+    const note=prompt('অতিরিক্ত তথ্য:',t.note||'');
+    if(note===null)return;
+
+    // সম্পাদনার আগে আবার যাচাই
+    const latestSnap=await taskRef.get();
+
+    if(!latestSnap.exists||latestSnap.data().isDone===true){
+      say('টাস্কটি ইতিমধ্যে সম্পন্ন হয়েছে।');
+      return;
+    }
+
+    if(latestSnap.data().createdBy!==auth.currentUser.uid){
+      say('শুধু নিজের টাস্ক এডিট করা যাবে।');
+      return;
+    }
+
+    await taskRef.update({
+      title:title.trim(),
+      quantity:quantity.trim(),
+      note:note.trim()
+    });
 
     S.taskMenu=null;
+
     say('টাস্ক এডিট হয়েছে।');
 
   }catch(error){
+
     console.error('EDIT TASK ERROR:',error);
+
     say('টাস্ক এডিট করা যায়নি।');
+
   }
 }
-  
+
 
 function render(){
   document.documentElement.lang=L;
