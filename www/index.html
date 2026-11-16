@@ -725,22 +725,55 @@ const messId=userSnap.data().messId;
       });
 
     // TASK LIVE SYNC
-    window._smartMessTaskUnsub=
-      messRef.collection('tasks').onSnapshot(snapshot=>{
+window._smartMessTaskUnsub=
+  messRef.collection('tasks').onSnapshot(snapshot=>{
 
-        if(!M || M.id!=messId) return;
+    if(!M || M.id!=messId) return;
 
-        M.tasks=snapshot.docs.map(doc=>({
-          id:doc.id,
-          ...doc.data()
-        }));
+    // সব টাস্ক অ্যাপে লোড
+    M.tasks=snapshot.docs.map(doc=>({
+      id:doc.id,
+      ...doc.data()
+    }));
 
-        render();
+    // ৪৮ ঘণ্টা পার হওয়া Completed Task খুঁজে বের করা
+    const now=Date.now();
 
-      },error=>{
-        console.error('TASK SYNC ERROR:',error);
-        say('টাস্ক আপডেট করা যায়নি।');
+    const expiredTasks=snapshot.docs.filter(doc=>{
+
+      const task=doc.data();
+
+      return task.isDone===true
+        && task.deleteAt
+        && typeof task.deleteAt.toDate==='function'
+        && task.deleteAt.toDate().getTime()<=now;
+
+    });
+
+    // মেয়াদ শেষ হওয়া টাস্ক মুছে ফেলা
+    expiredTasks.forEach(doc=>{
+
+      doc.ref.delete().catch(error=>{
+
+        console.error(
+          'TASK CLEANUP ERROR:',
+          doc.id,
+          error
+        );
+
       });
+
+    });
+
+    render();
+
+  },error=>{
+
+    console.error('TASK SYNC ERROR:',error);
+
+    say('টাস্ক আপডেট করা যায়নি।');
+
+  });
 
   }catch(e){
   console.error('AFTER ERROR:',e.code,e.message,e);
