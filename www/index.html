@@ -2794,23 +2794,53 @@ function taskView(){
     say('টাস্ক যোগ করা যায়নি।');
   }
 }
-  async function toggleTask(id,done){
-  try{
-    await db.collection('messes').doc(M.id)
-      .collection('tasks').doc(id).update({
-        isDone:done,
-        completedBy:done?auth.currentUser.uid:null,
-        completedAt:done
-          ?firebase.firestore.FieldValue.serverTimestamp()
-          :null,
-        deleteAt:null
-      });
+  async function toggleTask(id){
 
-    say(done?'টাস্ক সম্পন্ন হয়েছে।':'টাস্ক আবার চালু হয়েছে।');
+  try{
+
+    const taskRef=db.collection('messes').doc(M.id)
+      .collection('tasks').doc(id);
+
+    const taskSnap=await taskRef.get();
+
+    if(!taskSnap.exists){
+      say('টাস্কটি পাওয়া যায়নি।');
+      return;
+    }
+
+    const task=taskSnap.data();
+
+    if(task.isDone===true){
+      say('এই টাস্কটি ইতিমধ্যে সম্পন্ন হয়েছে।');
+      return;
+    }
+
+    const now=new Date();
+
+    const deleteAt=new Date(
+      now.getTime()+(48*60*60*1000)
+    );
+
+    await taskRef.update({
+
+      isDone:true,
+
+      completedBy:auth.currentUser.uid,
+
+      completedAt:firebase.firestore.Timestamp.fromDate(now),
+
+      deleteAt:firebase.firestore.Timestamp.fromDate(deleteAt)
+
+    });
+
+    say('টাস্ক সম্পন্ন হয়েছে।');
 
   }catch(error){
+
     console.error('TASK UPDATE ERROR:',error);
+
     say('টাস্ক আপডেট করা যায়নি।');
+
   }
 }
   
