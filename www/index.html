@@ -362,6 +362,30 @@ select{border:1.5px solid var(--bd);background:var(--card);color:var(--ink);bord
   white-space:nowrap;
 }
 .task-empty{text-align:center;background:#fff;border:1px dashed #9ac9aa;border-radius:14px;padding:20px;color:#52645a;font-size:14px}
+  @media(max-width:480px){
+  .task-head{
+    align-items:flex-start;
+  }
+
+  .task-item{
+    grid-template-columns:38px minmax(0,1fr) auto;
+    gap:8px;
+    padding:10px;
+  }
+
+  .task-title{
+    font-size:14px;
+  }
+
+  .task-status{
+    font-size:10px;
+    padding:5px 7px;
+  }
+
+  .task-actions .row{
+    right:0;
+  }
+}
 </style>
 </head>
 <body>
