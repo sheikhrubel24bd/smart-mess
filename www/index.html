@@ -370,16 +370,36 @@ select{border:1.5px solid var(--bd);background:var(--card);color:var(--ink);bord
  .task-count{background:#168653;color:#fff;border-radius:20px;padding:3px 10px;font-size:12px}
 .task-item{
   display:grid;
-  grid-template-columns:42px minmax(0,1fr) auto;
-  align-items:center;
-  gap:10px;
-  padding:12px;
-  margin-bottom:10px;
+  grid-template-columns:38px minmax(0,1fr) auto;
+  align-items:start;
+  gap:8px;
+  padding:9px 10px;
+  margin-bottom:7px;
   background:#fff;
   border:1px solid #c6e3ce;
-  border-radius:14px;
+  border-radius:12px;
+  position:relative;
 }
-  .task-item.done{background:#f0faf3}
+.task-item.done{
+  background:#f0faf3;
+}
+.task-item > .task-status{
+  grid-column:3;
+  grid-row:1;
+  margin:0;
+  align-self:start;
+  white-space:nowrap;
+  font-size:10px;
+  padding:4px 7px;
+}
+.task-item > .task-info{
+  grid-column:2;
+  grid-row:1;
+}
+.task-item > .task-actions{
+  grid-column:3;
+  grid-row:2;
+}
 .task-check{width:38px;height:38px;border-radius:50%;display:grid;place-items:center;background:#e4f4e9;color:#087344;font-size:21px}
   .task-check{
   border:2px solid #168653;
@@ -2963,12 +2983,12 @@ function taskView(){
             `:''}
           `:''}
 
-          <span class="task-status ${isDone?'completed':'pending'}">
-            ${isDone?T('সম্পন্ন','Completed'):T('অসম্পন্ন','Pending')}
-          </span>
+          
 
         </div>
-
+         <span class="task-status ${isDone?'completed':'pending'}">
+  ${isDone?T('সম্পন্ন','Completed'):T('অসম্পন্ন','Pending')}
+</span>
         ${canEdit||canDelete?`
           <div class="task-actions">
             <button class="task-more" onclick="taskMenu('${t.id}')">⋮</button>
