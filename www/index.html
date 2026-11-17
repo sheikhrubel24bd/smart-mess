@@ -3434,7 +3434,7 @@ auth.onAuthStateChanged(async user=>{
   hideSplash();
 }
 });
-const App = window.Capacitor?.Plugins?.App;
+const App = window.SmartMessApp;
 
 if(App){
  App.addListener('backButton',()=>{
