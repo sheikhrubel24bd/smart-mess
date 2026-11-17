@@ -15,10 +15,10 @@ jobs:
         with:
           distribution: temurin
           java-version: 17
-      - name: Install dependencies
+            - name: Install dependencies
         run: npm install
-        - name: Bundle Capacitor App Plugin
-  run: npx --yes esbuild@0.24.2 www/app-plugin.js --bundle --format=iife --outfile=www/app-plugin.bundle.js
+      - name: Bundle Capacitor App Plugin
+        run: npx --yes esbuild@0.24.2 www/app-plugin.js --bundle --format=iife --outfile=www/app-plugin.bundle.js
       - name: Create Android project
         run: npx cap add android
       - name: Prepare app icon source
