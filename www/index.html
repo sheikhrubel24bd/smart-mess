@@ -3443,9 +3443,13 @@ if(App){
    return;
   }
 
-  if(confirm('আপনি কি Smart Mess অ্যাপ থেকে বের হতে চান?')){
+  const exitMsg = L === 'bn'
+ ? 'আপনি কি Smart Mess অ্যাপ থেকে বের হতে চান?'
+ : 'Do you want to exit Smart Mess?';
+
+if(confirm(exitMsg)){
    App.exitApp();
-  }
+}
  });
 } 
 </script>
