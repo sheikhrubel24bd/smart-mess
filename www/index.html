@@ -574,6 +574,7 @@ const mny=n=>cs()+fmt(n);
 const dt=d=>new Date(d).toLocaleString(L=='bn'?'bn-BD':'en-GB',{day:'numeric',month:'short',hour:'numeric',minute:'2-digit',hour12:true});
 let REG=[],M=null;
  let S={screen:'auth',user:null,cur:'BDT',astep:'start',amode:'login',cc:'+880',ph:'',otp:'',via:'phone',memo:null,view:null,tab:'home',type:'meal',name:'',members:[],item:null,amt:'',payer:0,expSource:'pocket',toast:'',jcode:'',found:null,pend:null,historyDetail:null};
+  let NAV_HISTORY=[];
 function mk(name,type,members,cur){
   let code;do code='SM-'+(1000+Math.floor(Math.random()*9000));while(REG.some(m=>m.code==code));
   const m={code,name,type,members,cur:cur||'BDT',me:0,meals:{},exp:[],reqs:[]};REG.push(m);return m;
@@ -643,9 +644,58 @@ function say(t){
     render();
   },3000);
 }
-function go(t){S.tab=t;S.item=null;render();window.scrollTo(0,0)}
+function saveNavHistory(){
+  NAV_HISTORY.push({
+    screen:S.screen,
+    tab:S.tab,
+    item:S.item,
+    view:S.view
+  });
+
+  if(NAV_HISTORY.length>50){
+    NAV_HISTORY.shift();
+  }
+}
+
+function go(t){
+  if(S.screen=='app'&&S.tab==t)return;
+
+  saveNavHistory();
+  S.tab=t;
+  S.item=null;
+  render();
+  window.scrollTo(0,0);
+}
+
 function tl(){L=L=='bn'?'en':'bn';render()}
-function to(s){S.screen=s;S.found=null;S.pend=null;render();window.scrollTo(0,0)}
+
+function to(s){
+  if(S.screen==s)return;
+
+  saveNavHistory();
+  S.screen=s;
+  S.found=null;
+  S.pend=null;
+  render();
+  window.scrollTo(0,0);
+}
+  function goBack(fallback){
+ const prev=NAV_HISTORY.pop();
+ if(prev){
+  S.screen=prev.screen;
+  S.tab=prev.tab;
+  S.item=prev.item;
+  S.view=prev.view;
+  render();
+  window.scrollTo(0,0);
+  return;
+ }
+ if(fallback){
+  S.tab=fallback;
+  render();
+  window.scrollTo(0,0);
+ }
+}
 
 function topbar(){
   const app=S.screen=='app';
@@ -661,7 +711,7 @@ function topbar(){
 
   return `<div class="top">
     ${app&&backTo?`
-      <button class="x" onclick="go('${backTo}')" aria-label="Back">←</button>
+      <button class="x" onclick="goBack('${backTo}')" aria-label="Back">←</button>
     `:''}
     <span class="sp"></span>
     ${app?`<button class="bell" onclick="go('req')" aria-label="${T('নোটিফিকেশন','Notifications')}">🔔${p?`<i>${bn(p)}</i>`:''}</button>`:''}
@@ -3383,6 +3433,20 @@ auth.onAuthStateChanged(async user=>{
   hideSplash();
 }
 });
+const App = window.Capacitor?.Plugins?.App;
+
+if(App){
+ App.addListener('backButton',()=>{
+  if(NAV_HISTORY.length){
+   goBack();
+   return;
+  }
+
+  if(confirm('আপনি কি Smart Mess অ্যাপ থেকে বের হতে চান?')){
+   App.exitApp();
+  }
+ });
+} 
 </script>
 </body>
 </html>
