@@ -307,6 +307,66 @@ select{border:1.5px solid var(--bd);background:var(--card);color:var(--ink);bord
   margin:20px 0;
   color:#075c36;
 }
+  /* PENDING TASK SECTION */
+.pending-section{
+  background:#fffaf2;
+  border:1px solid #f0d7ad;
+  border-left:4px solid #e9a23b;
+  border-radius:16px;
+  padding:12px;
+  margin:20px 0;
+}
+
+.pending-section > .task-heading{
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  background:#fff0dc;
+  color:#925000;
+  border-radius:10px;
+  padding:11px 12px;
+  margin-bottom:12px;
+}
+
+/* COMPLETED TASK SECTION */
+.completed-section{
+  background:#f3fbf5;
+  border:1px solid #b9dfc7;
+  border-left:4px solid #168653;
+  border-radius:16px;
+  padding:12px;
+  margin:20px 0;
+}
+
+.completed-section > .task-heading{
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  background:#dff3e5;
+  color:#087344;
+  border-radius:10px;
+  padding:11px 12px;
+  margin-bottom:12px;
+}
+
+/* SECTION TITLES */
+.task-section > .task-heading h3{
+  margin:0;
+  font-size:15px;
+  font-weight:800;
+}
+
+/* TASK COUNTS */
+.task-section .task-count{
+  min-width:22px;
+  text-align:center;
+  padding:4px 10px;
+}
+
+/* EMPTY MESSAGE */
+.task-section .task-empty{
+  margin-top:8px;
+}
  .task-count{background:#168653;color:#fff;border-radius:20px;padding:3px 10px;font-size:12px}
 .task-item{display:grid;grid-template-columns:42px minmax(0,1fr) auto;gap:10px;align-items:center;background:#fff;border:1px solid #b9dfc7;border-radius:15px;padding:12px;margin-bottom:10px;box-shadow:0 2px 5px #0873440d}
 .task-item.done{background:#f0faf3}
