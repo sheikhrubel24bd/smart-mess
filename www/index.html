@@ -2968,10 +2968,6 @@ function taskView(){
             </div>
           `:''}
 
-          ${t.note?`
-            <div class="task-meta">${esc(t.note)}</div>
-          `:''}
-
           <div class="task-meta">
             ${T('যোগ করেছেন','Added by')}: ${esc(creator)}
           </div>
@@ -3039,9 +3035,6 @@ function taskView(){
         <input id="taskQty"
           placeholder="${T('পরিমাণ (ঐচ্ছিক)','Quantity (optional)')}">
 
-        <input id="taskNote"
-          placeholder="${T('অতিরিক্ত তথ্য (ঐচ্ছিক)','Additional note (optional)')}">
-
         <button class="task-add-toggle" onclick="addTask()">
           + ${T('নতুন টাস্ক যোগ করুন','Add New Task')}
         </button>
@@ -3078,8 +3071,7 @@ function taskView(){
   async function addTask(){
   const title=document.getElementById('taskTitle').value.trim();
   const quantity=document.getElementById('taskQty').value.trim();
-  const note=document.getElementById('taskNote').value.trim();
-
+  
   if(!title){
     say('টাস্কের নাম লিখুন।');
     return;
@@ -3090,7 +3082,6 @@ function taskView(){
       .collection('tasks').add({
         title,
         quantity,
-        note,
         createdBy:auth.currentUser.uid,
         createdAt:firebase.firestore.FieldValue.serverTimestamp(),
         isDone:false,
