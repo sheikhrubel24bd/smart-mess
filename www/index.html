@@ -2603,8 +2603,7 @@ async function removeMember(i){
       const messSnap=await tx.get(messRef);
       const adminSnap=await tx.get(adminRef);
       const targetSnap=await tx.get(targetRef);
-      const userSnap=await tx.get(userRef);
-
+      
       if(!messSnap.exists ||
          messSnap.data().adminUid!==currentUid ||
          !adminSnap.exists ||
@@ -2613,11 +2612,9 @@ async function removeMember(i){
         throw new Error('NOT_ADMIN');
 
       if(!targetSnap.exists ||
-         targetSnap.data().role!=='member' ||
-         targetSnap.data().status!=='active' ||
-         !userSnap.exists ||
-         userSnap.data().messId!==M.id)
-        throw new Error('INVALID_MEMBER');
+   targetSnap.data().role!=='member' ||
+   targetSnap.data().status!=='active')
+  throw new Error('INVALID_MEMBER');
 
       // পুরোনো সদস্যের রেকর্ড থাকবে, শুধু Status পরিবর্তন হবে
       tx.update(targetRef,{
