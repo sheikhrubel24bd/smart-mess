@@ -2492,6 +2492,10 @@ async function transferAdmin(i){
           <div style="padding:13px 0;border-bottom:1px solid var(--line)">
             <b>${i+1}. ${esc(m.name||'নাম নেই')}</b>
 
+            <div style="margin-top:7px;color:var(--green);font-weight:600">
+  ${T('মোট খাবার','Total Meals')}: ${Number(m.meals)||0}
+</div>
+
             <div class="mut" style="margin-top:7px">
               ${T('যোগদানের তারিখ','Joined')}:
               ${m.joinedAt?.toDate?m.joinedAt.toDate().toLocaleDateString():T('তথ্য নেই','Not available')}
