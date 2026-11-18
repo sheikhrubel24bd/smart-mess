@@ -2287,6 +2287,7 @@ function historyView(){
     <div style="padding:5px 0">
       ${row('👤',T('প্রোফাইল এডিট','Edit Profile'),"go('profile')")}
       ${row('👥',T('সদস্য তালিকা','Member List'),"go('members')")}
+      ${M.role=='admin'?row('📋',T('সাবেক সদস্য','Former Members'),'loadFormerMembers()'):''}
       ${row('💰',T('ডিপোজিট ম্যানেজমেন্ট','Deposit Management'),"go('deposits')")}
       ${row('📊',T('মাসিক রিপোর্ট','Monthly Report'),"go('rep')")}
       ${row('📚',T('আগের হিসাব','History'),'openHistory()')}
@@ -2393,11 +2394,283 @@ function historyView(){
     </div>
   `;
 }
+  // Adminship transfer
+async function transferAdmin(i){
+  if(!M || M.role !== 'admin')
+    return say('শুধু Admin এই কাজ করতে পারবেন।');
+
+  const currentUid=auth.currentUser.uid;
+  const targetUid=M.memberUids[i];
+  const targetName=M.members[i];
+
+  if(!targetUid || targetUid===currentUid)
+    return;
+
+  if(!confirm(T(
+    targetName+'-কে কি নতুন Admin করতে চান?',
+    'Transfer Admin rights to '+targetName+'?'
+  ))) return;
+
+  try{
+    const messRef=db.collection('messes').doc(M.id);
+    const oldRef=messRef.collection('members').doc(currentUid);
+    const newRef=messRef.collection('members').doc(targetUid);
+
+    await db.runTransaction(async tx=>{
+      const messSnap=await tx.get(messRef);
+      const oldSnap=await tx.get(oldRef);
+      const newSnap=await tx.get(newRef);
+
+      if(!messSnap.exists ||
+         messSnap.data().adminUid!==currentUid ||
+         !oldSnap.exists ||
+         oldSnap.data().role!=='admin' ||
+         oldSnap.data().status!=='active')
+        throw new Error('NOT_ADMIN');
+
+      if(!newSnap.exists ||
+         newSnap.data().role!=='member' ||
+         newSnap.data().status!=='active')
+        throw new Error('INVALID_MEMBER');
+
+      tx.update(messRef,{
+        adminUid:targetUid
+      });
+
+      tx.update(oldRef,{
+        role:'member'
+      });
+
+      tx.update(newRef,{
+        role:'admin'
+      });
+    });
+
+    M.role='member';
+    M.adminUid=targetUid;
+
+    say(T(
+      'Adminship সফলভাবে হস্তান্তর হয়েছে।',
+      'Admin rights transferred successfully.'
+    ));
+
+    render();
+
+  }catch(e){
+    console.error('ADMIN TRANSFER ERROR:',e);
+    say(T(
+      'Admin পরিবর্তন করা যায়নি: '+(e.message||e.code),
+      'Admin transfer failed: '+(e.message||e.code)
+    ));
+  }
+}
+
+ function formerMembersView(){
+  const list=M.formerMembers||[];
+
+  return `
+    <h1>📋 ${T('সাবেক সদস্য','Former Members')}</h1>
+
+    <div class="card" style="margin-top:12px">
+      ${list.length?list.map((m,i)=>{
+
+        const deposits=(M.deposits||[])
+          .filter(d=>d.uid===m.uid);
+
+        const totalDeposit=deposits.reduce(
+          (s,d)=>s+(Number(d.amt)||0),0
+        );
+
+        const personalExpenses=(M.exp||[])
+          .filter(e=>e.payerUid===m.uid && e.source==='pocket');
+
+        const totalExpense=personalExpenses.reduce(
+          (s,e)=>s+(Number(e.amt)||0),0
+        );
+
+        return `
+          <div style="padding:13px 0;border-bottom:1px solid var(--line)">
+            <b>${i+1}. ${esc(m.name||'নাম নেই')}</b>
+
+            <div class="mut" style="margin-top:7px">
+              ${T('যোগদানের তারিখ','Joined')}:
+              ${m.joinedAt?.toDate?m.joinedAt.toDate().toLocaleDateString():T('তথ্য নেই','Not available')}
+            </div>
+
+            <div class="mut" style="margin-top:5px">
+              ${T('ছাড়ার তারিখ','Left')}:
+              ${m.leftAt?.toDate?m.leftAt.toDate().toLocaleDateString():T('তথ্য নেই','Not available')}
+            </div>
+
+            <div style="margin-top:10px;color:var(--green);font-weight:600">
+              ${T('মোট জমা','Total Deposit')}: ${totalDeposit.toFixed(2)} ${M.cur}
+            </div>
+
+            <div style="margin-top:5px;font-weight:600">
+              ${T('নিজের পকেট থেকে খরচ','Personal Expenses')}: ${totalExpense.toFixed(2)} ${M.cur}
+            </div>
+          </div>
+        `;
+      }).join(''):`<p class="mut">${T('কোনো সাবেক সদস্য নেই','No former members')}</p>`}
+    </div>
+  `;
+} 
+
+// সাবেক সদস্যদের তালিকা ও মোট মিল লোড
+async function loadFormerMembers(){
+  if(!M || M.role!=='admin') return;
+
+  try{
+    const messRef=db.collection('messes').doc(M.id);
+
+    const [membersSnap,mealsSnap,historySnap]=await Promise.all([
+      messRef.collection('members')
+        .where('status','==','left')
+        .get(),
+
+      messRef.collection('mealCounts').get(),
+
+      messRef.collection('history').get()
+    ]);
+
+    // প্রত্যেক সদস্যের মোট মিল
+    const mealTotals={};
+
+    // বর্তমান হিসাবের মিল যোগ
+    mealsSnap.docs.forEach(doc=>{
+      mealTotals[doc.id]=
+        (mealTotals[doc.id]||0)+
+        (Number(doc.data().count)||0);
+    });
+
+    // Reset করা পুরোনো History-র মিল যোগ
+    const oldHistory=historySnap.docs
+      .filter(doc=>doc.data().status==='complete');
+
+    const oldMealSnaps=await Promise.all(
+      oldHistory.map(doc=>
+        doc.ref.collection('mealCounts').get()
+      )
+    );
+
+    oldMealSnaps.forEach(snap=>{
+      snap.docs.forEach(doc=>{
+        mealTotals[doc.id]=
+          (mealTotals[doc.id]||0)+
+          (Number(doc.data().count)||0);
+      });
+    });
+
+    M.formerMembers=membersSnap.docs.map(doc=>({
+      uid:doc.id,
+      ...doc.data(),
+      meals:mealTotals[doc.id]||0
+    }));
+
+    S.tab='formerMembers';
+    render();
+
+  }catch(e){
+    console.error('FORMER MEMBERS ERROR:',e);
+    say('সাবেক সদস্যদের তালিকা লোড করা যায়নি।');
+  }
+}
+// Remove member from mess
+async function removeMember(i){
+  if(!M || M.role!=='admin')
+    return say('শুধু Admin এই কাজ করতে পারবেন।');
+
+  const currentUid=auth.currentUser.uid;
+  const targetUid=M.memberUids[i];
+  const targetName=M.members[i];
+
+  if(!targetUid || targetUid===currentUid)
+    return;
+
+  if(!confirm(T(
+    'আপনি কি '+targetName+'-কে মেস থেকে বিদায় দিতে চান? তার পুরোনো হিসাব সংরক্ষিত থাকবে।',
+    'Remove '+targetName+' from the mess? Their old accounting records will be preserved.'
+  ))) return;
+
+  try{
+    const messRef=db.collection('messes').doc(M.id);
+    const adminRef=messRef.collection('members').doc(currentUid);
+    const targetRef=messRef.collection('members').doc(targetUid);
+    const userRef=db.collection('users').doc(targetUid);
+
+    await db.runTransaction(async tx=>{
+      const messSnap=await tx.get(messRef);
+      const adminSnap=await tx.get(adminRef);
+      const targetSnap=await tx.get(targetRef);
+      const userSnap=await tx.get(userRef);
+
+      if(!messSnap.exists ||
+         messSnap.data().adminUid!==currentUid ||
+         !adminSnap.exists ||
+         adminSnap.data().role!=='admin' ||
+         adminSnap.data().status!=='active')
+        throw new Error('NOT_ADMIN');
+
+      if(!targetSnap.exists ||
+         targetSnap.data().role!=='member' ||
+         targetSnap.data().status!=='active' ||
+         !userSnap.exists ||
+         userSnap.data().messId!==M.id)
+        throw new Error('INVALID_MEMBER');
+
+      // পুরোনো সদস্যের রেকর্ড থাকবে, শুধু Status পরিবর্তন হবে
+      tx.update(targetRef,{
+        status:'left',
+        leftAt:firebase.firestore.FieldValue.serverTimestamp()
+      });
+
+      // সদস্যের Account অন্য মেসে যোগ দেওয়ার জন্য মুক্ত হবে
+      tx.update(userRef,{
+        messId:null
+      });
+    });
+
+    // Active সদস্যদের তালিকা নতুন করে লোড
+    const snap=await messRef.collection('members')
+      .where('status','==','active')
+      .get();
+
+    M.memberUids=snap.docs.map(d=>d.id);
+    M.members=snap.docs.map(d=>d.data().name);
+    M.memberPhones=snap.docs.map(d=>d.data().phone||'');
+    M.me=M.memberUids.indexOf(currentUid);
+
+    say(T(
+      'সদস্যকে সফলভাবে বিদায় দেওয়া হয়েছে। পুরোনো হিসাব সংরক্ষিত আছে।',
+      'Member removed successfully. Previous records are preserved.'
+    ));
+
+    render();
+
+  }catch(e){
+    console.error('REMOVE MEMBER ERROR:',e);
+    say(T(
+      'সদস্যকে বিদায় দেওয়া যায়নি: '+(e.message||e.code),
+      'Could not remove member: '+(e.message||e.code)
+    ));
+  }
+}
   function openMemberDeposit(i){
   S.depositMemberIndex=i;
   S.tab='depositDetail';
   render();
   window.scrollTo(0,0);
+}
+  function toggleMemberMenu(i){
+  const menu=document.getElementById('member-menu-'+i);
+  if(!menu)return;
+
+  const isOpen=menu.style.display==='block';
+
+  document.querySelectorAll('.member-action-menu')
+    .forEach(el=>el.style.display='none');
+
+  menu.style.display=isOpen?'none':'block';
 }
   function memberListView(){
   return `
@@ -2406,16 +2679,49 @@ function historyView(){
     <div class="card" style="margin-top:12px">
       ${M.members.map((name,i)=>{
         const phone=(M.memberPhones&&M.memberPhones[i])||'';
+        const uid=M.memberUids[i];
 
         const deposit=M.deposits
-          .filter(d=>d.uid===M.memberUids[i])
+          .filter(d=>d.uid===uid)
           .reduce((sum,d)=>sum+(Number(d.amt)||0),0);
+
+        const canManage=
+          M.role==='admin' &&
+          uid!==auth.currentUser.uid;
 
         return `
           <div style="padding:12px 0;border-bottom:1px solid var(--bd)">
-            <b onclick="openMemberDeposit(${i})" style="cursor:pointer">
-  ${i+1}. ${esc(name)}
-</b>
+
+            <div style="display:flex;align-items:center;justify-content:space-between;gap:8px">
+
+              <b onclick="openMemberDeposit(${i})" style="cursor:pointer">
+                ${i+1}. ${esc(name)}
+              </b>
+
+              ${canManage?`
+                <button class="btn" style="padding:4px 10px"
+                  onclick="toggleMemberMenu(${i})">⋮</button>
+              `:''}
+            </div>
+
+            ${canManage?`
+              <div id="member-menu-${i}" class="member-action-menu"
+                style="display:none;margin-top:8px;text-align:right">
+
+                <button class="btn"
+                  style="margin:3px"
+                  onclick="removeMember(${i})">
+                  ${T('মেস থেকে বিদায়','Remove from mess')}
+                </button>
+
+                <button class="btn"
+                  style="margin:3px"
+                  onclick="transferAdmin(${i})">
+                  ${T('এডমিনশিপ হস্তান্তর','Transfer adminship')}
+                </button>
+
+              </div>
+            `:''}
 
             <div class="mut" style="margin-top:5px">
               📞 ${phone?esc(phone):T('নম্বর দেওয়া হয়নি','No phone number')}
@@ -2425,6 +2731,7 @@ function historyView(){
               💰 ${T('মোট জমা','Total Deposit')}:
               ${deposit.toFixed(2)} ${M.cur}
             </div>
+
           </div>
         `;
       }).join('')}
@@ -3322,7 +3629,7 @@ function render(){
   if(S.screen=='auth')v=authView();else if(S.screen=='welcome')v=welcomeView();else if(S.screen=='create')v=createView();else if(S.screen=='join')v=joinView();
   else{
       const tabs=[['home','🏠',T('হোম','Home')],['add','➕',T('খরচ যোগ','Add')],['expenses','🧾',T('খরচের তালিকা','Expenses')],['task','📝',T('টাস্ক','Tasks')]].concat(M.type=='meal'?[['meal','🍽️',T('মিল','Meals')]]:[]);   
-     v=({home:homeView,add:addView,meal:mealView,rep:reportView,task:taskView,req:reqView,expenses:expenseListView,members:memberListView,settings:settingsView,deposits:depositView,depositDetail:depositDetailView,history:historyView,historyDetail:historyDetailView,about:aboutView,profile:profileView,editnumber:editNumberView,editname:editNameView}[S.tab]||homeView)();  
+      v=({home:homeView,add:addView,meal:mealView,rep:reportView,task:taskView,req:reqView,expenses:expenseListView,members:memberListView,settings:settingsView,deposits:depositView,depositDetail:depositDetailView,history:historyView,historyDetail:historyDetailView,formerMembers:formerMembersView,about:aboutView,profile:profileView,editnumber:editNumberView,editname:editNameView}[S.tab]||homeView)();   
     nav=`<nav><div>${tabs.map(t=>`<button class="${S.tab==t[0]?'on':''}" onclick="go('${t[0]}')"><span>${t[1]}</span>${t[2]}</button>`).join('')}</div></nav>`;
   }
   document.getElementById('app').innerHTML=topbar()+v+nav+(S.view!=null&&M.exp[S.view]?`<div class="ov" onclick="S.view=null;render()"><img src="${M.exp[S.view].memo}" alt=""></div>`:'')+(S.toast?`<div class="toast">${esc(S.toast)}</div>`:'');
