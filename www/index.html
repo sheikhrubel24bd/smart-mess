@@ -2519,8 +2519,7 @@ async function transferAdmin(i){
     </div>
   `;
 } 
-
-// সাবেক সদস্যদের তালিকা ও মোট মিল লোড
+// সাবেক সদস্যদের তালিকা ও সর্বমোট মিল লোড
 async function loadFormerMembers(){
   if(!M || M.role!=='admin') return;
 
@@ -2540,31 +2539,28 @@ async function loadFormerMembers(){
     // প্রত্যেক সদস্যের মোট মিল
     const mealTotals={};
 
-    // বর্তমান হিসাবের মিল যোগ
+    // বর্তমান মাসের মিল যোগ
     mealsSnap.docs.forEach(doc=>{
       mealTotals[doc.id]=
         (mealTotals[doc.id]||0)+
         (Number(doc.data().count)||0);
     });
 
-    // Reset করা পুরোনো History-র মিল যোগ
-    const oldHistory=historySnap.docs
-      .filter(doc=>doc.data().status==='complete');
+    // সব পুরোনো History-র মিল যোগ
+    historySnap.docs.forEach(doc=>{
+      const records=doc.data().mealRecords||[];
 
-    const oldMealSnaps=await Promise.all(
-      oldHistory.map(doc=>
-        doc.ref.collection('mealCounts').get()
-      )
-    );
+      records.forEach(r=>{
+        const uid=r.uid||r.id;
+        if(!uid) return;
 
-    oldMealSnaps.forEach(snap=>{
-      snap.docs.forEach(doc=>{
-        mealTotals[doc.id]=
-          (mealTotals[doc.id]||0)+
-          (Number(doc.data().count)||0);
+        mealTotals[uid]=
+          (mealTotals[uid]||0)+
+          (Number(r.count)||0);
       });
     });
 
+    // সাবেক সদস্যদের তথ্য তৈরি
     M.formerMembers=membersSnap.docs.map(doc=>({
       uid:doc.id,
       ...doc.data(),
@@ -2579,6 +2575,7 @@ async function loadFormerMembers(){
     say('সাবেক সদস্যদের তালিকা লোড করা যায়নি।');
   }
 }
+
 // Remove member from mess
 async function removeMember(i){
   if(!M || M.role!=='admin')
