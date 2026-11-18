@@ -1436,24 +1436,34 @@ async function decide(i,ok){
         throw new Error('NOT_ADMIN');
 
       if(ok){
-        
-
-        
-
-        if(memberSnap.exists)
-          throw new Error('MEMBER_EXISTS');
-
         const data=requestSnap.data();
 
-        tx.set(memberRef,{
-          uid:r.uid,
-          name:data.name,
-          email:data.email,
-          phone:data.phone||'',
-          role:'member',
-          status:'active',
-          joinedAt:firebase.firestore.FieldValue.serverTimestamp()
-        });
+const memberData={
+  uid:r.uid,
+  name:data.name,
+  email:data.email,
+  phone:data.phone||'',
+  role:'member',
+  status:'active',
+  joinedAt:firebase.firestore.FieldValue.serverTimestamp()
+};
+
+if(memberSnap.exists){
+  if(memberSnap.data().status!=='left')
+    throw new Error('MEMBER_EXISTS');
+
+  tx.update(memberRef,{
+  name:data.name,
+  email:data.email,
+  phone:data.phone||'',
+  role:'member',
+  status:'active',
+  rejoinedAt:firebase.firestore.FieldValue.serverTimestamp()
+});
+
+}else{
+  tx.set(memberRef,memberData);
+}
 
         tx.update(userRef,{
           messId:messId
