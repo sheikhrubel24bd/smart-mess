@@ -931,6 +931,7 @@ const messId=userSnap.data().messId;
       memberPhones:memberPhones,
       me:memberUids.indexOf(uid),
       meals:{},
+      mealCountsByUid:{},
       deposits:[],
       exp:[],
       reqs:requestsSnap.docs.map(d=>{
