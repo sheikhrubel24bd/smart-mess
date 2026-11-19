@@ -2771,15 +2771,25 @@ async function removeMember(i){
       });
     });
 
-    // Active সদস্যদের তালিকা নতুন করে লোড
-    const snap=await messRef.collection('members')
-      .where('status','==','active')
-      .get();
+    // Active ও সব সদস্যের তালিকা নতুন করে লোড
+const [snap,allMembersSnap]=await Promise.all([
+  messRef.collection('members')
+    .where('status','==','active').get(),
+  messRef.collection('members').get()
+]);
 
-    M.memberUids=snap.docs.map(d=>d.id);
-    M.members=snap.docs.map(d=>d.data().name);
-    M.memberPhones=snap.docs.map(d=>d.data().phone||'');
-    M.me=M.memberUids.indexOf(currentUid);
+M.memberUids=snap.docs.map(d=>d.id);
+M.members=snap.docs.map(d=>d.data().name);
+M.memberPhones=snap.docs.map(d=>d.data().phone||'');
+M.me=M.memberUids.indexOf(currentUid);
+
+M.allMembers=allMembersSnap.docs.map(d=>({
+  uid:d.id,
+  name:d.data().name,
+  status:d.data().status,
+  joinedAt:d.data().joinedAt,
+  leftAt:d.data().leftAt||null
+}));
 
     say(T(
       'সদস্যকে সফলভাবে বিদায় দেওয়া হয়েছে। পুরোনো হিসাব সংরক্ষিত আছে।',
