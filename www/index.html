@@ -1002,14 +1002,19 @@ const messId=userSnap.data().messId;
         if(!M || M.id!=messId) return;
 
         M.meals={};
+M.mealCountsByUid={};
 
-        snapshot.docs.forEach(doc=>{
-          const i=memberUids.indexOf(doc.id);
+snapshot.docs.forEach(doc=>{
+  const count=Number(doc.data().count)||0;
 
-          if(i>=0){
-            M.meals[i]=Number(doc.data().count)||0;
-          }
-        });
+  M.mealCountsByUid[doc.id]=count;
+
+  const i=memberUids.indexOf(doc.id);
+
+  if(i>=0){
+    M.meals[i]=count;
+  }
+});
 
         render();
 
