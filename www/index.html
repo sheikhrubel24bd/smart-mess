@@ -1749,7 +1749,9 @@ function whoBlock(c){
       'You have left the mess. Your previous records are preserved.'
     ));
 
-    await auth.signOut();
+    // লগআউট না করে একই অ্যাকাউন্টে মেস নির্বাচন/তৈরির পেজে ফিরুন।
+    S.leavingMess=false;
+    await after();
 
   }catch(e){
     console.error('LEAVE MESS ERROR:',e);
