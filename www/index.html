@@ -1585,10 +1585,28 @@ if(memberSnap.exists){
 
     r.s=ok?'a':'r';
 
-    if(ok){
-      M.members.push(r.name);
-      M.memberUids.push(r.uid);
-    }
+if(ok){
+  const messRef=db.collection('messes').doc(M.id);
+
+  const [activeSnap,allMembersSnap]=await Promise.all([
+    messRef.collection('members')
+      .where('status','==','active').get(),
+    messRef.collection('members').get()
+  ]);
+
+  M.memberUids=activeSnap.docs.map(d=>d.id);
+  M.members=activeSnap.docs.map(d=>d.data().name);
+  M.memberPhones=activeSnap.docs.map(d=>d.data().phone||'');
+  M.me=M.memberUids.indexOf(uid);
+
+  M.allMembers=allMembersSnap.docs.map(d=>({
+    uid:d.id,
+    name:d.data().name,
+    status:d.data().status,
+    joinedAt:d.data().joinedAt,
+    leftAt:d.data().leftAt||null
+  }));
+}
 
     say(ok?'মেম্বার সফলভাবে যোগ হয়েছে।':'অনুরোধ বাতিল হয়েছে।');
     render();
