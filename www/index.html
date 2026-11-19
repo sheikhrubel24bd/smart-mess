@@ -3214,6 +3214,12 @@ function reportView(){
   const c=calc();
   const meal=M.type=='meal';
 
+  const allAccounts=calcAllMembers();
+
+  const currentAccounts=M.memberUids.map(uid=>
+    allAccounts.find(a=>a.uid===uid)
+  );
+
   const totalDeposit=c.deposited.reduce((a,b)=>a+b,0);
 
   const depositSpent=M.exp
@@ -3226,13 +3232,13 @@ function reportView(){
 
   const cashLeft=totalDeposit-depositSpent;
 
-  const totalReceivable=c.bal
-    .filter(b=>b>0)
-    .reduce((a,b)=>a+b,0);
+    const totalReceivable=currentAccounts
+    .filter(a=>a && a.bal>0)
+    .reduce((s,a)=>s+a.bal,0);
 
-  const totalOwed=c.bal
-    .filter(b=>b<0)
-    .reduce((a,b)=>a+Math.abs(b),0);
+  const totalOwed=currentAccounts
+    .filter(a=>a && a.bal<0)
+    .reduce((s,a)=>s+Math.abs(a.bal),0);
 
   return `
   <h1>${T('মাসিক হিসাব','Monthly report')}</h1>
@@ -3280,11 +3286,19 @@ function reportView(){
 
   <h2>${T('সদস্যভিত্তিক হিসাব','Member-wise calculation')}</h2>
 
-  ${M.members.map((m,i)=>{
-    const b=c.bal[i];
-    const deposit=c.deposited[i];
-    const pocket=c.paid[i]-deposit;
-    const share=c.due[i];
+    ${M.members.map((m,i)=>{
+    const a=currentAccounts[i]||{
+      bal:0,
+      deposited:0,
+      personalExpenses:0,
+      share:0,
+      meals:0
+    };
+
+    const b=a.bal;
+    const deposit=a.deposited;
+    const pocket=a.personalExpenses;
+    const share=a.share;
     const ok=Math.abs(b)<.005;
 
     return `
@@ -3310,7 +3324,7 @@ function reportView(){
       ${meal?`
       <div class="row" style="justify-content:space-between">
         <span>${T('মোট মিল','Total meals')}</span>
-        <b>${bn(M.meals[i]||0)}</b>
+        <b>${bn(a.meals||0)}</b>
       </div>`:''}
 
       <hr>
