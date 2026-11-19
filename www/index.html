@@ -663,9 +663,31 @@ function calc(){
   // প্রতিটি খরচের ভাগ
   (M.exp||[]).forEach(e=>{
 
-    const roster=e.memberUidsAtTime?.length
-      ? e.memberUidsAtTime
-      : M.memberUids;
+    const expenseTime=Number(e.d)||0;
+
+const roster=e.memberUidsAtTime?.length
+  ? e.memberUidsAtTime
+  : (M.allMembers||[]).filter(m=>{
+
+      const joined=m.joinedAt;
+      const left=m.leftAt;
+
+      const joinedTime=joined?.toMillis
+        ? joined.toMillis()
+        : joined instanceof Date
+          ? joined.getTime()
+          : Number(joined)||0;
+
+      const leftTime=left?.toMillis
+        ? left.toMillis()
+        : left instanceof Date
+          ? left.getTime()
+          : Number(left)||0;
+
+      return (!joinedTime || joinedTime<=expenseTime)
+        && (!leftTime || leftTime>=expenseTime);
+
+    }).map(m=>m.uid);
 
     const participants=roster.filter(uid=>accounts[uid]);
 
