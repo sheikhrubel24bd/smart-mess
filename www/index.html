@@ -2577,7 +2577,9 @@ async function transferAdmin(i){
 }
 
  function formerMembersView(){
+
   const list=M.formerMembers||[];
+  const accounts=calcAllMembers();
 
   return `
     <h1>📋 ${T('সাবেক সদস্য','Former Members')}</h1>
@@ -2585,27 +2587,24 @@ async function transferAdmin(i){
     <div class="card" style="margin-top:12px">
       ${list.length?list.map((m,i)=>{
 
-        const deposits=(M.deposits||[])
-          .filter(d=>d.uid===m.uid);
+        const account=accounts.find(a=>a.uid===m.uid)||{
+          meals:0,
+          deposited:0,
+          personalExpenses:0,
+          share:0,
+          bal:0
+        };
 
-        const totalDeposit=deposits.reduce(
-          (s,d)=>s+(Number(d.amt)||0),0
-        );
-
-        const personalExpenses=(M.exp||[])
-          .filter(e=>e.payerUid===m.uid && e.source==='pocket');
-
-        const totalExpense=personalExpenses.reduce(
-          (s,e)=>s+(Number(e.amt)||0),0
-        );
+        const balance=account.bal||0;
 
         return `
           <div style="padding:13px 0;border-bottom:1px solid var(--line)">
+
             <b>${i+1}. ${esc(m.name||'নাম নেই')}</b>
 
             <div style="margin-top:7px;color:var(--green);font-weight:600">
-  ${T('মোট খাবার','Total Meals')}: ${Number(m.meals)||0}
-</div>
+              ${T('মোট খাবার','Total Meals')}: ${account.meals}
+            </div>
 
             <div class="mut" style="margin-top:7px">
               ${T('যোগদানের তারিখ','Joined')}:
@@ -2618,18 +2617,31 @@ async function transferAdmin(i){
             </div>
 
             <div style="margin-top:10px;color:var(--green);font-weight:600">
-              ${T('মোট জমা','Total Deposit')}: ${totalDeposit.toFixed(2)} ${M.cur}
+              ${T('মোট জমা','Total Deposit')}: ${account.deposited.toFixed(2)} ${M.cur}
             </div>
 
             <div style="margin-top:5px;font-weight:600">
-              ${T('নিজের পকেট থেকে খরচ','Personal Expenses')}: ${totalExpense.toFixed(2)} ${M.cur}
+              ${T('নিজের পকেট থেকে খরচ','Personal Expenses')}: ${account.personalExpenses.toFixed(2)} ${M.cur}
             </div>
+
+            <div style="margin-top:5px;font-weight:600">
+              ${T('নিজের খরচের ভাগ','Allocated Expense')}: ${account.share.toFixed(2)} ${M.cur}
+            </div>
+
+            <div style="margin-top:8px;font-weight:700;color:${balance>=0?'var(--green)':'#d9534f'}">
+              ${T('চূড়ান্ত ব্যালেন্স','Final Balance')}:
+              ${Math.abs(balance).toFixed(2)} ${M.cur}
+              ${balance>=0
+                ?T('(পাবে)','(Will Receive)')
+                :T('(দিতে হবে)','(Must Pay)')}
+            </div>
+
           </div>
         `;
       }).join(''):`<p class="mut">${T('কোনো সাবেক সদস্য নেই','No former members')}</p>`}
     </div>
   `;
-} 
+}
 // সাবেক সদস্যদের তালিকা ও সর্বমোট মিল লোড
 async function loadFormerMembers(){
   if(!M || M.role!=='admin') return;
