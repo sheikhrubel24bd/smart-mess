@@ -3256,125 +3256,129 @@ async function changeMeal(i,delta){
     say('মিল সংরক্ষণ হয়নি: '+(e.code||e.message));
   }
 }
-  async function changeDailyMeal(uid,delta){
+function dailyMealLocalDate(){
+  const today=new Date();
+  return today.getFullYear()+'-'+
+    String(today.getMonth()+1).padStart(2,'0')+'-'+
+    String(today.getDate()).padStart(2,'0');
+}
 
+function dailyMealDraftKey(date,uid){
+  return M.id+'_'+date+'_'+uid;
+}
+
+function dailyMealDraftValue(date,uid){
+  const key=dailyMealDraftKey(date,uid);
+  const saved=(M.dailyMeals||[]).find(x=>x.id===date+'_'+uid);
+  const original=Number(saved?.count)||0;
+  const drafts=window._smartMessDailyMealDrafts||(window._smartMessDailyMealDrafts={});
+  return {
+    original,
+    count:Object.prototype.hasOwnProperty.call(drafts,key)
+      ? drafts[key]
+      : original,
+    dirty:Object.prototype.hasOwnProperty.call(drafts,key)
+      && drafts[key]!==original
+  };
+}
+
+function changeDailyMeal(uid,delta){
   if(M.type!=='meal') return;
 
   const myUid=auth.currentUser.uid;
-
   if(uid!==myUid && M.role!=='admin')
     return say('অন্য সদস্যের মিল পরিবর্তনের অনুমতি নেই।');
 
-  const today=new Date();
-  const localDate=
-    today.getFullYear()+'-'+
-    String(today.getMonth()+1).padStart(2,'0')+'-'+
-    String(today.getDate()).padStart(2,'0');
+  const date=document.getElementById('dailyMealDate')?.value||dailyMealLocalDate();
+  const key=dailyMealDraftKey(date,uid);
+  const state=dailyMealDraftValue(date,uid);
+  const next=Math.max(0,state.count+delta);
 
-  const date=document.getElementById('dailyMealDate')?.value||localDate;
+  if(next===state.count) return;
 
-  const id=date+'_'+uid;
+  const drafts=window._smartMessDailyMealDrafts||(window._smartMessDailyMealDrafts={});
+  drafts[key]=next;
+  render();
+}
 
-  const old=(M.dailyMeals||[]).find(x=>x.id===id);
-  const current=Number(old?.count)||0;
-  const count=Math.max(0,current+delta);
+async function saveDailyMeal(uid){
+  if(M.type!=='meal') return;
 
-  if(count===current) return;
+  const myUid=auth.currentUser.uid;
+  if(uid!==myUid && M.role!=='admin')
+    return say('অন্য সদস্যের মিল পরিবর্তনের অনুমতি নেই।');
+
+  const date=document.getElementById('dailyMealDate')?.value||dailyMealLocalDate();
+  const key=dailyMealDraftKey(date,uid);
+  const state=dailyMealDraftValue(date,uid);
+
+  if(!state.dirty) return say('নতুন কোনো পরিবর্তন নেই।');
 
   try{
-
     await db.collection('messes')
       .doc(M.id)
       .collection('dailyMeals')
-      .doc(id)
+      .doc(date+'_'+uid)
       .set({
         uid:uid,
         date:date,
-        count:count,
+        count:state.count,
         updatedAt:firebase.firestore.FieldValue.serverTimestamp(),
         updatedBy:myUid
       },{merge:true});
 
+    if(window._smartMessDailyMealDrafts)
+      delete window._smartMessDailyMealDrafts[key];
+
+    say('মিল সফলভাবে সেভ হয়েছে।');
+    render();
+
   }catch(e){
     console.error('DAILY MEAL SAVE ERROR:',e);
-    say('দৈনিক মিল সংরক্ষণ হয়নি: '+(e.code||e.message));
+    say('মিল সেভ হয়নি: '+(e.code||e.message));
   }
 }
 
-async function deleteDailyMeal(uid){
-
-  if(M.type!=='meal') return;
-
-  const myUid=auth.currentUser.uid;
-
-  if(uid!==myUid && M.role!=='admin')
-    return say('অন্য সদস্যের মিল মুছার অনুমতি নেই।');
-
-  const date=document.getElementById('dailyMealDate')?.value;
-  if(!date) return;
-
-  const id=date+'_'+uid;
-
-  const old=(M.dailyMeals||[]).find(x=>x.id===id);
-  if(!old) return say('এই দিনের কোনো মিলের হিসাব নেই।');
-
-  if(!confirm('এই দিনের মিলের হিসাব মুছে ফেলবেন?')) return;
-
-  try{
-
-    await db.collection('messes')
-      .doc(M.id)
-      .collection('dailyMeals')
-      .doc(id)
-      .delete();
-
-    say('দৈনিক মিলের হিসাব মুছে ফেলা হয়েছে।');
-
-  }catch(e){
-    console.error('DAILY MEAL DELETE ERROR:',e);
-    say('মিল মুছতে সমস্যা হয়েছে: '+(e.code||e.message));
-  }
-}
 function mealView(){
 
-  const today=new Date();
-  const localDate=
-    today.getFullYear()+'-'+
-    String(today.getMonth()+1).padStart(2,'0')+'-'+
-    String(today.getDate()).padStart(2,'0');
-
   const selectedDate=
-    document.getElementById('dailyMealDate')?.value||localDate;
+    document.getElementById('dailyMealDate')?.value||dailyMealLocalDate();
 
   const isAdmin=M.role==='admin';
-
   const records=M.dailyMeals||[];
 
   const dayMeals=M.members.map((name,i)=>{
-
     const uid=M.memberUids[i];
-
-    const record=records.find(x=>
-      x.id===selectedDate+'_'+uid
-    );
-
+    const state=dailyMealDraftValue(selectedDate,uid);
     return {
       name,
       uid,
-      count:Number(record?.count)||0,
-      exists:!!record
+      count:state.count,
+      original:state.original,
+      dirty:state.dirty
     };
-
   });
 
   const total=dayMeals.reduce((sum,m)=>sum+m.count,0);
+
+  const controls=m=>`
+    <div style="display:flex;align-items:center;gap:6px;justify-content:center;margin-top:7px">
+      <button class="step" onclick='changeDailyMeal(${JSON.stringify(m.uid)},-1)'>−</button>
+      <b style="min-width:25px;text-align:center">${bn(m.count)}</b>
+      <button class="step" onclick='changeDailyMeal(${JSON.stringify(m.uid)},1)'>+</button>
+    </div>
+    <button class="btn" style="width:100%;margin-top:7px;padding:7px"
+      onclick='saveDailyMeal(${JSON.stringify(m.uid)})'
+      ${m.dirty?'':'disabled'}>
+      ${T('সেভ','Save')}
+    </button>
+  `;
 
   return `
     <h1>${T('দৈনিক মিল','Daily Meals')}</h1>
 
     <div class="card">
       <div class="mut">${T('তারিখ নির্বাচন করুন','Select date')}</div>
-
       <input
         id="dailyMealDate"
         type="date"
@@ -3385,55 +3389,41 @@ function mealView(){
     </div>
 
     <div class="card">
-      <h2>
-        ${T('মোট মিল: ','Total meals: ')}${bn(total)}
-      </h2>
+      <h2>${T('মোট মিল: ','Total meals: ')}${bn(total)}</h2>
 
-      ${dayMeals.map((m,i)=>{
-
-        const canEdit=isAdmin || m.uid===auth.currentUser.uid;
-
-        return `
-          <div class="li">
-
-            <div class="t">
-              <b>${esc(m.name)}</b>
-            </div>
-
-            ${canEdit?`
-              <button class="step"
-                onclick='changeDailyMeal(${JSON.stringify(m.uid)},-1)'>
-                −
-              </button>
-            `:''}
-
+      ${!isAdmin?dayMeals.map(m=>`
+        <div class="li">
+          <div class="t"><b>${esc(m.name)}</b></div>
+          <div style="text-align:center">
             <div class="cnt">${bn(m.count)}</div>
-
-            ${canEdit?`
-              <button class="step"
-                onclick='changeDailyMeal(${JSON.stringify(m.uid)},1)'>
-                +
-              </button>
-            `:''}
-
-            ${canEdit && m.exists?`
-              <button class="step"
-                onclick='deleteDailyMeal(${JSON.stringify(m.uid)})'>
-                ×
-              </button>
-            `:''}
-
+            ${m.uid===auth.currentUser.uid?controls(m):''}
           </div>
-        `;
-
-      }).join('')}
-
+        </div>
+      `).join(''):dayMeals.map(m=>`
+        <div class="li">
+          <div class="t"><b>${esc(m.name)}</b></div>
+          <div class="cnt">${bn(m.count)}</div>
+        </div>
+      `).join('')}
     </div>
 
-    <div class="mut">
+    ${isAdmin?`
+      <h2 style="margin:14px 2px 8px">${T('সদস্যভিত্তিক মিল','Meals by member')}</h2>
+      <div style="display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px">
+        ${dayMeals.map(m=>`
+          <div class="card" style="padding:10px 7px;text-align:center;margin:0;min-width:0">
+            <b style="display:block;overflow-wrap:anywhere;font-size:13px">${esc(m.name)}</b>
+            <div style="font-size:20px;font-weight:700;margin-top:5px">${bn(m.count)} ${T('মিল','meals')}</div>
+            ${controls(m)}
+          </div>
+        `).join('')}
+      </div>
+    `:''}
+
+    <div class="mut" style="margin-top:12px">
       ${T(
-        'প্রত্যেকে নিজের মিল পরিবর্তন করতে পারবেন। অ্যাডমিন সবার মিল পরিবর্তন করতে পারবেন।',
-        'Members can edit their own meals. Admin can edit everyone’s meals.'
+        'মিল যোগ-বিয়োগ করার পর সেভ চাপলে হিসাব সংরক্ষিত হবে। অ্যাডমিন সবার মিল পরিবর্তন করতে পারবেন।',
+        'Adjust meals and press Save to store changes. Admin can edit everyone’s meals.'
       )}
     </div>
   `;
