@@ -954,6 +954,24 @@ async function resetPassword(){
   }
 }
 
+function stopMessListeners(){
+  const keys=[
+    '_smartMessExpenseUnsub',
+    '_smartMessMealUnsub',
+    '_smartMessDepositUnsub',
+    '_smartMessDailyMealUnsub',
+    '_smartMessTaskUnsub'
+  ];
+  keys.forEach(key=>{
+    const unsubscribe=window[key];
+    window[key]=null;
+    if(typeof unsubscribe==='function'){
+      try{ unsubscribe(); }
+      catch(error){ console.warn('LISTENER CLEANUP ERROR:',key,error); }
+    }
+  });
+}
+
 async function after(){
   try{
     const uid=auth.currentUser.uid;
@@ -978,18 +996,7 @@ const messId=userSnap.data().messId;
     S.astep='start';
 
     if(!messId){
-      if(window._smartMessExpenseUnsub){
-        window._smartMessExpenseUnsub();
-        window._smartMessExpenseUnsub=null;
-      }
-      if(window._smartMessMealUnsub){
-        window._smartMessMealUnsub();
-        window._smartMessMealUnsub=null;
-      }
-            if(window._smartMessDepositUnsub){
-        window._smartMessDepositUnsub();
-        window._smartMessDepositUnsub=null;
-      }
+      stopMessListeners();
       M=null;
       S.screen='welcome';
       render();
@@ -1718,6 +1725,9 @@ function whoBlock(c){
     const memberRef=messRef.collection('members').doc(uid);
     const userRef=db.collection('users').doc(uid);
 
+    // Leave-এর আগে পুরোনো মেসের সব Listener বন্ধ করুন।
+    stopMessListeners();
+
     await db.runTransaction(async tx=>{
       const messSnap=await tx.get(messRef);
       const memberSnap=await tx.get(memberRef);
@@ -1756,6 +1766,13 @@ function whoBlock(c){
   }catch(e){
     console.error('LEAVE MESS ERROR:',e);
     S.leavingMess=false;
+
+    // Leave ব্যর্থ হলে আগের Listener আবার চালু করুন।
+    if(auth.currentUser && M){
+      try{ await after(); }
+      catch(reloadError){ console.error('MESS RELOAD ERROR:',reloadError); }
+    }
+
     say(T(
       'মেস ত্যাগ করা যায়নি: '+(e.message||e.code),
       'Could not leave the mess: '+(e.message||e.code)
@@ -1772,6 +1789,9 @@ async function logout(){
     window._smartMessExpenseUnsub();
     window._smartMessExpenseUnsub=null;
   }
+
+  // Logout-এর আগে সব পাঁচটি Listener বন্ধ করুন।
+  stopMessListeners();
 
   await auth.signOut();
 }catch(e){
@@ -4152,6 +4172,9 @@ auth.onAuthStateChanged(async user=>{
     window._smartMessDepositUnsub();
     window._smartMessDepositUnsub=null;
   }
+
+  // Auth signed-out হলে সব Listener বন্ধ করুন।
+  stopMessListeners();
 
   S.user=null;
   M=null;
