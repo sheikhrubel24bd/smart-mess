@@ -21,6 +21,58 @@ jobs:
         run: npx --yes esbuild@0.24.2 www/app-plugin.js --bundle --format=iife --outfile=www/app-plugin.bundle.js
       - name: Create Android project
         run: npx cap add android
+      - name: Match Android status bar with app header
+        run: |
+          python3 - <<'PY'
+          from pathlib import Path
+          import re
+
+          style_files = list(Path("android/app/src/main/res").glob("values*/styles.xml"))
+          if not style_files:
+              raise SystemExit("Android styles.xml not found")
+
+          updated = 0
+          for path in style_files:
+              source = path.read_text()
+              def patch(match):
+                  nonlocal_dummy = None
+                  attrs = match.group(1)
+                  block = match.group(0)
+                  if not re.search(r'name=["\\']AppTheme\\.(?:NoActionBar|NoActionBarLaunch)["\\']', attrs):
+                      return block
+                  additions = []
+                  if "name=\\"android:statusBarColor\\"" not in block:
+                      additions.append('    <item name="android:statusBarColor">#16794f</item>')
+                  if "name=\\"android:windowLightStatusBar\\"" not in block:
+                      additions.append('    <item name="android:windowLightStatusBar">false</item>')
+                  if additions:
+                      block = block.replace("</style>", "\\n" + "\\n".join(additions) + "\\n  </style>")
+                  return block
+
+              result = re.sub(r'(<style\\b([^>]*)>.*?</style>)', lambda m: patch_style(m), source, flags=re.S) if False else source
+              pattern = re.compile(r'<style\\b([^>]*)>.*?</style>', re.S)
+              def patch_style(m):
+                  nonlocal updated
+                  block = m.group(0)
+                  attrs = m.group(1)
+                  if not re.search(r'name=["\\']AppTheme\\.(?:NoActionBar|NoActionBarLaunch)["\\']', attrs):
+                      return block
+                  additions = []
+                  if 'name="android:statusBarColor"' not in block:
+                      additions.append('    <item name="android:statusBarColor">#16794f</item>')
+                  if 'name="android:windowLightStatusBar"' not in block:
+                      additions.append('    <item name="android:windowLightStatusBar">false</item>')
+                  if additions:
+                      updated += 1
+                      return block.replace("</style>", "\\n" + "\\n".join(additions) + "\\n  </style>")
+                  return block
+              source = pattern.sub(patch_style, source)
+              path.write_text(source)
+
+          if updated == 0:
+              raise SystemExit("No Android app theme was updated")
+          print(f"Updated {updated} Android theme(s)")
+          PY
       - name: Prepare app icon source
         run: |
           mkdir -p assets
