@@ -3406,7 +3406,7 @@ function reportView(){
   <div class="card">
 
     ${M.members.map((m,i)=>{
-      const b=c.bal[i];
+      const b=currentAccounts[i]?.bal||0;
 
       if(Math.abs(b)<.005)return '';
 
