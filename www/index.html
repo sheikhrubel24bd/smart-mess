@@ -2602,9 +2602,11 @@ async function transferAdmin(i){
 
             <b>${i+1}. ${esc(m.name||'নাম নেই')}</b>
 
-            <div style="margin-top:7px;color:var(--green);font-weight:600">
-              ${T('মোট খাবার','Total Meals')}: ${account.meals}
-            </div>
+            ${M.type==='meal'?`
+  <div style="margin-top:7px;color:var(--green);font-weight:600">
+    ${T('মোট খাবার','Total Meals')}: ${account.meals}
+  </div>
+`:''}
 
             <div class="mut" style="margin-top:7px">
               ${T('যোগদানের তারিখ','Joined')}:
