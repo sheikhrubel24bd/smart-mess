@@ -1698,7 +1698,70 @@ function whoBlock(c){
   const mx=Math.max(1,...c.paid);
   return `<h2>${T('কে কত খরচ করেছে','Who spent how much')}</h2><div class="card">${M.members.map((m,i)=>`<div style="margin:8px 0"><div class="row" style="justify-content:space-between"><span>${esc(m)}${i==M.me?' ('+T('আমি','me')+')':''}</span><b>${mny(c.paid[i])}</b></div><div class="bar"><i style="width:${c.paid[i]/mx*100}%"></i></div></div>`).join('')}</div>`;
 }
-  async function logout(){
+  async function leaveMess(){
+  if(!M || M.role!=='member' || !auth.currentUser){
+    return say(T('শুধু সাধারণ সদস্য মেস ত্যাগ করতে পারবেন।','Only regular members can leave the mess.'));
+  }
+
+  if(S.leavingMess)return;
+
+  if(!confirm(T(
+    'আপনি কি মেস ত্যাগ করতে চান? আপনার আগের হিসাব ও লেনদেন সংরক্ষিত থাকবে।',
+    'Are you sure you want to leave this mess? Your previous accounts and transactions will be preserved.'
+  ))) return;
+
+  S.leavingMess=true;
+
+  try{
+    const uid=auth.currentUser.uid;
+    const messRef=db.collection('messes').doc(M.id);
+    const memberRef=messRef.collection('members').doc(uid);
+    const userRef=db.collection('users').doc(uid);
+
+    await db.runTransaction(async tx=>{
+      const messSnap=await tx.get(messRef);
+      const memberSnap=await tx.get(memberRef);
+      const userSnap=await tx.get(userRef);
+
+      if(!messSnap.exists || !memberSnap.exists || !userSnap.exists)
+        throw new Error('ACCOUNT_NOT_FOUND');
+
+      const memberData=memberSnap.data();
+
+      if(messSnap.data().adminUid===uid || memberData.role!=='member')
+        throw new Error('ADMIN_CANNOT_LEAVE');
+
+      if(memberData.status!=='active' || userSnap.data().messId!==M.id)
+        throw new Error('NOT_ACTIVE_MEMBER');
+
+      // শুধু সদস্যের status বন্ধ হবে; পুরোনো সদস্য ও হিসাবের রেকর্ড থাকবে।
+      tx.update(memberRef,{
+        status:'left',
+        leftAt:firebase.firestore.FieldValue.serverTimestamp()
+      });
+
+      // একই account-কে অন্য মেসে যোগ দেওয়ার সুযোগ দেওয়া হবে।
+      tx.set(userRef,{messId:null},{merge:true});
+    });
+
+    say(T(
+      'আপনি মেস ত্যাগ করেছেন। আগের হিসাব সংরক্ষিত আছে।',
+      'You have left the mess. Your previous records are preserved.'
+    ));
+
+    await auth.signOut();
+
+  }catch(e){
+    console.error('LEAVE MESS ERROR:',e);
+    S.leavingMess=false;
+    say(T(
+      'মেস ত্যাগ করা যায়নি: '+(e.message||e.code),
+      'Could not leave the mess: '+(e.message||e.code)
+    ));
+  }
+}
+
+async function logout(){
   if(!confirm(T('আপনি কি লগআউট করতে চান?','Are you sure you want to log out?')))
     return;
 
@@ -2466,6 +2529,7 @@ function historyView(){
 
       ${row('👨‍💻',T('ডেভেলপার পরিচিতি','About Developer'),"go('about')")}
 
+      ${M.role==='member'?row('🚪',T('মেস ত্যাগ করুন','Leave Mess'),'leaveMess()'):''}
       ${row('🚪',T('লগআউট','Logout'),'logout()')}
     </div>
   `;
