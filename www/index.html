@@ -2903,6 +2903,7 @@ if(item==='other' && !(S.otherName||'').trim()){
       item:item,
       otherName:item==='other'?(S.otherName||'').trim():null,
       payerUid:M.memberUids[payer],
+      memberUidsAtTime:[...M.memberUids],
       source:S.expSource||'pocket',
       amt:amt,
       d:Date.now(),
