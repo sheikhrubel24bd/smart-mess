@@ -849,7 +849,7 @@ function topbar(){
   if(app){
     return `<div class="top app-topbar">
       ${backTo?`<button class="x" onclick="goBack('${backTo}')" aria-label="Back">←</button>`:''}
-      <div class="app-brand"><span class="app-brand-mark">⌂</span><span>Smart Mess</span></div>
+      <span class="sp"></span>
       <button class="bell" onclick="go('req')" aria-label="${T('নোটিফিকেশন','Notifications')}">🔔${p?`<i>${bn(p)}</i>`:''}</button>
       <button class="lang" onclick="tl()" aria-label="Language">${L=='bn'?'EN':'বাং'}</button>
       <button class="lang" onclick="go('settings')" aria-label="${T('সেটিংস','Settings')}">⚙</button>
