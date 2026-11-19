@@ -113,7 +113,24 @@ box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:en
 *{box-sizing:border-box}
 html{scroll-padding-top:env(safe-area-inset-top,0px)}
 body{margin:0;background:var(--bg);color:var(--ink);font-family:"Noto Sans Bengali","Hind Siliguri","Kalpurush",system-ui,sans-serif;font-size:16px;line-height:1.5;-webkit-tap-highlight-color:transparent}
-#app{max-width:480px;margin:0 auto;padding:16px 14px 96px}
+#app{max-width:480px;margin:0 auto;padding:16px 14px 112px}
+.top.app-topbar{
+  display:flex;align-items:center;gap:9px;
+  min-height:62px;margin:-16px -14px 14px;
+  padding:0 14px;background:#16794f;color:#fff;
+  box-shadow:0 3px 10px #0c513326;
+}
+.app-brand{display:flex;align-items:center;gap:9px;margin-right:auto;font-size:19px;font-weight:800;white-space:nowrap}
+.app-brand-mark{width:33px;height:33px;border:1.7px solid #ffffffb8;border-radius:11px;display:grid;place-items:center;font-size:21px;line-height:1}
+.top.app-topbar .x,.top.app-topbar .bell,.top.app-topbar .lang{
+  color:#fff;border:0;background:transparent;
+}
+.top.app-topbar .x{font-size:25px;padding:4px 7px}
+.top.app-topbar .bell{font-size:22px;padding:4px 7px}
+.top.app-topbar .bell i{background:#ffcf4a;color:#263629}
+.top.app-topbar .lang{border:1px solid #ffffff80;border-radius:10px;padding:6px 9px;font-size:13px}
+.top.app-topbar .sp{display:none}
+
 /* PULL TO REFRESH */
 #pullRefresh{
   position:fixed;
@@ -214,10 +231,21 @@ input[type=text]{
 .pos{color:var(--pri)}.neg{color:var(--bad)}
 .tag{display:inline-block;border-radius:99px;padding:2px 10px;font-size:13px;font-weight:700}
 .tag.pos{background:var(--pri2)}.tag.neg{background:var(--bad2)}
-nav{position:fixed;left:0;right:0;bottom:0;display:flex;justify-content:center;background:var(--card);border-top:1px solid var(--bd);padding:6px 6px calc(6px + env(safe-area-inset-bottom,0px))}
-nav div{display:flex;width:100%;max-width:480px}
-nav button{flex:1;border:0;background:none;padding:6px 0;font-size:13px;color:var(--mut)}
-nav button span{display:block;font-size:24px}nav button.on{color:var(--pri);font-weight:700}
+nav{
+  position:fixed;left:50%;right:auto;bottom:calc(10px + env(safe-area-inset-bottom,0px));
+  transform:translateX(-50%);width:calc(100% - 30px);max-width:452px;
+  display:flex;justify-content:center;background:#16794f;border:0;
+  border-radius:22px;padding:5px 7px;
+  box-shadow:0 6px 18px #0c51334a;z-index:40;
+}
+nav div{display:flex;width:100%;max-width:none;gap:3px}
+nav button{
+  flex:1;min-width:0;border:0;border-radius:16px;background:transparent;
+  padding:6px 2px;font-size:12px;line-height:1.25;color:#e6f4eb;
+}
+nav button span{display:block;font-size:22px;line-height:25px;margin-bottom:2px}
+nav button.on{background:#35a866;color:#fff;font-weight:800}
+
 .toast{
   position:fixed;
   left:50%;
@@ -818,14 +846,19 @@ function topbar(){
     editname:'profile'
   }[S.tab];
 
+  if(app){
+    return `<div class="top app-topbar">
+      ${backTo?`<button class="x" onclick="goBack('${backTo}')" aria-label="Back">←</button>`:''}
+      <div class="app-brand"><span class="app-brand-mark">⌂</span><span>Smart Mess</span></div>
+      <button class="bell" onclick="go('req')" aria-label="${T('নোটিফিকেশন','Notifications')}">🔔${p?`<i>${bn(p)}</i>`:''}</button>
+      <button class="lang" onclick="tl()" aria-label="Language">${L=='bn'?'EN':'বাং'}</button>
+      <button class="lang" onclick="go('settings')" aria-label="${T('সেটিংস','Settings')}">⚙</button>
+    </div>`;
+  }
+
   return `<div class="top">
-    ${app&&backTo?`
-      <button class="x" onclick="goBack('${backTo}')" aria-label="Back">←</button>
-    `:''}
     <span class="sp"></span>
-    ${app?`<button class="bell" onclick="go('req')" aria-label="${T('নোটিফিকেশন','Notifications')}">🔔${p?`<i>${bn(p)}</i>`:''}</button>`:''}
     <button class="lang" onclick="tl()" aria-label="Language">${L=='bn'?'EN':'বাং'}</button>
-    ${app?`<button class="lang" onclick="go('settings')" aria-label="${T('সেটিংস','Settings')}">⚙️</button>`:''}
   </div>`;
 }
   function authView(){
