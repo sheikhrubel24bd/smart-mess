@@ -3256,6 +3256,85 @@ async function changeMeal(i,delta){
     say('মিল সংরক্ষণ হয়নি: '+(e.code||e.message));
   }
 }
+  async function changeDailyMeal(uid,delta){
+
+  if(M.type!=='meal') return;
+
+  const myUid=auth.currentUser.uid;
+
+  if(uid!==myUid && M.role!=='admin')
+    return say('অন্য সদস্যের মিল পরিবর্তনের অনুমতি নেই।');
+
+  const today=new Date();
+  const localDate=
+    today.getFullYear()+'-'+
+    String(today.getMonth()+1).padStart(2,'0')+'-'+
+    String(today.getDate()).padStart(2,'0');
+
+  const date=document.getElementById('dailyMealDate')?.value||localDate;
+
+  const id=date+'_'+uid;
+
+  const old=(M.dailyMeals||[]).find(x=>x.id===id);
+  const current=Number(old?.count)||0;
+  const count=Math.max(0,current+delta);
+
+  if(count===current) return;
+
+  try{
+
+    await db.collection('messes')
+      .doc(M.id)
+      .collection('dailyMeals')
+      .doc(id)
+      .set({
+        uid:uid,
+        date:date,
+        count:count,
+        updatedAt:firebase.firestore.FieldValue.serverTimestamp(),
+        updatedBy:myUid
+      },{merge:true});
+
+  }catch(e){
+    console.error('DAILY MEAL SAVE ERROR:',e);
+    say('দৈনিক মিল সংরক্ষণ হয়নি: '+(e.code||e.message));
+  }
+}
+
+async function deleteDailyMeal(uid){
+
+  if(M.type!=='meal') return;
+
+  const myUid=auth.currentUser.uid;
+
+  if(uid!==myUid && M.role!=='admin')
+    return say('অন্য সদস্যের মিল মুছার অনুমতি নেই।');
+
+  const date=document.getElementById('dailyMealDate')?.value;
+  if(!date) return;
+
+  const id=date+'_'+uid;
+
+  const old=(M.dailyMeals||[]).find(x=>x.id===id);
+  if(!old) return say('এই দিনের কোনো মিলের হিসাব নেই।');
+
+  if(!confirm('এই দিনের মিলের হিসাব মুছে ফেলবেন?')) return;
+
+  try{
+
+    await db.collection('messes')
+      .doc(M.id)
+      .collection('dailyMeals')
+      .doc(id)
+      .delete();
+
+    say('দৈনিক মিলের হিসাব মুছে ফেলা হয়েছে।');
+
+  }catch(e){
+    console.error('DAILY MEAL DELETE ERROR:',e);
+    say('মিল মুছতে সমস্যা হয়েছে: '+(e.code||e.message));
+  }
+}
 
 function mealView(){
   const c=calc();
