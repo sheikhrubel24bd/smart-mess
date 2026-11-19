@@ -1785,12 +1785,7 @@ async function logout(){
     return;
 
   try{
-  if(window._smartMessExpenseUnsub){
-    window._smartMessExpenseUnsub();
-    window._smartMessExpenseUnsub=null;
-  }
-
-  // Logout-এর আগে সব পাঁচটি Listener বন্ধ করুন।
+  // Logout-এর আগে সব পাঁচটি Listener বন্ধ করুন.
   stopMessListeners();
 
   await auth.signOut();
@@ -4159,21 +4154,7 @@ auth.onAuthStateChanged(async user=>{
 
   }else{
 
-  if(window._smartMessExpenseUnsub){
-    window._smartMessExpenseUnsub();
-    window._smartMessExpenseUnsub=null;
-  }
-
-  if(window._smartMessMealUnsub){
-    window._smartMessMealUnsub();
-    window._smartMessMealUnsub=null;
-  }
-      if(window._smartMessDepositUnsub){
-    window._smartMessDepositUnsub();
-    window._smartMessDepositUnsub=null;
-  }
-
-  // Auth signed-out হলে সব Listener বন্ধ করুন।
+  // Auth signed-out হলে সব Listener বন্ধ করুন.
   stopMessListeners();
 
   S.user=null;
