@@ -3335,32 +3335,110 @@ async function deleteDailyMeal(uid){
     say('মিল মুছতে সমস্যা হয়েছে: '+(e.code||e.message));
   }
 }
-
 function mealView(){
-  const c=calc();
 
-  return `<h1>${T('মিল','Meals')}</h1>
-  <div class="mut">${T('মাসে কে কত মিল খেয়েছে','Meals eaten by each member this month')}</div>
-  <h2>${T('মোট মিল: ','Total meals: ')}${bn(c.tm)}</h2>
+  const today=new Date();
+  const localDate=
+    today.getFullYear()+'-'+
+    String(today.getMonth()+1).padStart(2,'0')+'-'+
+    String(today.getDate()).padStart(2,'0');
 
-  <div class="card">${M.members.map((m,i)=>`
-    <div class="li">
-      <div class="t"><b>${esc(m)}</b></div>
-      ${i==M.me?`
-        <button class="step" onclick="changeMeal(${i},-1)" aria-label="−">−</button>
-        <div class="cnt">${bn(M.meals[i]||0)}</div>
-        <button class="step" onclick="changeMeal(${i},1)" aria-label="+">+</button>
-      `:`
-        <div class="cnt">${bn(M.meals[i]||0)}</div>
-      `}
-    </div>`).join('')}
-  </div>
+  const selectedDate=
+    document.getElementById('dailyMealDate')?.value||localDate;
 
-  <div class="card">
-    <div class="mut">${T('মিল রেট','Meal rate')}</div>
-    <b style="font-size:24px">${cs()}${bn(c.rate.toFixed(2))}</b>
-  </div>`;
+  const isAdmin=M.role==='admin';
+
+  const records=M.dailyMeals||[];
+
+  const dayMeals=M.members.map((name,i)=>{
+
+    const uid=M.memberUids[i];
+
+    const record=records.find(x=>
+      x.id===selectedDate+'_'+uid
+    );
+
+    return {
+      name,
+      uid,
+      count:Number(record?.count)||0,
+      exists:!!record
+    };
+
+  });
+
+  const total=dayMeals.reduce((sum,m)=>sum+m.count,0);
+
+  return `
+    <h1>${T('দৈনিক মিল','Daily Meals')}</h1>
+
+    <div class="card">
+      <div class="mut">${T('তারিখ নির্বাচন করুন','Select date')}</div>
+
+      <input
+        id="dailyMealDate"
+        type="date"
+        value="${selectedDate}"
+        onchange="render()"
+        style="width:100%;padding:12px;margin-top:8px"
+      />
+    </div>
+
+    <div class="card">
+      <h2>
+        ${T('মোট মিল: ','Total meals: ')}${bn(total)}
+      </h2>
+
+      ${dayMeals.map((m,i)=>{
+
+        const canEdit=isAdmin || m.uid===auth.currentUser.uid;
+
+        return `
+          <div class="li">
+
+            <div class="t">
+              <b>${esc(m.name)}</b>
+            </div>
+
+            ${canEdit?`
+              <button class="step"
+                onclick='changeDailyMeal(${JSON.stringify(m.uid)},-1)'>
+                −
+              </button>
+            `:''}
+
+            <div class="cnt">${bn(m.count)}</div>
+
+            ${canEdit?`
+              <button class="step"
+                onclick='changeDailyMeal(${JSON.stringify(m.uid)},1)'>
+                +
+              </button>
+            `:''}
+
+            ${canEdit && m.exists?`
+              <button class="step"
+                onclick='deleteDailyMeal(${JSON.stringify(m.uid)})'>
+                ×
+              </button>
+            `:''}
+
+          </div>
+        `;
+
+      }).join('')}
+
+    </div>
+
+    <div class="mut">
+      ${T(
+        'প্রত্যেকে নিজের মিল পরিবর্তন করতে পারবেন। অ্যাডমিন সবার মিল পরিবর্তন করতে পারবেন।',
+        'Members can edit their own meals. Admin can edit everyone’s meals.'
+      )}
+    </div>
+  `;
 }
+
 function reportView(){
   const c=calc();
   const meal=M.type=='meal';
