@@ -890,11 +890,12 @@ const messId=userSnap.data().messId;
 
     const messRef=db.collection('messes').doc(messId);
 
-    const [messSnap,myMemberSnap,membersSnap]=await Promise.all([
-      messRef.get(),
-      messRef.collection('members').doc(uid).get(),
-      messRef.collection('members').where('status','==','active').get()
-    ]);
+    const [messSnap,myMemberSnap,membersSnap,allMembersSnap]=await Promise.all([
+  messRef.get(),
+  messRef.collection('members').doc(uid).get(),
+  messRef.collection('members').where('status','==','active').get(),
+  messRef.collection('members').get()
+]);
 
     let requestsSnap={docs:[]};
 
@@ -929,6 +930,13 @@ const messId=userSnap.data().messId;
       memberUids:memberUids,
       members:members,
       memberPhones:memberPhones,
+      allMembers:allMembersSnap.docs.map(d=>({
+  uid:d.id,
+  name:d.data().name,
+  status:d.data().status,
+  joinedAt:d.data().joinedAt,
+  leftAt:d.data().leftAt||null
+})),
       me:memberUids.indexOf(uid),
       meals:{},
       mealCountsByUid:{},
