@@ -629,6 +629,92 @@ function calc(){
     per:(baz+fix)/n
   };
 }
+  function calcAllMembers(){
+
+  const members=M.allMembers||M.memberUids.map((uid,i)=>({
+    uid,
+    name:M.members[i],
+    status:'active'
+  }));
+
+  const accounts={};
+
+  members.forEach(m=>{
+    accounts[m.uid]={
+      uid:m.uid,
+      name:m.name,
+      meals:Number(M.mealCountsByUid?.[m.uid])||0,
+      deposited:0,
+      personalExpenses:0,
+      share:0,
+      paid:0,
+      due:0,
+      bal:0
+    };
+  });
+
+  // সদস্যদের জমা
+  (M.deposits||[]).forEach(d=>{
+    if(accounts[d.uid]){
+      accounts[d.uid].deposited+=Number(d.amt)||0;
+    }
+  });
+
+  // প্রতিটি খরচের ভাগ
+  (M.exp||[]).forEach(e=>{
+
+    const roster=e.memberUidsAtTime?.length
+      ? e.memberUidsAtTime
+      : M.memberUids;
+
+    const participants=roster.filter(uid=>accounts[uid]);
+
+    if(!participants.length)return;
+
+    const amount=Number(e.amt)||0;
+    const isMarket=IT[e.item]?.[3]==='b';
+
+    if(M.type==='meal' && isMarket){
+
+      const totalMeals=participants.reduce(
+        (sum,uid)=>sum+accounts[uid].meals,0
+      );
+
+      participants.forEach(uid=>{
+        const share=totalMeals>0
+          ? amount*accounts[uid].meals/totalMeals
+          : amount/participants.length;
+
+        accounts[uid].share+=share;
+      });
+
+    }else{
+
+      const share=amount/participants.length;
+
+      participants.forEach(uid=>{
+        accounts[uid].share+=share;
+      });
+    }
+
+    // পকেট থেকে দেওয়া খরচ
+    if((e.source||'pocket')==='pocket' && accounts[e.payerUid]){
+      accounts[e.payerUid].personalExpenses+=amount;
+    }
+
+  });
+
+  // চূড়ান্ত হিসাব
+  Object.values(accounts).forEach(a=>{
+
+    a.paid=a.deposited+a.personalExpenses;
+    a.due=a.share;
+    a.bal=a.paid-a.due;
+
+  });
+
+  return Object.values(accounts);
+}
 
 function settle(bal){
   const d=[],c=[];bal.forEach((b,i)=>{if(b<-0.5)d.push([i,-b]);else if(b>0.5)c.push([i,b])});
