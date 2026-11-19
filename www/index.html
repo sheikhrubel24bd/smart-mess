@@ -831,7 +831,7 @@ function topbar(){
   function authView(){
   const m=S.amode=='signup';
   return `
-  <h1>🍽️ Smart Mess</h1>
+  <div style="text-align:center;margin:8px 0 18px"><img src="logo.png" alt="Smart-Mess" style="width:104px;height:104px;object-fit:contain"><h1 style="margin:5px 0 0">Smart Mess</h1></div>
   <div class="mut">${T('মেসের হিসাব, সহজে','Mess accounts, made simple')}</div>
 
   <div class="types" style="margin-top:18px">
@@ -1264,14 +1264,14 @@ async function savePhone(){
 }
 
 function welcomeView(){
-  return `<h1>🍽️ Smart Mess</h1><div class="mut">${T('হ্যালো, ','Hello, ')}<b>${esc(S.user.name)}</b> · <button class="x" style="font-size:14px;padding:0" onclick="auth.signOut()">${T('লগআউট','Log out')}</button></div><div style="height:22px"></div>
+  return `<div style="text-align:center;margin:8px 0 18px"><img src="logo.png" alt="Smart-Mess" style="width:104px;height:104px;object-fit:contain"><h1 style="margin:5px 0 0">Smart Mess</h1></div><div class="mut">${T('হ্যালো, ','Hello, ')}<b>${esc(S.user.name)}</b> · <button class="x" style="font-size:14px;padding:0" onclick="auth.signOut()">${T('লগআউট','Log out')}</button></div><div style="height:22px"></div>
   <button class="btn" onclick="to('create')">➕ ${T('নতুন মেস তৈরি করুন','Create a new mess')}</button><div style="height:10px"></div>
   <button class="btn ghost" onclick="to('join')">🔍 ${T('কোড দিয়ে মেস খুঁজুন','Find a mess by code')}</button>
   <div class="sample" style="margin-top:16px">${T('ডেমো মেসের কোড: ','Demo mess code: ')}<b>SM-1234</b></div>`;
 }
 
 function createView(){
-  return `<h1>${T('নতুন মেস','New mess')}</h1>
+  return `<div style="text-align:center;margin:8px 0 18px"><img src="logo.png" alt="Smart-Mess" style="width:88px;height:88px;object-fit:contain"></div><h1>${T('নতুন মেস','New mess')}</h1>
   <h2>${T('মেসের নাম','Mess name')}</h2>
   <input type="text" value="${esc(S.name)}" placeholder="${T('যেমন: সবুজ মেস','e.g. Green Mess')}" oninput="S.name=this.value">
 
@@ -1406,7 +1406,7 @@ async function start(){
   }
 }
 function joinView(){
-  let h=`<h1>🔍 ${T('মেস খুঁজুন','Find a mess')}</h1><div class="mut">${T('অ্যাডমিনের দেওয়া মেসের কোড লিখুন','Enter the code from the admin')}</div>
+  let h=`<div style="text-align:center;margin:8px 0 18px"><img src="logo.png" alt="Smart-Mess" style="width:88px;height:88px;object-fit:contain"></div><h1>${T('মেস খুঁজুন','Find a mess')}</h1><div class="mut">${T('অ্যাডমিনের দেওয়া মেসের কোড লিখুন','Enter the code from the admin')}</div>
   <div class="row" style="margin-top:12px"><input type="text" value="${esc(S.jcode)}" placeholder="SM-1234" style="text-transform:uppercase" oninput="S.jcode=this.value" onkeydown="if(event.key=='Enter')search()"><button class="btn" style="width:auto;padding:12px 18px" onclick="search()">${T('খুঁজুন','Search')}</button></div>`;
   if(S.found===false)return h+`<div class="card neg" style="margin-top:12px">${T('এই কোডে কোনো মেস পাওয়া যায়নি।','No mess found with this code.')}</div>`;
   const m=S.found;if(!m)return h;
