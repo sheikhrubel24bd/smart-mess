@@ -1140,6 +1140,25 @@ snapshot.docs.forEach(doc=>{
         console.error('MEAL SYNC ERROR:',error);
         say('মিল আপডেট করা যায়নি: '+(error.code||error.message));
       });
+        // DAILY MEALS LIVE SYNC
+    window._smartMessDailyMealUnsub=
+      messRef.collection('dailyMeals').onSnapshot(snapshot=>{
+
+        if(!M || M.id!=messId) return;
+
+        M.dailyMeals=snapshot.docs.map(doc=>({
+          id:doc.id,
+          ...doc.data()
+        }));
+
+        render();
+
+      },error=>{
+        console.error('DAILY MEAL SYNC ERROR:',error);
+        say('দৈনিক মিল আপডেট করা যায়নি।');
+      });
+
+    
         // DEPOSIT LIVE SYNC
     window._smartMessDepositUnsub=
       messRef.collection('deposits').onSnapshot(snapshot=>{
