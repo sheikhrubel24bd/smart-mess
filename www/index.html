@@ -2524,15 +2524,18 @@ function historyView(){
   async function saveDeposit(){
   if(S.savingDeposit)return;
 
-  const memberIndex=Number(document.getElementById('depositMember').value);
-  const amt=Number(document.getElementById('depositAmount').value);
+  const memberSelect=document.getElementById('depositMember');
+  const memberIndex=M.role==='admin'
+    ? Number(memberSelect?.value)
+    : M.me;
+  const amt=Number(document.getElementById('depositAmount')?.value);
+
+  if(!Number.isInteger(memberIndex)||memberIndex<0||memberIndex>=M.memberUids.length){
+    return say(T('সদস্য নির্বাচন সঠিক নয়','Please select a valid member'));
+  }
 
   if(!Number.isFinite(amt)||amt<=0){
     return say(T('সঠিক টাকার পরিমাণ দিন','Enter a valid amount'));
-  }
-
-  if(M.role!=='admin' && memberIndex!==M.me){
-    return say(T('শুধু নিজের জমা যোগ করতে পারবেন','You can only add your own deposit'));
   }
 
   S.savingDeposit=true;
@@ -2556,6 +2559,63 @@ function historyView(){
     say(T('জমা সংরক্ষণ করা যায়নি','Could not save deposit'));
   }finally{
     S.savingDeposit=false;
+  }
+}
+
+function isDepositAdmin(){
+  return !!(M && auth.currentUser && M.role==='admin' && M.adminUid===auth.currentUser.uid);
+}
+
+function depositDateTime(record){
+  const date=record.date?.toDate?.();
+  if(!date)return T('তারিখ পাওয়া যায়নি','Date unavailable');
+  const locale=L==='bn'?'bn-BD':'en-US';
+  const day=date.toLocaleDateString(locale,{day:'numeric',month:'short'});
+  const time=date.toLocaleTimeString('en-US',{hour:'numeric',minute:'2-digit'}).replace(' ','').toLowerCase();
+  return day+' · '+time;
+}
+
+async function editDeposit(id){
+  if(!isDepositAdmin())return say(T('শুধু এডমিন জমা পরিবর্তন করতে পারবেন','Only the admin can edit deposits'));
+  const record=(M.deposits||[]).find(d=>d.id===id);
+  if(!record)return say(T('জমার রেকর্ড পাওয়া যায়নি','Deposit record not found'));
+
+  const entered=prompt(T('নতুন জমার পরিমাণ লিখুন','Enter the corrected deposit amount'),String(record.amt));
+  if(entered===null)return;
+  const amount=Number(entered.trim());
+  if(!Number.isFinite(amount)||amount<=0)return say(T('সঠিক টাকার পরিমাণ দিন','Enter a valid amount'));
+
+  try{
+    await db.collection('messes').doc(M.id).collection('deposits').doc(id).update({
+      amt:amount,
+      editedAt:firebase.firestore.FieldValue.serverTimestamp(),
+      editedBy:auth.currentUser.uid
+    });
+    say(T('জমার পরিমাণ সংশোধন হয়েছে','Deposit updated successfully'));
+  }catch(e){
+    console.error('EDIT DEPOSIT ERROR:',e);
+    say(T('জমা পরিবর্তন করা যায়নি। Firestore অনুমতি পরীক্ষা করুন।','Could not edit deposit. Check Firestore permissions.'));
+  }
+}
+
+async function deleteDeposit(id){
+  if(!isDepositAdmin())return say(T('শুধু এডমিন জমা মুছতে পারবেন','Only the admin can delete deposits'));
+  const record=(M.deposits||[]).find(d=>d.id===id);
+  if(!record)return say(T('জমার রেকর্ড পাওয়া যায়নি','Deposit record not found'));
+
+  const memberIndex=M.memberUids.indexOf(record.uid);
+  const memberName=memberIndex>=0?M.members[memberIndex]:T('সদস্য','Member');
+  if(!confirm(T(
+    memberName+'-এর '+Number(record.amt).toFixed(2)+' '+M.cur+' জমার রেকর্ডটি ডিলিট করবেন? এই কাজ ফিরিয়ে আনা যাবে না।',
+    'Delete this '+Number(record.amt).toFixed(2)+' '+M.cur+' deposit from '+memberName+'? This cannot be undone.'
+  )))return;
+
+  try{
+    await db.collection('messes').doc(M.id).collection('deposits').doc(id).delete();
+    say(T('জমার রেকর্ড ডিলিট হয়েছে','Deposit record deleted'));
+  }catch(e){
+    console.error('DELETE DEPOSIT ERROR:',e);
+    say(T('জমা ডিলিট করা যায়নি। Firestore অনুমতি পরীক্ষা করুন।','Could not delete deposit. Check Firestore permissions.'));
   }
 }
   function depositDetailView(){
@@ -2604,63 +2664,88 @@ function historyView(){
   `;
 }
   function depositView(){
-  const total=M.deposits.reduce((s,d)=>s+(Number(d.amt)||0),0);
+  const deposits=M.deposits||[];
+  const total=deposits.reduce((s,d)=>s+(Number(d.amt)||0),0);
+  const admin=isDepositAdmin();
 
   return `
     <h1>💰 ${T('ডিপোজিট ম্যানেজমেন্ট','Deposit Management')}</h1>
 
-    <div class="card">
-      <h2>${T('মোট জমা','Total Deposit')}</h2>
-      <h1 style="color:var(--green)">
+    <div style="background:#e3efff;border:1px solid #b9d4f5;border-radius:15px;padding:15px 17px;margin:10px 0 16px">
+      <div style="font-size:13px;font-weight:650;color:#2161bd">${T('মোট জমা','Total Deposit')}</div>
+      <div style="font-size:27px;font-weight:800;color:#2161bd;margin-top:3px">
         ${total.toFixed(2)} ${M.cur}
-      </h1>
+      </div>
     </div>
 
     <div class="card">
       <h2>${T('নতুন জমা যোগ করুন','Add New Deposit')}</h2>
 
-      <label>${T('সদস্য নির্বাচন','Select Member')}</label>
-
-      <select id="depositMember">
-        ${M.members.map((name,i)=>`
-          <option value="${i}" ${i===M.me?'selected':''}>
-            ${esc(name)}
-          </option>
-        `).join('')}
-      </select>
+      ${admin?`
+        <label>${T('সদস্য নির্বাচন','Select Member')}</label>
+        <select id="depositMember">
+          ${M.members.map((name,i)=>`
+            <option value="${i}" ${i===M.me?'selected':''}>${esc(name)}</option>
+          `).join('')}
+        </select>
+      `:`
+        <div class="mut" style="margin:0 0 10px">
+          ${T('আপনার নামে জমা হবে','Deposit will be added to your account')}: <b>${esc(M.members[M.me]||'')}</b>
+        </div>
+      `}
 
       <label>${T('জমার পরিমাণ','Deposit Amount')}</label>
+      <input id="depositAmount" type="number" min="1" step="0.01" placeholder="0">
 
-      <input id="depositAmount"
-        type="number"
-        min="1"
-        step="0.01"
-        placeholder="0">
-
-      <button class="primary" onclick="saveDeposit()">
-        ${T('জমা সংরক্ষণ','Save Deposit')}
+      <button class="primary" onclick="saveDeposit()" ${S.savingDeposit?'disabled':''}>
+        ${S.savingDeposit?T('সংরক্ষণ হচ্ছে...','Saving...'):T('জমা সংরক্ষণ','Save Deposit')}
       </button>
     </div>
 
-    <div class="card">
-      <h2>${T('সদস্যভিত্তিক জমা','Member Deposits')}</h2>
+    <h2 style="margin:18px 0 10px">${T('সদস্যভিত্তিক জমা','Member Deposits')}</h2>
 
-      ${M.members.map((name,i)=>{
-        const amount=M.deposits
-          .filter(d=>d.uid===M.memberUids[i])
-          .reduce((s,d)=>s+(Number(d.amt)||0),0);
+    ${M.members.map((name,i)=>{
+      const uid=M.memberUids[i];
+      const records=deposits
+        .filter(d=>d.uid===uid)
+        .sort((a,b)=>(b.date?.toMillis?.()||0)-(a.date?.toMillis?.()||0));
+      const amount=records.reduce((sum,d)=>sum+(Number(d.amt)||0),0);
+      const latest=records[0];
 
-        return `
-          <div style="padding:12px 0;border-bottom:1px solid var(--bd)">
-            <b>${esc(name)}</b>
-            <div class="mut">
-              ${T('মোট জমা','Total Deposit')}:
-              ${amount.toFixed(2)} ${M.cur}
-            </div>
+      return `
+        <div style="position:relative;background:#e3efff;border:1.5px solid #83c99b;border-radius:14px;padding:13px 14px;margin-bottom:10px;box-sizing:border-box">
+          <div style="display:flex;align-items:center;gap:7px">
+            <b style="font-size:15px">${esc(name)}</b>
+            <span style="font-size:10px;font-weight:700;padding:4px 7px;border-radius:20px;background:${uid===M.adminUid?'#d8f1df':'#edf1f5'};color:${uid===M.adminUid?'#087b42':'#53616b'}">${uid===M.adminUid?T('এডমিন','Admin'):T('মেম্বার','Member')}</span>
+            ${admin? `
+              <details style="margin-left:auto;position:relative">
+                <summary aria-label="Deposit actions" style="list-style:none;cursor:pointer;color:var(--muted);font-size:23px;line-height:20px;padding:0 3px">⋮</summary>
+                <div style="position:absolute;right:0;top:25px;z-index:8;width:min(260px,75vw);max-height:280px;overflow:auto;background:var(--card);border:1px solid var(--line);border-radius:11px;padding:8px;box-shadow:0 5px 18px #0002">
+                  <div style="font-size:12px;font-weight:700;padding:4px 5px 8px">${T('জমার লেনদেন','Deposit transactions')}</div>
+                  ${records.length?records.map(d=>`
+                    <div style="padding:8px 5px;border-top:1px solid var(--line)">
+                      <div style="font-size:12px;font-weight:700">${Number(d.amt).toFixed(2)} ${M.cur}</div>
+                      <div class="mut" style="font-size:10px;margin:3px 0 7px">${depositDateTime(d)}</div>
+                      <div style="display:flex;gap:7px">
+                        <button class="secondary" style="padding:5px 9px;font-size:11px" onclick="editDeposit('${esc(d.id)}')">${T('এডিট','Edit')}</button>
+                        <button style="padding:5px 9px;font-size:11px;background:#ffe8e8;color:#c52d36;border:1px solid #f2caca;border-radius:8px" onclick="deleteDeposit('${esc(d.id)}')">${T('ডিলিট','Delete')}</button>
+                      </div>
+                    </div>
+                  `).join(''):`<div class="mut" style="font-size:12px;padding:6px">${T('এখনো জমা নেই','No deposits yet')}</div>`}
+                </div>
+              </details>
+            `:''}
           </div>
-        `;
-      }).join('')}
-    </div>
+
+          <div style="font-size:23px;font-weight:800;color:#2161bd;margin:8px 0 4px">
+            ${amount.toFixed(2)} ${M.cur}
+          </div>
+          <div class="mut" style="font-size:11px">
+            ${latest?depositDateTime(latest):T('এখনো জমা নেই','No deposits yet')}
+          </div>
+        </div>
+      `;
+    }).join('')}
   `;
 }
   
