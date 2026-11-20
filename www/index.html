@@ -139,6 +139,16 @@ body{margin:0;background:var(--bg);color:var(--ink);font-family:"Noto Sans Benga
 .regular-code b{font-family:ui-monospace,Menlo,monospace;font-size:12px;letter-spacing:.5px}
 .regular-copy{border:0;background:transparent;color:#087b42;font-size:15px;line-height:1;padding:1px 3px}
 .regular-section-title{font-size:18px;color:#087b42;margin:8px 0 13px}
+.regular-summary-head{display:flex;align-items:center;justify-content:space-between;gap:10px;margin:8px 0 13px}
+.regular-summary-head .regular-section-title{margin:0;min-width:0}
+.regular-personal-card{width:48%;max-width:178px;min-width:0;background:#e3efff;color:#2161bd;border:1px solid #b9d4f3;border-radius:12px;padding:8px 10px;display:flex;flex-direction:column;gap:3px;line-height:1.3}
+.regular-personal-top{display:flex;align-items:center;justify-content:space-between;gap:5px;min-width:0}
+.regular-personal-name{font-size:12px;font-weight:800;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;min-width:0}
+.regular-personal-role{font-size:10px;white-space:nowrap;opacity:.85}
+.regular-personal-status{font-size:10px;opacity:.9}
+.regular-personal-amount{font-size:17px;font-weight:800;overflow-wrap:anywhere}
+@media(max-width:360px){.regular-summary-head{gap:7px}.regular-summary-head .regular-section-title{font-size:16px}.regular-personal-card{padding:7px 8px}.regular-personal-name{font-size:11px}.regular-personal-amount{font-size:15px}}
+
 .regular-summary{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px;margin-bottom:20px}
 .regular-card{min-width:0;min-height:112px;padding:14px 12px;border:1px solid #b9dfc6;box-sizing:border-box;border-radius:16px;display:flex;flex-direction:column;align-items:flex-start;justify-content:center;gap:5px}
 .regular-card-icon{font-size:25px;line-height:1.1;margin-bottom:2px}
@@ -3221,7 +3231,27 @@ function homeView(){
 
       ${p?`<button class="banner" onclick="go('req')">🔔 ${bn(p)} ${T('টি নতুন যোগদানের অনুরোধ','new join request(s)')}</button>`:''}
 
-      <h2 class="regular-section-title">${T('মেসের সারসংক্ষেপ','Mess Summary')}</h2>
+      <div class="regular-summary-head">
+        <h2 class="regular-section-title">${T('মেসের সারসংক্ষেপ','Mess Summary')}</h2>
+        ${(()=>{
+          const me=calcAllMembers().find(a=>a.uid===auth.currentUser?.uid);
+          const myName=me?.name||S.user?.name||'';
+          const balance=Number(me?.bal)||0;
+          const status=Math.abs(balance)<.005
+            ?T('হিসাব সমান','Settled')
+            :balance>0
+              ?T('পাওনা','Receivable')
+              :T('দেনা','Due');
+          return `<div class="regular-personal-card">
+            <div class="regular-personal-top">
+              <span class="regular-personal-name">${esc(myName)}</span>
+              <span class="regular-personal-role">${M.role==='admin'?T('Admin','Admin'):T('সদস্য','Member')}</span>
+            </div>
+            <span class="regular-personal-status">${status}</span>
+            <strong class="regular-personal-amount">${Math.abs(balance)<.005?T('—','—'):cs()+fmt(Math.abs(balance))}</strong>
+          </div>`;
+        })()}
+      </div>
       <div class="regular-summary">
         <div class="regular-card regular-market">
           <div class="regular-card-icon">🛒</div>
