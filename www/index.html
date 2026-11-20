@@ -2681,7 +2681,7 @@ async function deleteDeposit(id){
     <div class="card" style="padding:16px">
       <h2 style="margin:0 0 16px">${T('নতুন জমা যোগ করুন','Add New Deposit')}</h2>
 
-      ${!S.editDepositId&&admin?`
+      ${!S.editDepositId && admin ? `
         <div style="margin-bottom:14px">
           <label for="depositMember" style="display:block;font-size:14px;font-weight:700;margin-bottom:7px">${T('সদস্য নির্বাচন','Select Member')}</label>
           <select id="depositMember" style="display:block;width:100%;max-width:100%;min-height:48px;padding:10px 12px;border:1.5px solid #cbd8d0;border-radius:10px;background:var(--card);color:var(--ink);font:inherit">
@@ -2690,11 +2690,11 @@ async function deleteDeposit(id){
             `).join('')}
           </select>
         </div>
-      `:` ${!S.editDepositId&&!admin?`
+      ` : (!S.editDepositId && !admin ? `
         <div class="mut" style="margin:0 0 14px;padding:10px 12px;background:#f0f8f2;border:1px solid #d5e9db;border-radius:10px">
           ${T('আপনার নামে জমা হবে','Deposit will be added to your account')}: <b>${esc(M.members[M.me]||'')}</b>
         </div>
-      ` : ''}
+      ` : '')}
 
       <div style="margin-bottom:14px">
         <label for="depositAmount" style="display:block;font-size:14px;font-weight:700;margin-bottom:7px">${T('জমার পরিমাণ','Deposit Amount')}</label>
