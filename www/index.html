@@ -1190,6 +1190,7 @@ function stopMessListeners(){
     '_smartMessDepositUnsub',
     '_smartMessSettlementUnsub',
     '_smartMessDailyMealUnsub',
+    '_smartMessMessUnsub',
     '_smartMessTaskUnsub',
     '_smartMessUserUnsub'
   ];
@@ -1436,6 +1437,18 @@ const messId=userData.messId;
     }
 
     render();
+
+    // MESS DETAILS LIVE SYNC
+    window._smartMessMessUnsub=messRef.onSnapshot(snapshot=>{
+      if(!M || M.id!==messId || !snapshot.exists) return;
+      const latest=snapshot.data()||{};
+      if(latest.name && latest.name!==M.name){
+        M.name=latest.name;
+        render();
+      }
+    },error=>{
+      console.error('MESS DETAILS SYNC ERROR:',error);
+    });
 
     // EXPENSE LIVE SYNC
     window._smartMessExpenseUnsub=
@@ -3147,7 +3160,8 @@ async function deleteDeposit(id){
       ${row('👤',T('প্রোফাইল এডিট','Edit Profile'),"go('profile')")}
       ${row('👥',T('সদস্য তালিকা','Member List'),"go('members')")}
       ${M.role=='admin'?row('📋',T('সাবেক সদস্য','Former Members'),'loadFormerMembers()'):''}
-      ${row('💰',T('ডিপোজিট ম্যানেজমেন্ট','Deposit Management'),"go('deposits')")}
+      ${M.role=='admin'?row('🏷️',T('মেসের নাম পরিবর্তন','Change Mess Name'),"go('editMessName')"):''}
+      ${row('💰'},T('ডিপোজিট ম্যানেজমেন্ট','Deposit Management'),"go('deposits')")}
       ${row('📊',T('মাসিক রিপোর্ট','Monthly Report'),"go('rep')")}
       ${row('📚',T('আগের হিসাব','History'),'openHistory()')}
       ${M.role=='admin'?row('♻️',T('মেস রিসেট','Reset Mess'),'resetMess()'):''}
@@ -3159,6 +3173,49 @@ async function deleteDeposit(id){
     </div>
   `;
 }
+  function editMessNameView(){
+  if(!M || M.role!=='admin')
+    return '<div class="card">শুধু Admin মেসের নাম পরিবর্তন করতে পারবেন।</div>';
+
+  return `
+    <h1>🏷️ ${T('মেসের নাম পরিবর্তন','Change Mess Name')}</h1>
+    <div class="card">
+      <label>${T('বর্তমান মেসের নাম','Current mess name')}</label>
+      <input type="text" id="newMessName" value="${esc(M.name||'')}"
+        maxlength="60" placeholder="${T('নতুন মেসের নাম লিখুন','Enter new mess name')}">
+      <button class="btn" onclick="saveMessName()" style="margin-top:12px">
+        ${T('নাম সংরক্ষণ করুন','Save Name')}
+      </button>
+    </div>
+  `;
+}
+
+  async function saveMessName(){
+  if(!M || M.role!=='admin')
+    return say(T('শুধু Admin এই কাজ করতে পারবেন','Only Admin can do this'));
+
+  const input=document.getElementById('newMessName');
+  const name=(input?.value||'').trim().replace(/\\s+/g,' ');
+  if(!name) return say(T('মেসের নাম লিখুন','Enter mess name'));
+  if(name.length>60) return say(T('মেসের নাম ৬০ অক্ষরের মধ্যে হতে হবে','Mess name must be 60 characters or less'));
+  if(name===M.name) return say(T('নতুন নামটি আগের নামের মতোই','The name is unchanged'));
+
+  try{
+    await db.collection('messes').doc(M.id).update({
+      name:name,
+      updatedAt:firebase.firestore.FieldValue.serverTimestamp(),
+      updatedBy:auth.currentUser.uid
+    });
+    M.name=name;
+    say(T('মেসের নাম সফলভাবে পরিবর্তন হয়েছে','Mess name updated successfully'));
+    S.tab='settings';
+    render();
+  }catch(e){
+    console.error('SAVE MESS NAME ERROR:',e);
+    say('মেসের নাম পরিবর্তন ব্যর্থ: '+(e.code||e.message));
+  }
+}
+
   async function saveName(){
   try{
     const name=document.getElementById('newName').value.trim();
@@ -4847,7 +4904,7 @@ function render(){
   if(S.screen=='auth')v=authView();else if(S.screen=='welcome')v=welcomeView();else if(S.screen=='create')v=createView();else if(S.screen=='join')v=joinView();
   else{
       const tabs=S.pendingJoin?[['home','home',T('হোম','Home')]]:[['home','home',T('হোম','Home')],['add','add',T('খরচ যোগ','Add')],['expenses','receipt',T('খরচের তালিকা','Expenses')],['task','task',T('টাস্ক','Tasks')]].concat(M.type=='meal'?[['meal','meals',T('মিল','Meals')]]:[]);   
-      v=({home:homeView,add:addView,meal:mealView,rep:reportView,task:taskView,req:reqView,expenses:expenseListView,members:memberListView,settings:settingsView,deposits:depositView,depositDetail:depositDetailView,history:historyView,historyDetail:historyDetailView,formerMembers:formerMembersView,about:aboutView,profile:profileView,editnumber:editNumberView,editname:editNameView}[S.tab]||homeView)();   
+      v=({home:homeView,add:addView,meal:mealView,rep:reportView,task:taskView,req:reqView,expenses:expenseListView,members:memberListView,settings:settingsView,editMessName:editMessNameView,deposits:depositView,depositDetail:depositDetailView,history:historyView,historyDetail:historyDetailView,formerMembers:formerMembersView,about:aboutView,profile:profileView,editnumber:editNumberView,editname:editNameView}[S.tab]||homeView)();   
     nav=`<nav><div>${tabs.map(t=>`<button class="${S.tab==t[0]?'on':''}" onclick="go('${t[0]}')"><span class="sm-icon nav-icon i-${t[1]}"></span><small class="nav-label">${t[2]}</small></button>`).join('')}</div></nav>`;
   }
   document.getElementById('app').innerHTML=topbar()+v+nav+(S.view!=null&&M.exp[S.view]?`<div class="ov" onclick="S.view=null;render()"><img src="${M.exp[S.view].memo}" alt=""></div>`:'')+(S.toast?`<div class="toast">${esc(S.toast)}</div>`:'');
