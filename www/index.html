@@ -3248,69 +3248,35 @@ async function transferAdmin(i){
 
  function formerMembersView(){
 
-  const list=M.formerMembers||[];
+  const periods=(M.periods||[]).filter(p=>p.status==='closed');
   const accounts=calcAllMembers();
 
   return `
-    <h1>📋 ${T('সাবেক সদস্য','Former Members')}</h1>
-
+    <h1>📋 ${T('সাবেক সদস্যদের হিসাবকাল','Closed Membership Periods')}</h1>
     <div class="card" style="margin-top:12px">
-      ${list.length?list.map((m,i)=>{
-
-        const account=accounts.find(a=>a.uid===m.uid)||{
-          meals:0,
-          deposited:0,
-          personalExpenses:0,
-          share:0,
-          bal:0
-        };
-
-        const balance=account.bal||0;
-
+      ${periods.length?periods.map((p,i)=>{
+        const account=accounts.find(a=>a.periodId===p.id)||{};
+        const balance=p.balanceFrozen===true
+          ?Number(p.finalBalance)||0
+          :Number(account.bal)||0;
+        const deposited=p.balanceFrozen===true?Number(p.finalDeposited)||0:Number(account.deposited)||0;
+        const personal=p.balanceFrozen===true?Number(p.finalPersonalExpenses)||0:Number(account.personalExpenses)||0;
+        const share=p.balanceFrozen===true?Number(p.finalShare)||0:Number(account.share)||0;
         return `
           <div style="padding:13px 0;border-bottom:1px solid var(--line)">
-
-            <b>${i+1}. ${esc(m.name||'নাম নেই')}</b>
-
-            ${M.type==='meal'?`
-  <div style="margin-top:7px;color:var(--green);font-weight:600">
-    ${T('মোট খাবার','Total Meals')}: ${account.meals}
-  </div>
-`:''}
-
-            <div class="mut" style="margin-top:7px">
-              ${T('যোগদানের তারিখ','Joined')}:
-              ${m.joinedAt?.toDate?m.joinedAt.toDate().toLocaleDateString():T('তথ্য নেই','Not available')}
-            </div>
-
-            <div class="mut" style="margin-top:5px">
-              ${T('ছাড়ার তারিখ','Left')}:
-              ${m.leftAt?.toDate?m.leftAt.toDate().toLocaleDateString():T('তথ্য নেই','Not available')}
-            </div>
-
-            <div style="margin-top:10px;color:var(--green);font-weight:600">
-              ${T('মোট জমা','Total Deposit')}: ${account.deposited.toFixed(2)} ${M.cur}
-            </div>
-
-            <div style="margin-top:5px;font-weight:600">
-              ${T('নিজের পকেট থেকে খরচ','Personal Expenses')}: ${account.personalExpenses.toFixed(2)} ${M.cur}
-            </div>
-
-            <div style="margin-top:5px;font-weight:600">
-              ${T('নিজের খরচের ভাগ','Allocated Expense')}: ${account.share.toFixed(2)} ${M.cur}
-            </div>
-
+            <b>${i+1}. ${esc(p.name||'নাম নেই')}</b>
+            <div class="mut" style="margin-top:6px">${T('যোগদান','Joined')}: ${p.joinedAt?.toDate?p.joinedAt.toDate().toLocaleDateString():'—'}</div>
+            <div class="mut" style="margin-top:4px">${T('ছাড়ার তারিখ','Left')}: ${p.leftAt?.toDate?p.leftAt.toDate().toLocaleDateString():'—'}</div>
+            <div style="margin-top:8px">${T('মোট জমা','Deposits')}: <b>${deposited.toFixed(2)} ${M.cur}</b></div>
+            <div style="margin-top:4px">${T('পকেট খরচ','Pocket expenses')}: <b>${personal.toFixed(2)} ${M.cur}</b></div>
+            <div style="margin-top:4px">${T('খরচের ভাগ','Expense share')}: <b>${share.toFixed(2)} ${M.cur}</b></div>
             <div style="margin-top:8px;font-weight:700;color:${balance>=0?'var(--green)':'#d9534f'}">
-              ${T('চূড়ান্ত ব্যালেন্স','Final Balance')}:
-              ${Math.abs(balance).toFixed(2)} ${M.cur}
-              ${balance>=0
-                ?T('(পাবে)','(Will Receive)')
-                :T('(দিতে হবে)','(Must Pay)')}
+              ${T('চূড়ান্ত ব্যালেন্স','Final balance')}: ${Math.abs(balance).toFixed(2)} ${M.cur}
+              ${balance>=0?T('(পাবে)','(Will receive)'):T('(দিতে হবে)','(Must pay)')}
+              ${p.balanceFrozen===true?' · '+T('স্থায়ীভাবে সংরক্ষিত','Frozen'):''}
             </div>
-
-          </div>
-        `;
-      }).join(''):`<p class="mut">${T('কোনো সাবেক সদস্য নেই','No former members')}</p>`}
+          </div>`;
+      }).join(''):`<p class="mut">${T('কোনো বন্ধ হিসাবকাল নেই','No closed membership periods')}</p>`}
     </div>
   `;
 }
