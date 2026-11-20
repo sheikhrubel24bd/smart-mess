@@ -4574,7 +4574,8 @@ function exportMonthlyPdf(){
   const money=v=>escPdf(M.cur||'')+' '+(Number(v)||0).toFixed(2);
   const dateLabel=new Date().toLocaleDateString(L==='bn'?'bn-BD':'en-US',{year:'numeric',month:'long'});
   const logoUrl=new URL('logo.png',location.href).href;
-  const memberRows=current.map((a,i)=>'<tr><td>'+escPdf(M.members[i])+'</td><td>'+escPdf(a.meals??M.meals?.[i]??0)+'</td><td>'+money(a.deposited)+'</td><td>'+money(a.personalExpenses)+'</td><td>'+money(a.share)+'</td><td>'+money(a.bal)+'</td></tr>').join('');
+  const memberRows=current.map((a,i)=>'<tr><td>'+escPdf(M.members[i])+'</td><td>'+escPdf(M.type==='meal'?(M.meals?.[i]||0):(a.meals||0))+'</td><td>'+money(a.deposited)+'</td><td>'+money(a.personalExpenses)+'</td><td>'+money(a.share)+'</td><td>'+money(a.bal)+'</td></tr>').join('');
+  const depositRows=(M.deposits||[]).slice().sort((a,b)=>{const da=a.date?.toDate?.()?.getTime?.()||0;const db=b.date?.toDate?.()?.getTime?.()||0;return da-db;}).map(d=>{const member=(M.allMembers||[]).find(x=>x.uid===d.uid);const when=d.date?.toDate?.()?.toLocaleDateString(L==='bn'?'bn-BD':'en-US')||'—';return '<tr><td>'+escPdf(when)+'</td><td>'+escPdf(member?.name||'—')+'</td><td>'+money(d.amt)+'</td></tr>';}).join('');
   const formerRows=former.map(a=>'<tr><td>'+escPdf(a.name)+' (সাবেক সদস্য)</td><td>—</td><td>'+money(a.deposited)+'</td><td>'+money(a.personalExpenses)+'</td><td>'+money(a.share)+'</td><td>'+money(a.bal)+'</td></tr>').join('');
   const expenseRows=(M.exp||[]).slice().sort((a,b)=>(Number(a.d)||0)-(Number(b.d)||0)).map(e=>{
     const item=e.item==='other'?(e.otherName||'অন্যান্য খরচ'):(typeof nm==='function'?nm(e.item):e.item);
@@ -4623,6 +4624,8 @@ function exportMonthlyPdf(){
     </tbody></table>
     <h2>সদস্যভিত্তিক হিসাব / Member Accounts</h2>
     <table><thead><tr><th>সদস্য / Member</th><th>মিল / Meals</th><th>জমা / Deposit</th><th>পকেট খরচ / Pocket</th><th>খরচের ভাগ / Share</th><th>ব্যালেন্স / Balance</th></tr></thead><tbody>${memberRows}${formerRows}</tbody></table>
+    <h2>ডিপোজিটের বিস্তারিত / Deposit Details</h2>
+    <table><thead><tr><th>তারিখ / Date</th><th>সদস্য / Member</th><th>জমা / Deposit</th></tr></thead><tbody>${depositRows||'<tr><td colspan="3">কোনো জমা নেই / No deposits</td></tr>'}</tbody></table>
     <h2>খরচের বিস্তারিত / Expense Details</h2>
     <table><thead><tr><th>তারিখ / Date</th><th>বিবরণ / Description</th><th>প্রদানকারী / Paid by</th><th>উৎস / Source</th><th>পরিমাণ / Amount</th></tr></thead><tbody>${expenseRows||'<tr><td colspan="5">কোনো খরচ নেই / No expenses</td></tr>'}</tbody></table>
     <div class="note">এই রিপোর্টটি Smart-Mess অ্যাপের সংরক্ষিত তথ্য থেকে তৈরি। হিসাব যাচাইয়ের জন্য মূল অ্যাপের তথ্যের সঙ্গে মিলিয়ে নিন।</div>
