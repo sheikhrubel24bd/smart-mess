@@ -4227,6 +4227,8 @@ function reportView(){
     allAccounts.find(a=>a.uid===uid)
   );
 
+  const formerAccounts=allAccounts.filter(a=>a.frozen);
+
   const totalDeposit=c.deposited.reduce((a,b)=>a+b,0);
 
   const depositSpent=M.exp
@@ -4239,11 +4241,11 @@ function reportView(){
 
   const cashLeft=totalDeposit-depositSpent;
 
-    const totalReceivable=currentAccounts
+  const totalReceivable=[...currentAccounts,...formerAccounts]
     .filter(a=>a && a.bal>0)
     .reduce((s,a)=>s+a.bal,0);
 
-  const totalOwed=currentAccounts
+  const totalOwed=[...currentAccounts,...formerAccounts]
     .filter(a=>a && a.bal<0)
     .reduce((s,a)=>s+Math.abs(a.bal),0);
 
@@ -4374,6 +4376,23 @@ function reportView(){
             :T('মেসে দেবে','Pays to mess')}
         </div>
 
+        <b class="${b>0?'pos':'neg'}">
+          ${cs()}${fmt(Math.abs(b))}
+        </b>
+      </div>`;
+    }).join('')}
+
+    ${formerAccounts.map(a=>{
+      const b=Number(a.bal)||0;
+      if(Math.abs(b)<.005)return '';
+      return `
+      <div class="li">
+        <div class="t">
+          <b>${esc(a.name||T('সাবেক সদস্য','Former member'))}</b>
+          ${b>0
+            ?T('মেস থেকে ফেরত পাবে','Gets refund from mess')
+            :T('মেসে দেবে','Pays to mess')}
+        </div>
         <b class="${b>0?'pos':'neg'}">
           ${cs()}${fmt(Math.abs(b))}
         </b>
