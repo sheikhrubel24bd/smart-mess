@@ -919,7 +919,9 @@ function calc(){
       participants=e.participantsAtTime
         .map(x=>byId[x.periodId])
         .filter(p=>p&&!p.frozen);
-    }else if(Array.isArray(e.memberUidsAtTime)&&e.memberUidsAtTime.length){
+    }
+    // পরীক্ষামূলক পুরোনো রেকর্ডে periodId null থাকলে বর্তমান সক্রিয় period ব্যবহার।
+    if(!participants.length&&Array.isArray(e.memberUidsAtTime)&&e.memberUidsAtTime.length){
       participants=e.memberUidsAtTime.map(uid=>{
         const member=(M.allMembers||[]).find(m=>m.uid===uid&&m.status==='active');
         return member?.currentPeriodId?byId[member.currentPeriodId]:null;
