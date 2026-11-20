@@ -694,9 +694,10 @@ select{border:1.5px solid var(--bd);background:var(--card);color:var(--ink);bord
 
 
 /* Final compact welcome page layout */
-.welcome-page{padding:2px 0 22px}
-.welcome-user{display:flex;align-items:center;justify-content:space-between;gap:10px;margin:0 2px 5px}
-.welcome-user-label{font-size:11px;color:var(--mut)}
+.welcome-page{padding:0 0 22px}
+.welcome-user{display:flex;align-items:center;justify-content:flex-end;gap:8px;margin:0 2px 5px}
+.welcome-user-label{display:none}
+.welcome-lang{border:1px solid #16794f;background:#fff;color:#16794f;border-radius:99px;padding:6px 14px;font-size:13px;font-weight:700;white-space:nowrap}
 .welcome-logout{border:1px solid #b9dfc7;background:#f0faf3;color:#16794f;border-radius:99px;padding:6px 12px;font-size:12px;font-weight:700;white-space:nowrap}
 .welcome-brand{text-align:center;padding:0 8px 0;margin:0 0 17px}
 .welcome-brand img{display:block;width:88px;height:88px;object-fit:contain;margin:0 auto 1px}
@@ -1023,6 +1024,8 @@ function to(s){
 function topbar(){
   const app=S.screen=='app';
   const p=pend();
+
+  if(S.screen=='welcome')return '';
 
   if(app){
     return `<div class="top app-topbar">
