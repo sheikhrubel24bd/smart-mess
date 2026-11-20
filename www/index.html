@@ -235,23 +235,28 @@ nav{
   position:fixed;left:50%;right:auto;bottom:calc(10px + env(safe-area-inset-bottom,0px));
   transform:translateX(-50%);width:calc(100% - 30px);max-width:452px;
   display:flex;justify-content:center;align-items:stretch;
-  min-height:82px;background:#16794f;border:0;
+  min-height:68px;background:#16794f;border:0;
   border-radius:26px;padding:7px 8px;
   box-shadow:0 6px 18px #0c51334a;z-index:40;
 }
 nav div{display:flex;width:100%;max-width:none;gap:3px;align-items:stretch}
 nav button{
-  flex:1;min-width:0;min-height:66px;border:0;border-radius:18px;
-  background:transparent;padding:6px 2px;
+  flex:1;min-width:0;min-height:54px;border:0;border-radius:18px;
+  background:transparent;padding:4px 2px;
   display:flex;flex-direction:column;align-items:center;justify-content:center;
-  gap:4px;font-size:10px;line-height:1.15;color:#e6f4eb;text-align:center;
+  gap:3px;font-size:10px;line-height:1.15;color:#e6f4eb;text-align:center;
 }
-nav button .nav-icon{display:block;flex:0 0 23px;width:23px;height:23px;margin:0 auto}
-nav button .nav-label{display:block;width:100%;font-size:10px;line-height:1.2;white-space:nowrap;text-align:center}
+nav button .nav-icon{display:block;flex:0 0 21px;width:21px;height:21px;margin:0 auto}
+nav button .nav-label{display:block;width:100%;font-size:9px;line-height:1.15;white-space:nowrap;text-align:center}
 .sm-icon{display:inline-block;width:21px;height:21px;filter:brightness(0) invert(1);background-image:url("icons/navigation.png");background-repeat:no-repeat;background-size:700% 100%;vertical-align:middle}
 .i-bell{background-position:0 0}.i-settings{background-position:16.6667% 0}.i-home{background-position:33.3333% 0}.i-add{background-position:50% 0}.i-receipt{background-position:66.6667% 0}.i-task{background-position:83.3333% 0}.i-meals{background-position:100% 0}
 .top.app-topbar .top-icon{position:relative;display:grid;place-items:center;min-width:42px;min-height:42px;padding:5px;border:0;background:transparent;color:#fff}
-.top.app-topbar .top-icon .sm-icon{width:25px;height:25px}
+.top.app-topbar .top-icon .sm-icon{width:23px;height:23px}
+.top.app-topbar .top-icon .top-settings-icon{
+  width:24px;height:24px;display:block;background:none;filter:none;
+  background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='24' height='24' viewBox='0 0 24 24' fill='none' stroke='%23ffffff' stroke-width='2.2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M12 8a4 4 0 1 0 0 8 4 4 0 0 0 0-8Z'/%3E%3Cpath d='m19.4 15 .1.1 1.4 1.1-1.4 2.4-1.7-.7a8 8 0 0 1-1.5.9l-.3 1.8h-2.8l-.3-1.8a8 8 0 0 1-1.5-.9l-1.7.7-1.4-2.4 1.4-1.1a7 7 0 0 1 0-1.8l-1.4-1.1 1.4-2.4 1.7.7a8 8 0 0 1 1.5-.9l.3-1.8h2.8l.3 1.8a8 8 0 0 1 1.5.9l1.7-.7 1.4 2.4-1.4 1.1a7 7 0 0 1 0 1.8Z'/%3E%3C/svg%3E");
+  background-size:contain;background-repeat:no-repeat;background-position:center;
+}
 .top.app-topbar .top-icon .i-settings{background-position:16.6667% 0}
 .top.app-topbar .top-icon i{position:absolute;top:0;right:0;background:#ffcf4a;color:#263629;font-style:normal;font-size:10px;font-weight:700;border-radius:99px;min-width:15px;padding:0 3px;text-align:center}
 .nav-icon{width:23px;height:23px}
@@ -914,7 +919,7 @@ function topbar(){
       <span class="sp"></span>
       <button class="top-icon" onclick="go('req')" aria-label="${T('নোটিফিকেশন','Notifications')}"><span class="sm-icon i-bell"></span>${p?`<i>${bn(p)}</i>`:''}</button>
       <button class="lang" onclick="tl()" aria-label="Language">${L=='bn'?'EN':'বাং'}</button>
-      <button class="top-icon" onclick="go('settings')" aria-label="${T('সেটিংস','Settings')}"><span class="sm-icon i-settings"></span></button>
+      <button class="top-icon" onclick="go('settings')" aria-label="${T('সেটিংস','Settings')}"><span class="top-settings-icon"></span></button>
     </div>`;
   }
 
