@@ -2165,10 +2165,18 @@ function whoBlock(c){
         const periodRef=messRef.collection('membershipPeriods').doc(memberData.currentPeriodId);
         const periodSnap=await tx.get(periodRef);
         if(periodSnap.exists){
+          const periodAccount=calcAllMembers().find(a=>a.periodId===memberData.currentPeriodId);
           tx.update(periodRef,{
             status:'closed',
             leftAt:leftAt,
-            closedAt:firebase.firestore.FieldValue.serverTimestamp()
+            closedAt:firebase.firestore.FieldValue.serverTimestamp(),
+            balanceFrozen:true,
+            finalBalance:Number(periodAccount?.bal)||0,
+            finalDeposited:Number(periodAccount?.deposited)||0,
+            finalPersonalExpenses:Number(periodAccount?.personalExpenses)||0,
+            finalShare:Number(periodAccount?.share)||0,
+            finalPaid:Number(periodAccount?.paid)||0,
+            balanceFrozenAt:firebase.firestore.FieldValue.serverTimestamp()
           });
         }
       }
@@ -3410,10 +3418,18 @@ async function removeMember(i){
         const periodRef=messRef.collection('membershipPeriods').doc(targetData.currentPeriodId);
         const periodSnap=await tx.get(periodRef);
         if(periodSnap.exists){
+          const periodAccount=calcAllMembers().find(a=>a.periodId===targetData.currentPeriodId);
           tx.update(periodRef,{
             status:'closed',
             leftAt:leftAt,
-            closedAt:firebase.firestore.FieldValue.serverTimestamp()
+            closedAt:firebase.firestore.FieldValue.serverTimestamp(),
+            balanceFrozen:true,
+            finalBalance:Number(periodAccount?.bal)||0,
+            finalDeposited:Number(periodAccount?.deposited)||0,
+            finalPersonalExpenses:Number(periodAccount?.personalExpenses)||0,
+            finalShare:Number(periodAccount?.share)||0,
+            finalPaid:Number(periodAccount?.paid)||0,
+            balanceFrozenAt:firebase.firestore.FieldValue.serverTimestamp()
           });
         }
       }
