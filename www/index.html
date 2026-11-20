@@ -3161,7 +3161,7 @@ async function deleteDeposit(id){
       ${row('👥',T('সদস্য তালিকা','Member List'),"go('members')")}
       ${M.role=='admin'?row('📋',T('সাবেক সদস্য','Former Members'),'loadFormerMembers()'):''}
       ${M.role=='admin'?row('🏷️',T('মেসের নাম পরিবর্তন','Change Mess Name'),"go('editMessName')"):''}
-      ${row('💰'},T('ডিপোজিট ম্যানেজমেন্ট','Deposit Management'),"go('deposits')")}
+      ${row('💰',T('ডিপোজিট ম্যানেজমেন্ট','Deposit Management'),"go('deposits')")}
       ${row('📊',T('মাসিক রিপোর্ট','Monthly Report'),"go('rep')")}
       ${row('📚',T('আগের হিসাব','History'),'openHistory()')}
       ${M.role=='admin'?row('♻️',T('মেস রিসেট','Reset Mess'),'resetMess()'):''}
@@ -3195,7 +3195,7 @@ async function deleteDeposit(id){
     return say(T('শুধু Admin এই কাজ করতে পারবেন','Only Admin can do this'));
 
   const input=document.getElementById('newMessName');
-  const name=(input?.value||'').trim().replace(/\\s+/g,' ');
+  const name=(input?.value||'').trim().replace(/\s+/g,' ');
   if(!name) return say(T('মেসের নাম লিখুন','Enter mess name'));
   if(name.length>60) return say(T('মেসের নাম ৬০ অক্ষরের মধ্যে হতে হবে','Mess name must be 60 characters or less'));
   if(name===M.name) return say(T('নতুন নামটি আগের নামের মতোই','The name is unchanged'));
