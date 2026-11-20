@@ -1997,6 +1997,9 @@ async function decide(i,ok){
         const data=requestSnap.data();
 
 const joinedAt=firebase.firestore.FieldValue.serverTimestamp();
+const nextPeriodNo=memberSnap.exists
+  ? (Number(memberSnap.data().periodCount)||1)+1
+  : 1;
 const memberData={
   uid:r.uid,
   name:data.name,
@@ -2005,31 +2008,29 @@ const memberData={
   role:'member',
   status:'active',
   joinedAt:joinedAt,
-  currentPeriodId:periodRef.id
+  currentPeriodId:periodRef.id,
+  periodCount:nextPeriodNo
 };
 
 if(memberSnap.exists){
   if(memberSnap.data().status!=='left')
     throw new Error('MEMBER_EXISTS');
 
-  tx.update(memberRef,{
-  name:data.name,
-  email:data.email,
-  phone:data.phone||'',
-  role:'member',
-  status:'active',
-  joinedAt:joinedAt,
-  rejoinedAt:joinedAt,
-  currentPeriodId:periodRef.id
-});
-
+  tx.set(memberRef,{
+    name:data.name,
+    email:data.email,
+    phone:data.phone||'',
+    role:'member',
+    status:'active',
+    joinedAt:joinedAt,
+    rejoinedAt:joinedAt,
+    currentPeriodId:periodRef.id,
+    periodCount:nextPeriodNo
+  },{merge:true});
 }else{
   tx.set(memberRef,memberData);
 }
 
-const nextPeriodNo=memberSnap.exists
-  ? (Number(memberSnap.data().periodCount)||1)+1
-  : 1;
 tx.set(periodRef,{
   uid:r.uid,
   name:data.name,
@@ -2039,7 +2040,6 @@ tx.set(periodRef,{
   leftAt:null,
   createdAt:firebase.firestore.FieldValue.serverTimestamp()
 });
-tx.set(memberRef,{periodCount:nextPeriodNo},{merge:true});
 
         tx.update(userRef,{
           messId:messId,
