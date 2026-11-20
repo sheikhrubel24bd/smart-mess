@@ -2091,7 +2091,9 @@ if(ok){
     name:d.data().name,
     status:d.data().status,
     joinedAt:d.data().joinedAt,
-    leftAt:d.data().leftAt||null
+    leftAt:d.data().leftAt||null,
+    currentPeriodId:d.data().currentPeriodId||null,
+    periodCount:Number(d.data().periodCount)||1
   }));
 }
 
@@ -2851,8 +2853,11 @@ function historyView(){
       S.editDepositId=null;
       say(T('জমার পরিমাণ সংশোধন হয়েছে','Deposit updated successfully'));
     }else{
+      const depositUid=M.memberUids[memberIndex];
+      const depositMember=(M.allMembers||[]).find(m=>m.uid===depositUid);
       await depositRef.add({
-        uid:M.memberUids[memberIndex],
+        uid:depositUid,
+        periodId:depositMember?.currentPeriodId||null,
         amt:amt,
         addedBy:auth.currentUser.uid,
         date:firebase.firestore.FieldValue.serverTimestamp()
