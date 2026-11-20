@@ -4629,7 +4629,7 @@ function exportMonthlyPdf(){
     <h2>খরচের বিস্তারিত / Expense Details</h2>
     <table><thead><tr><th>তারিখ / Date</th><th>বিবরণ / Description</th><th>প্রদানকারী / Paid by</th><th>উৎস / Source</th><th>পরিমাণ / Amount</th></tr></thead><tbody>${expenseRows||'<tr><td colspan="5">কোনো খরচ নেই / No expenses</td></tr>'}</tbody></table>
     <div class="note">এই রিপোর্টটি Smart-Mess অ্যাপের সংরক্ষিত তথ্য থেকে তৈরি। হিসাব যাচাইয়ের জন্য মূল অ্যাপের তথ্যের সঙ্গে মিলিয়ে নিন।</div>
-    <script>window.addEventListener('load',()=>{const img=document.querySelector('.running-head img');const go=()=>setTimeout(()=>window.print(),400);if(img.complete)go();else{img.onload=go;img.onerror=go;setTimeout(go,1800)}});</script>
+    <script>window.addEventListener('load',()=>{const img=document.querySelector('.running-head img');const go=()=>setTimeout(()=>window.print(),400);if(img.complete)go();else{img.onload=go;img.onerror=go;setTimeout(go,1800)}});<\\/script>
   </body></html>`);
   w.document.close();
 }
