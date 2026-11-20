@@ -2524,42 +2524,57 @@ function historyView(){
   async function saveDeposit(){
   if(S.savingDeposit)return;
 
+  const editingId=S.editDepositId||null;
   const memberSelect=document.getElementById('depositMember');
   const memberIndex=M.role==='admin'
     ? Number(memberSelect?.value)
     : M.me;
   const amt=Number(document.getElementById('depositAmount')?.value);
 
-  if(!Number.isInteger(memberIndex)||memberIndex<0||memberIndex>=M.memberUids.length){
+  if(!Number.isFinite(amt)||amt<=0){
+    return say(T('সঠিক টাকার পরিমাণ দিন','Enter a valid amount'));
+  }
+
+  if(!editingId&&(!Number.isInteger(memberIndex)||memberIndex<0||memberIndex>=M.memberUids.length)){
     return say(T('সদস্য নির্বাচন সঠিক নয়','Please select a valid member'));
   }
 
-  if(!Number.isFinite(amt)||amt<=0){
-    return say(T('সঠিক টাকার পরিমাণ দিন','Enter a valid amount'));
+  if(editingId&&!isDepositAdmin()){
+    return say(T('শুধু এডমিন জমা পরিবর্তন করতে পারবেন','Only the admin can edit deposits'));
   }
 
   S.savingDeposit=true;
 
   try{
-    await db.collection('messes')
-      .doc(M.id)
-      .collection('deposits')
-      .add({
+    const depositRef=db.collection('messes').doc(M.id).collection('deposits');
+    if(editingId){
+      const record=(M.deposits||[]).find(d=>d.id===editingId);
+      if(!record)throw new Error('Deposit record not found');
+      await depositRef.doc(editingId).update({amt:amt});
+      S.editDepositId=null;
+      say(T('জমার পরিমাণ সংশোধন হয়েছে','Deposit updated successfully'));
+    }else{
+      await depositRef.add({
         uid:M.memberUids[memberIndex],
         amt:amt,
         addedBy:auth.currentUser.uid,
         date:firebase.firestore.FieldValue.serverTimestamp()
       });
-
-    document.getElementById('depositAmount').value='';
-    say(T('জমা সফলভাবে সংরক্ষণ হয়েছে','Deposit saved successfully'));
-
+      say(T('জমা সফলভাবে সংরক্ষণ হয়েছে','Deposit saved successfully'));
+    }
+    render();
   }catch(e){
-    console.error('SAVE DEPOSIT ERROR:',e);
-    say(T('জমা সংরক্ষণ করা যায়নি','Could not save deposit'));
+    console.error('SAVE/EDIT DEPOSIT ERROR:',e);
+    say(editingId?T('জমা পরিবর্তন করা যায়নি। Firestore অনুমতি পরীক্ষা করুন।','Could not edit deposit. Check Firestore permissions.'):T('জমা সংরক্ষণ করা যায়নি','Could not save deposit'));
   }finally{
     S.savingDeposit=false;
+    render();
   }
+}
+
+function cancelDepositEdit(){
+  S.editDepositId=null;
+  render();
 }
 
 function isDepositAdmin(){
@@ -2575,27 +2590,12 @@ function depositDateTime(record){
   return day+' · '+time;
 }
 
-async function editDeposit(id){
+function editDeposit(id){
   if(!isDepositAdmin())return say(T('শুধু এডমিন জমা পরিবর্তন করতে পারবেন','Only the admin can edit deposits'));
   const record=(M.deposits||[]).find(d=>d.id===id);
   if(!record)return say(T('জমার রেকর্ড পাওয়া যায়নি','Deposit record not found'));
-
-  const entered=prompt(T('নতুন জমার পরিমাণ লিখুন','Enter the corrected deposit amount'),String(record.amt));
-  if(entered===null)return;
-  const amount=Number(entered.trim());
-  if(!Number.isFinite(amount)||amount<=0)return say(T('সঠিক টাকার পরিমাণ দিন','Enter a valid amount'));
-
-  try{
-    // Firestore rules currently allow only amt/date fields to be updated.
-    // Keep the edit within the existing permitted field set.
-    await db.collection('messes').doc(M.id).collection('deposits').doc(id).update({
-      amt:amount
-    });
-    say(T('জমার পরিমাণ সংশোধন হয়েছে','Deposit updated successfully'));
-  }catch(e){
-    console.error('EDIT DEPOSIT ERROR:',e);
-    say(T('জমা পরিবর্তন করা যায়নি। Firestore অনুমতি পরীক্ষা করুন।','Could not edit deposit. Check Firestore permissions.'));
-  }
+  S.editDepositId=id;
+  render();
 }
 
 async function deleteDeposit(id){
@@ -2698,12 +2698,13 @@ async function deleteDeposit(id){
 
       <div style="margin-bottom:14px">
         <label for="depositAmount" style="display:block;font-size:14px;font-weight:700;margin-bottom:7px">${T('জমার পরিমাণ','Deposit Amount')}</label>
-        <input id="depositAmount" type="number" inputmode="decimal" min="0.01" step="0.01" placeholder="0.00" style="display:block;width:100%;min-height:50px;padding:12px;border:1.5px solid #cbd8d0;border-radius:10px;background:var(--card);color:var(--ink);font:inherit;font-size:18px">
+        <input id="depositAmount" type="number" inputmode="decimal" min="0.01" step="0.01" value="${S.editDepositId?(Number(deposits.find(d=>d.id===S.editDepositId)?.amt)||''): ''}" placeholder="0.00" style="display:block;width:100%;min-height:50px;padding:12px;border:1.5px solid #cbd8d0;border-radius:10px;background:var(--card);color:var(--ink);font:inherit;font-size:18px">
       </div>
 
       <button class="primary" style="display:block;width:100%;min-height:48px;background:#16a34a;color:#fff;border:1px solid #16a34a" onclick="saveDeposit()" ${S.savingDeposit?'disabled':''}>
-        ${S.savingDeposit?T('সংরক্ষণ হচ্ছে...','Saving...'):T('জমা সংরক্ষণ','Save Deposit')}
+        ${S.savingDeposit?T('সংরক্ষণ হচ্ছে...','Saving...'):S.editDepositId?T('পরিবর্তন সংরক্ষণ','Save Changes'):T('জমা সংরক্ষণ','Save Deposit')}
       </button>
+      ${S.editDepositId?'<button class="secondary" style="display:block;width:100%;min-height:42px;margin-top:8px" onclick="cancelDepositEdit()">'+T('এডিট বাতিল','Cancel Edit')+'</button>':''}
     </div>
 
     <h2 style="margin:18px 0 10px">${T('সদস্যভিত্তিক জমা','Member Deposits')}</h2>
