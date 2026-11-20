@@ -815,11 +815,12 @@ function calc(){
   // নতুন সদস্যের আগের খরচ এবং চলে যাওয়া সদস্যের পরের খরচ বাদ থাকবে।
   if(!meal){
     const allAccounts=calcAllMembers();
-    const activeAccounts=M.memberUids.map(uid=>
-      allAccounts.find(a=>a.uid===uid)||{
+    const activeAccounts=M.memberUids.map(uid=>{
+      const member=(M.allMembers||[]).find(m=>m.uid===uid);
+      return allAccounts.find(a=>a.periodId===member?.currentPeriodId)||{
         deposited:0,personalExpenses:0,share:0,bal:0
-      }
-    );
+      };
+    });
 
     const deposited=activeAccounts.map(a=>Number(a.deposited)||0);
     const paid=activeAccounts.map(a=>
@@ -873,113 +874,85 @@ function calc(){
 }
   function calcAllMembers(){
 
-  const members=M.allMembers||M.memberUids.map((uid,i)=>({
-    uid,
-    name:M.members[i],
-    status:'active'
+  // প্রতিটি join/rejoin আলাদা period account হিসেবে গণনা হবে।
+  const periods=(M.periods||[]).map(p=>({
+    periodId:p.id,
+    uid:p.uid,
+    name:p.name||((M.allMembers||[]).find(m=>m.uid===p.uid)?.name)||'',
+    status:p.status||'closed',
+    meals:0,
+    deposited:0,
+    personalExpenses:0,
+    share:0,
+    paid:0,
+    due:0,
+    bal:0,
+    finalBalance:p.finalBalance,
+    frozen: p.balanceFrozen===true
   }));
 
-  const accounts={};
+  const byId={};
+  periods.forEach(p=>{byId[p.periodId]=p;});
 
-  members.forEach(m=>{
-    accounts[m.uid]={
-      uid:m.uid,
-      name:m.name,
-      meals:Number(M.mealCountsByUid?.[m.uid])||0,
-      deposited:0,
-      personalExpenses:0,
-      share:0,
-      paid:0,
-      due:0,
-      bal:0
-    };
+  // পরীক্ষামূলক ডেটা বা Rules publish হওয়ার আগের সক্রিয় সদস্যের
+  // period না থাকলে হিসাবের জন্য অস্থায়ী account তৈরি হবে।
+  (M.allMembers||[]).filter(m=>m.status==='active'&&m.currentPeriodId&&!byId[m.currentPeriodId]).forEach(m=>{
+    const p={periodId:m.currentPeriodId,uid:m.uid,name:m.name,status:'active',meals:0,deposited:0,personalExpenses:0,share:0,paid:0,due:0,bal:0,frozen:false};
+    periods.push(p);
+    byId[p.periodId]=p;
   });
 
-  // সদস্যদের জমা
+  // জমা সংশ্লিষ্ট period-এ যাবে।
   (M.deposits||[]).forEach(d=>{
-    if(accounts[d.uid]){
-      accounts[d.uid].deposited+=Number(d.amt)||0;
+    let p=d.periodId?byId[d.periodId]:null;
+    if(!p && !d.periodId){
+      const member=(M.allMembers||[]).find(m=>m.uid===d.uid&&m.status==='active');
+      p=member?.currentPeriodId?byId[member.currentPeriodId]:null;
     }
+    if(p && !p.frozen) p.deposited+=Number(d.amt)||0;
   });
 
-  // প্রতিটি খরচের ভাগ
+  // প্রতিটি খরচের ভাগ শুধু ঐ সময়কার period সদস্যদের মধ্যে হবে.
   (M.exp||[]).forEach(e=>{
-
-    const expenseTime=Number(e.d)||0;
-
-const roster=e.memberUidsAtTime?.length
-  ? e.memberUidsAtTime
-  : (M.allMembers||[]).filter(m=>{
-
-      const joined=m.joinedAt;
-      const left=m.leftAt;
-
-      const joinedTime=joined?.toMillis
-        ? joined.toMillis()
-        : joined instanceof Date
-          ? joined.getTime()
-          : Number(joined)||0;
-
-      const leftTime=left?.toMillis
-        ? left.toMillis()
-        : left instanceof Date
-          ? left.getTime()
-          : Number(left)||0;
-
-      return (!joinedTime || joinedTime<=expenseTime)
-        && (!leftTime || leftTime>=expenseTime);
-
-    }).map(m=>m.uid);
-
-    const participants=roster.filter(uid=>accounts[uid]);
+    let participants=[];
+    if(Array.isArray(e.participantsAtTime)&&e.participantsAtTime.length){
+      participants=e.participantsAtTime
+        .map(x=>byId[x.periodId])
+        .filter(p=>p&&!p.frozen);
+    }else if(Array.isArray(e.memberUidsAtTime)&&e.memberUidsAtTime.length){
+      participants=e.memberUidsAtTime.map(uid=>{
+        const member=(M.allMembers||[]).find(m=>m.uid===uid&&m.status==='active');
+        return member?.currentPeriodId?byId[member.currentPeriodId]:null;
+      }).filter(Boolean);
+    }
 
     if(!participants.length)return;
-
     const amount=Number(e.amt)||0;
-    const isMarket=IT[e.item]?.[3]==='b';
+    const share=amount/participants.length;
+    participants.forEach(p=>p.share+=share);
 
-    if(M.type==='meal' && isMarket){
+    if((e.source||'pocket')==='pocket'){
+      let payer=e.payerPeriodId?byId[e.payerPeriodId]:null;
+      if(!payer){
+        const member=(M.allMembers||[]).find(m=>m.uid===e.payerUid&&m.status==='active');
+        payer=member?.currentPeriodId?byId[member.currentPeriodId]:null;
+      }
+      if(payer&&!payer.frozen)payer.personalExpenses+=amount;
+    }
+  });
 
-      const totalMeals=participants.reduce(
-        (sum,uid)=>sum+accounts[uid].meals,0
-      );
-
-      participants.forEach(uid=>{
-        const share=totalMeals>0
-          ? amount*accounts[uid].meals/totalMeals
-          : amount/participants.length;
-
-        accounts[uid].share+=share;
-      });
-
+  periods.forEach(p=>{
+    if(!p.frozen){
+      p.paid=p.deposited+p.personalExpenses;
+      p.due=p.share;
+      p.bal=p.paid-p.due;
     }else{
-
-      const share=amount/participants.length;
-
-      participants.forEach(uid=>{
-        accounts[uid].share+=share;
-      });
+      p.bal=Number(p.finalBalance)||0;
     }
-
-    // পকেট থেকে দেওয়া খরচ
-    if((e.source||'pocket')==='pocket' && accounts[e.payerUid]){
-      accounts[e.payerUid].personalExpenses+=amount;
-    }
-
   });
 
-  // চূড়ান্ত হিসাব
-  Object.values(accounts).forEach(a=>{
-
-    a.paid=a.deposited+a.personalExpenses;
-    a.due=a.share;
-    a.bal=a.paid-a.due;
-
-  });
-
-  return Object.values(accounts);
+  return periods;
 }
-
 function settle(bal){
   const d=[],c=[];bal.forEach((b,i)=>{if(b<-0.5)d.push([i,-b]);else if(b>0.5)c.push([i,b])});
   d.sort((a,b)=>b[1]-a[1]);c.sort((a,b)=>b[1]-a[1]);const r=[];
@@ -1306,11 +1279,12 @@ const messId=userData.messId;
 
     const messRef=db.collection('messes').doc(messId);
 
-    const [messSnap,myMemberSnap,membersSnap,allMembersSnap]=await Promise.all([
+    const [messSnap,myMemberSnap,membersSnap,allMembersSnap,periodsSnap]=await Promise.all([
   messRef.get(),
   messRef.collection('members').doc(uid).get(),
   messRef.collection('members').where('status','==','active').get(),
-  messRef.collection('members').get()
+  messRef.collection('members').get(),
+  messRef.collection('membershipPeriods').get()
 ]);
 
     let requestsSnap={docs:[]};
@@ -1355,6 +1329,7 @@ const messId=userData.messId;
   currentPeriodId:d.data().currentPeriodId||null,
   periodCount:Number(d.data().periodCount)||1
 })),
+      periods:periodsSnap.docs.map(d=>({id:d.id,...d.data()})),
       me:memberUids.indexOf(uid),
       meals:{},
       mealCountsByUid:{},
