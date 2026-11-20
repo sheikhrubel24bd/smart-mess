@@ -134,12 +134,11 @@ body{margin:0;background:var(--bg);color:var(--ink);font-family:"Noto Sans Benga
 
 
 /* WELCOME: CREATE OR FIND A MESS */
-.welcome-page{padding:4px 0 24px}
-.welcome-user{display:flex;align-items:center;justify-content:space-between;gap:10px;margin:0 2px 14px}
-.welcome-greeting{font-size:13px;color:var(--mut);min-width:0;overflow-wrap:anywhere}
-.welcome-greeting b{color:var(--ink);font-size:14px}
+.welcome-page{padding:0 0 24px}
+.welcome-user{display:flex;align-items:center;justify-content:flex-end;gap:8px;margin:0 2px 4px}
+.welcome-lang{border:1px solid #16794f;background:#fff;color:#16794f;border-radius:99px;padding:6px 14px;font-size:13px;font-weight:700;white-space:nowrap}
 .welcome-logout{border:1px solid #b9dfc7;background:#f0faf3;color:#16794f;border-radius:99px;padding:6px 12px;font-size:12px;font-weight:700;white-space:nowrap}
-.welcome-brand{text-align:center;padding:8px 8px 0}
+.welcome-brand{text-align:center;padding:0 8px 0}
 .welcome-brand img{display:block;width:112px;height:112px;object-fit:contain;margin:0 auto 2px}
 .welcome-brand h1{margin:0;color:#16794f;font-size:30px;font-weight:850;letter-spacing:-.5px}
 .welcome-brand p{margin:4px 0 0;color:#315d45;font-size:13px}
@@ -1485,7 +1484,7 @@ function welcomeView(){
   return `
     <div class="welcome-page">
       <div class="welcome-user">
-        <span class="welcome-user-label">${T('আপনার অ্যাকাউন্ট','Your account')}</span>
+        <button class="welcome-lang" onclick="tl()" aria-label="Language">${L=='bn'?'EN':'বাং'}</button>
         <button class="welcome-logout" onclick="auth.signOut()">${T('লগআউট','Log out')}</button>
       </div>
 
