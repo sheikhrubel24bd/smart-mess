@@ -234,22 +234,27 @@ input[type=text]{
 nav{
   position:fixed;left:50%;right:auto;bottom:calc(10px + env(safe-area-inset-bottom,0px));
   transform:translateX(-50%);width:calc(100% - 30px);max-width:452px;
-  display:flex;justify-content:center;background:#16794f;border:0;
-  border-radius:22px;padding:5px 7px;
+  display:flex;justify-content:center;align-items:stretch;
+  min-height:82px;background:#16794f;border:0;
+  border-radius:26px;padding:7px 8px;
   box-shadow:0 6px 18px #0c51334a;z-index:40;
 }
-nav div{display:flex;width:100%;max-width:none;gap:3px}
+nav div{display:flex;width:100%;max-width:none;gap:3px;align-items:stretch}
 nav button{
-  flex:1;min-width:0;border:0;border-radius:16px;background:transparent;
-  padding:5px 2px;font-size:9px;line-height:1.15;color:#e6f4eb;text-align:center;
+  flex:1;min-width:0;min-height:66px;border:0;border-radius:18px;
+  background:transparent;padding:6px 2px;
+  display:flex;flex-direction:column;align-items:center;justify-content:center;
+  gap:4px;font-size:10px;line-height:1.15;color:#e6f4eb;text-align:center;
 }
-nav button span{display:block;line-height:1;margin:0 auto 3px}
+nav button .nav-icon{display:block;flex:0 0 23px;width:23px;height:23px;margin:0 auto}
+nav button .nav-label{display:block;width:100%;font-size:10px;line-height:1.2;white-space:nowrap;text-align:center}
 .sm-icon{display:inline-block;width:21px;height:21px;filter:brightness(0) invert(1);background-image:url("icons/navigation.png");background-repeat:no-repeat;background-size:700% 100%;vertical-align:middle}
 .i-bell{background-position:0 0}.i-settings{background-position:16.6667% 0}.i-home{background-position:33.3333% 0}.i-add{background-position:50% 0}.i-receipt{background-position:66.6667% 0}.i-task{background-position:83.3333% 0}.i-meals{background-position:100% 0}
-.top.app-topbar .top-icon{position:relative;display:grid;place-items:center;min-width:34px;min-height:38px;padding:4px;border:0;background:transparent;color:#fff}
-.top.app-topbar .top-icon .sm-icon{width:21px;height:21px}
+.top.app-topbar .top-icon{position:relative;display:grid;place-items:center;min-width:42px;min-height:42px;padding:5px;border:0;background:transparent;color:#fff}
+.top.app-topbar .top-icon .sm-icon{width:25px;height:25px}
+.top.app-topbar .top-icon .i-settings{background-position:16.6667% 0}
 .top.app-topbar .top-icon i{position:absolute;top:0;right:0;background:#ffcf4a;color:#263629;font-style:normal;font-size:10px;font-weight:700;border-radius:99px;min-width:15px;padding:0 3px;text-align:center}
-.nav-icon{width:19px;height:19px}
+.nav-icon{width:23px;height:23px}
 
 nav button.on{background:#35a866;color:#fff;font-weight:800}
 
@@ -4156,7 +4161,7 @@ function render(){
   else{
       const tabs=[['home','home',T('হোম','Home')],['add','add',T('খরচ যোগ','Add')],['expenses','receipt',T('খরচের তালিকা','Expenses')],['task','task',T('টাস্ক','Tasks')]].concat(M.type=='meal'?[['meal','meals',T('মিল','Meals')]]:[]);   
       v=({home:homeView,add:addView,meal:mealView,rep:reportView,task:taskView,req:reqView,expenses:expenseListView,members:memberListView,settings:settingsView,deposits:depositView,depositDetail:depositDetailView,history:historyView,historyDetail:historyDetailView,formerMembers:formerMembersView,about:aboutView,profile:profileView,editnumber:editNumberView,editname:editNameView}[S.tab]||homeView)();   
-    nav=`<nav><div>${tabs.map(t=>`<button class="${S.tab==t[0]?'on':''}" onclick="go('${t[0]}')"><span class="sm-icon nav-icon i-${t[1]}"></span>${t[2]}</button>`).join('')}</div></nav>`;
+    nav=`<nav><div>${tabs.map(t=>`<button class="${S.tab==t[0]?'on':''}" onclick="go('${t[0]}')"><span class="sm-icon nav-icon i-${t[1]}"></span><small class="nav-label">${t[2]}</small></button>`).join('')}</div></nav>`;
   }
   document.getElementById('app').innerHTML=topbar()+v+nav+(S.view!=null&&M.exp[S.view]?`<div class="ov" onclick="S.view=null;render()"><img src="${M.exp[S.view].memo}" alt=""></div>`:'')+(S.toast?`<div class="toast">${esc(S.toast)}</div>`:'');
 }
