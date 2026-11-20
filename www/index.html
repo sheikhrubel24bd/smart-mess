@@ -131,6 +131,49 @@ body{margin:0;background:var(--bg);color:var(--ink);font-family:"Noto Sans Benga
 .top.app-topbar .lang{border:1px solid #ffffff80;border-radius:10px;padding:6px 9px;font-size:13px}
 .top.app-topbar .sp{display:block;flex:1;min-width:0}
 
+
+/* REGULAR MESS HOME DASHBOARD */
+.regular-welcome{margin:2px 0 17px}
+.regular-welcome h1{font-size:23px;margin:3px 0 7px}
+.regular-code{display:inline-flex;align-items:center;gap:8px;background:#e1f5e8;color:#087b42;border:1px solid #c5e8d1;border-radius:9px;padding:4px 9px;font-size:11px;line-height:1.35}
+.regular-code b{font-family:ui-monospace,Menlo,monospace;font-size:12px;letter-spacing:.5px}
+.regular-copy{border:0;background:transparent;color:#087b42;font-size:15px;line-height:1;padding:1px 3px}
+.regular-section-title{font-size:18px;color:#087b42;margin:8px 0 13px}
+.regular-summary{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px;margin-bottom:20px}
+.regular-card{min-width:0;min-height:112px;padding:14px 12px;border-radius:16px;display:flex;flex-direction:column;align-items:flex-start;justify-content:center;gap:5px}
+.regular-card-icon{font-size:25px;line-height:1.1;margin-bottom:2px}
+.regular-card small{font-size:12px;line-height:1.4}
+.regular-card b{font-size:21px;line-height:1.35;overflow-wrap:anywhere}
+.regular-market{background:#fff0dc;color:#bd6900}
+.regular-other{background:#ffe8e8;color:#c52d36}
+.regular-deposit{background:#e3efff;color:#2161bd}
+.regular-members{background:#e1f5e8;color:#087b42}
+.regular-recent{background:#fff;border:1px solid #e2eee6;border-radius:16px;padding:15px;margin-top:4px}
+.regular-recent h2{font-size:17px;color:#087b42;margin:0 0 8px}
+.regular-expense{display:flex;align-items:center;gap:10px;padding:11px 0;border-bottom:1px solid #edf1ee;min-width:0}
+.regular-expense:last-child{border-bottom:0}
+.regular-expense-icon{font-size:23px;flex:0 0 28px;text-align:center}
+.regular-expense-info{flex:1;min-width:0;display:flex;flex-direction:column;gap:2px}
+.regular-expense-info b{font-size:14px;overflow-wrap:anywhere}
+.regular-expense-info small{font-size:11px;color:#718078;line-height:1.4}
+.regular-expense strong{font-size:14px;white-space:nowrap}
+@media(max-width:360px){
+ .regular-card{padding:12px 10px;min-height:105px}
+ .regular-card b{font-size:18px}
+ .regular-card small{font-size:11px}
+ .regular-summary{gap:9px}
+}
+@media(prefers-color-scheme:dark){
+ :root:not([data-theme="light"]) .regular-code{background:#1f3a2e;color:#a7e8bd;border-color:#315a40}
+ :root:not([data-theme="light"]) .regular-recent{background:var(--card);border-color:var(--bd)}
+ :root:not([data-theme="light"]) .regular-expense{border-color:var(--bd)}
+ :root:not([data-theme="light"]) .regular-expense-info small{color:var(--mut)}
+}
+:root[data-theme="dark"] .regular-code{background:#1f3a2e;color:#a7e8bd;border-color:#315a40}
+:root[data-theme="dark"] .regular-recent{background:var(--card);border-color:var(--bd)}
+:root[data-theme="dark"] .regular-expense{border-color:var(--bd)}
+:root[data-theme="dark"] .regular-expense-info small{color:var(--mut)}
+
 /* PULL TO REFRESH */
 #pullRefresh{
   position:fixed;
@@ -3156,9 +3199,79 @@ M.allMembers=allMembersSnap.docs.map(d=>({
 }
 
 function homeView(){
-  const c=calc();const meal=M.type=='meal';const p=pend();
+  const c=calc();
+  const meal=M.type=='meal';
+  const p=pend();
   const totalDeposit=c.deposited.reduce((a,b)=>a+b,0);
 
+  // Regular mess home: keep the approved simple dashboard.
+  if(!meal){
+    const recent=[...(M.exp||[])]
+      .sort((a,b)=>(Number(b.d)||0)-(Number(a.d)||0))
+      .slice(0,3);
+
+    return `
+      <div class="regular-welcome">
+        <h1>${esc(M.name)}</h1>
+        <div class="regular-code">
+          <span>${T('মেস কোড','Mess code')}: <b>${esc(M.code||'')}</b></span>
+          <button class="regular-copy" onclick="copy()" aria-label="${T('কপি','Copy')}">▢</button>
+        </div>
+      </div>
+
+      ${p?`<button class="banner" onclick="go('req')">🔔 ${bn(p)} ${T('টি নতুন যোগদানের অনুরোধ','new join request(s)')}</button>`:''}
+
+      <h2 class="regular-section-title">${T('মেসের সারসংক্ষেপ','Mess Summary')}</h2>
+      <div class="regular-summary">
+        <div class="regular-card regular-market">
+          <div class="regular-card-icon">🛒</div>
+          <small>${T('মোট বাজার খরচ','Total market expenses')}</small>
+          <b>${cs()}${fmt(c.baz)}</b>
+        </div>
+        <div class="regular-card regular-other">
+          <div class="regular-card-icon">🧾</div>
+          <small>${T('অন্যান্য খরচ','Other expenses')}</small>
+          <b>${cs()}${fmt(c.fix)}</b>
+        </div>
+        <div class="regular-card regular-deposit">
+          <div class="regular-card-icon">🏦</div>
+          <small>${T('মোট জমা','Total deposits')}</small>
+          <b>${cs()}${fmt(totalDeposit)}</b>
+        </div>
+        <div class="regular-card regular-members">
+          <div class="regular-card-icon">👥</div>
+          <small>${T('মোট সদস্য','Total members')}</small>
+          <b>${bn(c.n)}</b>
+        </div>
+      </div>
+
+      <section class="regular-recent">
+        <h2>${T('সাম্প্রতিক খরচ','Recent Expenses')}</h2>
+        ${recent.length?recent.map(e=>{
+          const payerIndex=M.memberUids.indexOf(e.payerUid);
+          const payerName=payerIndex>=0
+            ?M.members[payerIndex]
+            :(e.payer!=null?M.members[e.payer]:'');
+          const itemName=e.item==='other'
+            ?(e.otherName||T('অন্যান্য','Other'))
+            :nm(e.item);
+          const itemIcon=IT[e.item]?.[0]||'🧾';
+          return `
+            <div class="regular-expense">
+              <span class="regular-expense-icon">${itemIcon}</span>
+              <div class="regular-expense-info">
+                <b>${esc(itemName)}</b>
+                <small>${esc(payerName||T('সদস্য','Member'))}${e.d?' · '+dt(e.d):''}</small>
+              </div>
+              <strong>${cs()}${fmt(e.amt)}</strong>
+            </div>
+          `;
+        }).join(''):`<div class="mut">${T('এখনো কোনো খরচ নেই','No expenses yet')}</div>`}
+      </section>
+    `;
+  }
+
+  // Meal mess retains its existing home layout and calculations.
   return `<div class="row" style="justify-content:space-between"><h1>${esc(M.name)}</h1></div>
 
   <div class="card row" style="justify-content:space-between;margin-top:12px">
@@ -3170,37 +3283,30 @@ function homeView(){
   ${p?`<button class="banner" onclick="go('req')">🔔 ${bn(p)} ${T('টি নতুন যোগদানের অনুরোধ','new join request(s)')}</button>`:''}
 
   <div class="stats">
-
     <div class="stat hero">
       <small>${T('এই মাসের মোট খরচ','Total spent this month')}</small>
       <b>${cs()}${fmt(c.tot)}</b>
     </div>
-
     <div class="stat deposit-stat">
       <small>${T('এই মাসের মোট জমা','Total deposits this month')}</small>
       <b>${cs()}${fmt(totalDeposit)}</b>
     </div>
-
     <div class="stat">
       <small class="mut">🛒 ${T('বাজার','Groceries')}</small>
       <b>${cs()}${fmt(c.baz)}</b>
     </div>
-
     <div class="stat">
       <small class="mut">🧾 ${T('ফিক্সড','Fixed')}</small>
       <b>${cs()}${fmt(c.fix)}</b>
     </div>
-
     <div class="stat">
-      <small class="mut">📊 ${meal?T('মিল রেট','Meal rate'):T('জনপ্রতি ভাগ','Per person')}</small>
-      <b>${cs()}${meal?bn(c.rate.toFixed(2)):fmt(c.per)}</b>
+      <small class="mut">📊 ${T('মিল রেট','Meal rate')}</small>
+      <b>${cs()}${bn(c.rate.toFixed(2))}</b>
     </div>
-
     <div class="stat">
-      <small class="mut">👥 ${meal?T('মোট মিল','Total meals'):T('মেম্বার','Members')}</small>
-      <b>${bn(meal?c.tm:c.n)}</b>
+      <small class="mut">👥 ${T('মোট মিল','Total meals')}</small>
+      <b>${bn(c.tm)}</b>
     </div>
-
   </div>
 
   ${whoBlock(c)}`;
