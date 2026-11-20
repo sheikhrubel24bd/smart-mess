@@ -132,6 +132,33 @@ body{margin:0;background:var(--bg);color:var(--ink);font-family:"Noto Sans Benga
 .top.app-topbar .sp{display:block;flex:1;min-width:0}
 
 
+
+/* WELCOME: CREATE OR FIND A MESS */
+.welcome-page{padding:4px 0 24px}
+.welcome-user{display:flex;align-items:center;justify-content:space-between;gap:10px;margin:0 2px 14px}
+.welcome-greeting{font-size:13px;color:var(--mut);min-width:0;overflow-wrap:anywhere}
+.welcome-greeting b{color:var(--ink);font-size:14px}
+.welcome-logout{border:1px solid #b9dfc7;background:#f0faf3;color:#16794f;border-radius:99px;padding:6px 12px;font-size:12px;font-weight:700;white-space:nowrap}
+.welcome-brand{text-align:center;padding:8px 8px 0}
+.welcome-brand img{display:block;width:112px;height:112px;object-fit:contain;margin:0 auto 2px}
+.welcome-brand h1{margin:0;color:#16794f;font-size:30px;font-weight:850;letter-spacing:-.5px}
+.welcome-brand p{margin:4px 0 0;color:#315d45;font-size:13px}
+.welcome-divider{display:flex;align-items:center;justify-content:center;gap:12px;margin:18px 10px 22px;color:#168653}
+.welcome-divider span{height:2px;flex:1;background:linear-gradient(90deg,transparent,#5bd58c)}
+.welcome-divider span:last-child{background:linear-gradient(90deg,#5bd58c,transparent)}
+.welcome-divider b{font-size:18px;line-height:1}
+.welcome-option{width:100%;display:flex;align-items:center;gap:12px;text-align:left;padding:15px 12px;margin:0 0 15px;border:1.5px solid #a9e8c2;border-radius:23px;background:linear-gradient(110deg,#fff 0%,#f5fff8 100%);color:#16794f;box-shadow:0 4px 12px #0c513318;min-height:150px}
+.welcome-art{width:112px;height:112px;flex:0 0 112px;border-radius:50%;display:grid;place-items:center;background:#dff8e8}
+.welcome-art svg{width:100%;height:100%;padding:8px}
+.search-art{background:#e5f2ff;color:#1679bd}
+.welcome-copy{display:flex;flex:1;min-width:0;flex-direction:column;gap:6px}
+.welcome-copy b{font-size:23px;line-height:1.25;color:#087344}
+.welcome-copy small{font-size:12px;line-height:1.6;color:#354b3e;font-weight:500}
+.welcome-arrow{width:38px;height:38px;flex:0 0 38px;border-radius:50%;display:grid;place-items:center;background:#168653;color:#fff;font-size:32px;line-height:1}
+.welcome-note{display:flex;align-items:center;justify-content:center;gap:10px;margin:28px 6px 0;padding:13px 12px;border:1px solid #a9e8c2;border-radius:99px;background:#e1f9e9;color:#174b2e;font-size:12px;line-height:1.5;text-align:left}
+.welcome-shield{width:30px;height:30px;flex:0 0 30px;border-radius:50%;display:grid;place-items:center;background:#159653;color:#fff;font-weight:900;font-size:17px}
+@media(max-width:360px){.welcome-brand img{width:94px;height:94px}.welcome-brand h1{font-size:26px}.welcome-option{gap:9px;padding:12px 9px;min-height:128px;border-radius:19px}.welcome-art{width:86px;height:86px;flex-basis:86px}.welcome-copy b{font-size:19px}.welcome-copy small{font-size:11px}.welcome-arrow{width:32px;height:32px;flex-basis:32px}.welcome-note{font-size:11px;margin-top:20px}}
+
 /* REGULAR MESS HOME DASHBOARD */
 .regular-welcome{margin:2px 0 17px}
 .regular-welcome h1{font-size:23px;margin:3px 0 7px}
@@ -1425,10 +1452,63 @@ async function savePhone(){
 }
 
 function welcomeView(){
-  return `<div style="text-align:center;margin:8px 0 18px"><img src="logo.png" alt="Smart-Mess" style="width:104px;height:104px;object-fit:contain"><h1 style="margin:5px 0 0">Smart Mess</h1></div><div class="mut">${T('হ্যালো, ','Hello, ')}<b>${esc(S.user.name)}</b> · <button class="x" style="font-size:14px;padding:0" onclick="auth.signOut()">${T('লগআউট','Log out')}</button></div><div style="height:22px"></div>
-  <button class="btn" onclick="to('create')">➕ ${T('নতুন মেস তৈরি করুন','Create a new mess')}</button><div style="height:10px"></div>
-  <button class="btn ghost" onclick="to('join')">🔍 ${T('কোড দিয়ে মেস খুঁজুন','Find a mess by code')}</button>
-  <div class="sample" style="margin-top:16px">${T('ডেমো মেসের কোড: ','Demo mess code: ')}<b>SM-1234</b></div>`;
+  return `
+    <div class="welcome-page">
+      <div class="welcome-user">
+        <div class="welcome-greeting">${T('হ্যালো, ','Hello, ')}<b>${esc(S.user.name)}</b></div>
+        <button class="welcome-logout" onclick="auth.signOut()">${T('লগআউট','Log out')}</button>
+      </div>
+
+      <div class="welcome-brand">
+        <img src="logo.png" alt="Smart-Mess">
+        <h1>Smart-Mess</h1>
+        <p>${T('একসাথে, স্মার্টভাবে মেস ব্যবস্থাপনা','Manage your mess together, smartly')}</p>
+      </div>
+
+      <div class="welcome-divider">
+        <span></span><b>●</b><span></span>
+      </div>
+
+      <button class="welcome-option create-option" onclick="to('create')">
+        <span class="welcome-art create-art" aria-hidden="true">
+          <svg viewBox="0 0 120 120" role="img">
+            <path d="M17 48 60 15l43 33" fill="none" stroke="currentColor" stroke-width="9" stroke-linecap="round" stroke-linejoin="round"/>
+            <path d="M29 45v53h62V45L60 22z" fill="currentColor" opacity=".15" stroke="currentColor" stroke-width="4"/>
+            <path d="M43 60h34M43 73h34M43 86h22" stroke="currentColor" stroke-width="5" stroke-linecap="round"/>
+            <circle cx="88" cy="91" r="20" fill="#16a765" stroke="#fff" stroke-width="4"/>
+            <path d="M88 81v20M78 91h20" stroke="#fff" stroke-width="5" stroke-linecap="round"/>
+          </svg>
+        </span>
+        <span class="welcome-copy">
+          <b>${T('মেস তৈরি','Create a mess')}</b>
+          <small>${T('আপনার নতুন মেস তৈরি করুন এবং অ্যাডমিন হিসেবে শুরু করুন','Create your mess and get started as admin')}</small>
+        </span>
+        <span class="welcome-arrow">›</span>
+      </button>
+
+      <button class="welcome-option search-option" onclick="to('join')">
+        <span class="welcome-art search-art" aria-hidden="true">
+          <svg viewBox="0 0 120 120" role="img">
+            <circle cx="51" cy="49" r="34" fill="#fff" stroke="currentColor" stroke-width="8"/>
+            <circle cx="51" cy="38" r="8" fill="#16794f"/>
+            <circle cx="34" cy="48" r="6" fill="#16794f"/>
+            <circle cx="68" cy="48" r="6" fill="#16794f"/>
+            <path d="M32 70c1-13 9-19 19-19s18 6 19 19" fill="#16794f"/>
+            <path d="m77 76 25 25" stroke="#16794f" stroke-width="12" stroke-linecap="round"/>
+          </svg>
+        </span>
+        <span class="welcome-copy">
+          <b>${T('মেস খুঁজুন','Find a mess')}</b>
+          <small>${T('মেস কোড দিয়ে আপনার পরিচিত মেসে যোগ দিন','Find your known mess by its code and request to join')}</small>
+        </span>
+        <span class="welcome-arrow">›</span>
+      </button>
+
+      <div class="welcome-note">
+        <span class="welcome-shield">✓</span>
+        <span>${T('স্মার্ট মেসের সাথে থাকুন, হিসাব থাকুক স্বচ্ছ ও সঠিক।','Stay with Smart-Mess for clear and accurate accounts.')}</span>
+      </div>
+    </div>`;
 }
 
 function createView(){
