@@ -3325,39 +3325,76 @@ async function transferAdmin(i){
   }
 }
 
- function formerMembersView(){
+async function addFormerPayment(periodId){
+  if(!M||M.role!=='admin')return;
+  const p=(M.periods||[]).find(x=>x.id===periodId);
+  if(!p||p.balanceFrozen!==true)return say('সাবেক সদস্যের সংরক্ষিত হিসাব পাওয়া যায়নি।');
+  const original=Number(p.finalBalance)||0;
+  const summary=formerSettlementSummary(periodId,original);
+  if(Math.abs(summary.remaining)<0.005)return say('এই হিসাবের কোনো বকেয়া নেই।');
+  const input=prompt('পরিশোধের পরিমাণ লিখুন ('+M.cur+')। বাকি: '+Math.abs(summary.remaining).toFixed(2));
+  if(input===null)return;
+  const amount=Number(String(input).replace(',','.'));
+  if(!Number.isFinite(amount)||amount<=0)return say('সঠিক পরিমাণ লিখুন।');
+  if(amount>Math.abs(summary.remaining)+0.005)return say('পরিশোধের পরিমাণ বাকি টাকার চেয়ে বেশি হতে পারবে না।');
+  try{
+    await db.collection('messes').doc(M.id).collection('formerSettlements').add({
+      periodId:periodId,uid:p.uid,name:p.name||'',kind:'payment',amount:amount,
+      direction:summary.remaining<0?'toMess':'fromMess',
+      addedBy:auth.currentUser.uid,createdAt:firebase.firestore.FieldValue.serverTimestamp()
+    });
+    say('পরিশোধের টাকা সংরক্ষণ হয়েছে।');
+  }catch(e){console.error('FORMER PAYMENT ERROR:',e);say('পরিশোধ যোগ করা যায়নি: '+(e.code||e.message));}
+}
 
+async function completeFormerPayment(periodId){
+  if(!M||M.role!=='admin')return;
+  const p=(M.periods||[]).find(x=>x.id===periodId);
+  if(!p||p.balanceFrozen!==true)return say('সাবেক সদস্যের সংরক্ষিত হিসাব পাওয়া যায়নি।');
+  const summary=formerSettlementSummary(periodId,Number(p.finalBalance)||0);
+  if(Math.abs(summary.remaining)>=0.005)return say('বাকি টাকা আগে সম্পূর্ণ পরিশোধ করতে হবে।');
+  if(summary.completed)return say('এই হিসাবটি আগেই সম্পন্ন করা হয়েছে।');
+  if(!confirm('এই পরিশোধ সম্পন্ন হিসেবে চিহ্নিত করবেন?'))return;
+  try{
+    await db.collection('messes').doc(M.id).collection('formerSettlements').add({
+      periodId:periodId,uid:p.uid,name:p.name||'',kind:'completed',amount:0,
+      addedBy:auth.currentUser.uid,createdAt:firebase.firestore.FieldValue.serverTimestamp()
+    });
+    say('পরিশোধ সম্পন্ন হিসেবে সংরক্ষণ হয়েছে।');
+  }catch(e){console.error('FORMER COMPLETE ERROR:',e);say('সম্পন্ন করা যায়নি: '+(e.code||e.message));}
+}
+
+function formerMembersView(){
   const periods=(M.periods||[]).filter(p=>p.status==='closed');
   const accounts=calcAllMembers();
-
   return `
     <h1>📋 ${T('সাবেক সদস্যদের হিসাবকাল','Closed Membership Periods')}</h1>
     <div class="card" style="margin-top:12px">
       ${periods.length?periods.map((p,i)=>{
-        const account=accounts.find(a=>a.periodId===p.id)||{};
-        const balance=p.balanceFrozen===true
-          ?Number(p.finalBalance)||0
-          :Number(account.bal)||0;
-        const deposited=p.balanceFrozen===true?Number(p.finalDeposited)||0:Number(account.deposited)||0;
-        const personal=p.balanceFrozen===true?Number(p.finalPersonalExpenses)||0:Number(account.personalExpenses)||0;
-        const share=p.balanceFrozen===true?Number(p.finalShare)||0:Number(account.share)||0;
+        const a=accounts.find(x=>x.periodId===p.id)||{};
+        const balance=p.balanceFrozen===true?(Number(p.finalBalance)||0):(Number(a.bal)||0);
+        const st=formerSettlementSummary(p.id,balance);
+        const deposited=p.balanceFrozen===true?(Number(p.finalDeposited)||0):(Number(a.deposited)||0);
+        const personal=p.balanceFrozen===true?(Number(p.finalPersonalExpenses)||0):(Number(a.personalExpenses)||0);
+        const share=p.balanceFrozen===true?(Number(p.finalShare)||0):(Number(a.share)||0);
         return `
           <div style="padding:13px 0;border-bottom:1px solid var(--line)">
-            <b>${i+1}. ${esc(p.name||'নাম নেই')}</b>
+            <div class="row" style="justify-content:space-between"><b>${i+1}. ${esc(p.name||'নাম নেই')}</b>
+            ${M.role==='admin'?`<button class="btn secondary" style="padding:4px 10px" onclick="S.formerMenuPeriod=S.formerMenuPeriod==='${p.id}'?null:'${p.id}';render()">⋮</button>`:''}</div>
+            ${M.role==='admin'&&S.formerMenuPeriod===p.id?`<div style="display:flex;gap:7px;margin:8px 0;flex-wrap:wrap"><button class="btn" onclick="S.formerMenuPeriod=null;addFormerPayment('${p.id}')">${T('পরিশোধের পরিমাণ যোগ করুন','Add payment')}</button><button class="btn secondary" onclick="S.formerMenuPeriod=null;completeFormerPayment('${p.id}')">${T('পরিশোধ সম্পন্ন','Mark paid')}</button></div>`:''}
             <div class="mut" style="margin-top:6px">${T('যোগদান','Joined')}: ${p.joinedAt?.toDate?p.joinedAt.toDate().toLocaleDateString():'—'}</div>
             <div class="mut" style="margin-top:4px">${T('ছাড়ার তারিখ','Left')}: ${p.leftAt?.toDate?p.leftAt.toDate().toLocaleDateString():'—'}</div>
             <div style="margin-top:8px">${T('মোট জমা','Deposits')}: <b>${deposited.toFixed(2)} ${M.cur}</b></div>
             <div style="margin-top:4px">${T('পকেট খরচ','Pocket expenses')}: <b>${personal.toFixed(2)} ${M.cur}</b></div>
             <div style="margin-top:4px">${T('খরচের ভাগ','Expense share')}: <b>${share.toFixed(2)} ${M.cur}</b></div>
-            <div style="margin-top:8px;font-weight:700;color:${balance>=0?'var(--green)':'#d9534f'}">
-              ${T('চূড়ান্ত ব্যালেন্স','Final balance')}: ${Math.abs(balance).toFixed(2)} ${M.cur}
-              ${balance>=0?T('(পাবে)','(Will receive)'):T('(দিতে হবে)','(Must pay)')}
-              ${p.balanceFrozen===true?' · '+T('স্থায়ীভাবে সংরক্ষিত','Frozen'):''}
-            </div>
+            <div style="margin-top:8px">${T('মূল চূড়ান্ত ব্যালেন্স','Original final balance')}: <b>${Math.abs(balance).toFixed(2)} ${M.cur}</b></div>
+            <div style="margin-top:5px">${T('পরিশোধ হয়েছে','Paid')}: <b>${st.paid.toFixed(2)} ${M.cur}</b></div>
+            <div style="margin-top:5px;font-weight:700;color:${Math.abs(st.remaining)<0.005?'var(--green)':'#d9534f'}">${T('বাকি','Remaining')}: ${Math.abs(st.remaining).toFixed(2)} ${M.cur}</div>
+            ${st.completed&&Math.abs(st.remaining)<0.005?`<div style="margin-top:7px"><span class="tag pos">${T('পরিশোধ সম্পন্ন','Payment complete')}</span></div>`:''}
+            ${st.records.filter(x=>x.kind==='payment').length?`<details style="margin-top:8px"><summary style="cursor:pointer">${T('পরিশোধের ইতিহাস','Payment history')}</summary>${st.records.filter(x=>x.kind==='payment').map(x=>`<div class="row" style="justify-content:space-between;padding:5px 0;font-size:13px"><span>${x.createdAt?.toDate?x.createdAt.toDate().toLocaleDateString():'—'}</span><b>${Number(x.amount||0).toFixed(2)} ${M.cur}</b></div>`).join('')}</details>`:''}
           </div>`;
       }).join(''):`<p class="mut">${T('কোনো বন্ধ হিসাবকাল নেই','No closed membership periods')}</p>`}
-    </div>
-  `;
+    </div>`;
 }
 // সাবেক সদস্যদের তালিকা ও সর্বমোট মিল লোড
 async function loadFormerMembers(){
