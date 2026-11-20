@@ -789,7 +789,7 @@ const cs=()=>CUR[(M&&M.cur)||'BDT'][0];
 const mny=n=>cs()+fmt(n);
 const dt=d=>new Date(d).toLocaleString(L=='bn'?'bn-BD':'en-GB',{day:'numeric',month:'short',hour:'numeric',minute:'2-digit',hour12:true});
 let REG=[],M=null;
- let S={screen:'auth',user:null,cur:'BDT',astep:'start',amode:'login',cc:'+880',ph:'',otp:'',via:'phone',memo:null,view:null,tab:'home',type:'meal',name:'',members:[],item:null,amt:'',payer:0,expSource:'pocket',toast:'',jcode:'',found:null,pend:null,historyDetail:null};
+ let S={screen:'auth',user:null,cur:'BDT',astep:'start',amode:'login',cc:'+880',ph:'',otp:'',via:'phone',memo:null,view:null,tab:'home',type:'meal',name:'',members:[],item:null,amt:'',payer:0,expSource:'pocket',toast:'',jcode:'',found:null,pend:null,pendingJoin:null,historyDetail:null};
   let NAV_HISTORY=[];
 function mk(name,type,members,cur){
   let code;do code='SM-'+(1000+Math.floor(Math.random()*9000));while(REG.some(m=>m.code==code));
@@ -982,6 +982,7 @@ function saveNavHistory(){
 }
 
 function go(t){
+  if(S.pendingJoin && t!=='home') return say(T('অ্যাডমিন অনুমোদন দিলে সব সুবিধা চালু হবে।','Features unlock after admin approval.'));
   if(S.screen=='app'&&S.tab==t)return;
 
   saveNavHistory();
@@ -1026,6 +1027,10 @@ function topbar(){
   const p=pend();
 
   if(S.screen=='welcome')return '';
+
+  if(app && S.pendingJoin){
+    return `<div class="top app-topbar"><span class="sp"></span><button class="lang" onclick="tl()" aria-label="Language">${L=='bn'?'EN':'বাং'}</button></div>`;
+  }
 
   if(app){
     return `<div class="top app-topbar">
@@ -1173,7 +1178,8 @@ function stopMessListeners(){
     '_smartMessMealUnsub',
     '_smartMessDepositUnsub',
     '_smartMessDailyMealUnsub',
-    '_smartMessTaskUnsub'
+    '_smartMessTaskUnsub',
+    '_smartMessUserUnsub'
   ];
   keys.forEach(key=>{
     const unsubscribe=window[key];
@@ -1204,17 +1210,72 @@ if(!userSnap.exists){
   userSnap=await db.collection('users').doc(uid).get();
 }
 
-const messId=userSnap.data().messId;
+const userData=userSnap.data();
+const messId=userData.messId;
 
     S.astep='start';
 
     if(!messId){
       stopMessListeners();
       M=null;
+      if(userData.pendingMessId && userData.pendingJoinStatus==='pending'){
+        S.pendingJoin={
+          id:userData.pendingMessId,
+          name:userData.pendingMessName||'',
+          code:userData.pendingMessCode||'',
+          type:userData.pendingMessType||'regular'
+        };
+        M={
+          id:userData.pendingMessId,
+          name:userData.pendingMessName||'',
+          code:userData.pendingMessCode||'',
+          type:userData.pendingMessType||'regular',
+          cur:'BDT',role:'pending',members:[],memberUids:[],
+          memberPhones:[],allMembers:[],reqs:[],exp:[],deposits:[],
+          meals:{},mealCountsByUid:{},dailyMeals:[]
+        };
+        S.screen='app';
+        S.tab='home';
+        render();
+
+        window._smartMessUserUnsub=db.collection('users').doc(uid).onSnapshot(snap=>{
+          if(!snap.exists) return;
+          const latest=snap.data()||{};
+          if(latest.messId){
+            if(window._smartMessUserUnsub){
+              window._smartMessUserUnsub();
+              window._smartMessUserUnsub=null;
+            }
+            after();
+          }else if(latest.pendingJoinStatus==='rejected'){
+            if(window._smartMessUserUnsub){
+              window._smartMessUserUnsub();
+              window._smartMessUserUnsub=null;
+            }
+            S.pendingJoin=null;
+            M=null;
+            S.screen='welcome';
+            S.tab='home';
+            render();
+            say(T('আপনার যোগদানের অনুরোধ অ্যাডমিন বাতিল করেছেন।','Your join request was rejected by the admin.'));
+          }
+        },error=>{
+          console.error('PENDING MEMBERSHIP SYNC ERROR:',error);
+          say(T('অনুমোদনের অবস্থা আপডেট করা যায়নি।','Could not refresh approval status.'));
+        });
+        return;
+      }
+      S.pendingJoin=null;
       S.screen='welcome';
       render();
       return;
     }
+
+    if(window._smartMessUserUnsub){
+      window._smartMessUserUnsub();
+      window._smartMessUserUnsub=null;
+    }
+    S.pendingJoin=null;
 
     const messRef=db.collection('messes').doc(messId);
 
@@ -1797,11 +1858,53 @@ async function send(){
         phone:phone,
         createdAt:firebase.firestore.FieldValue.serverTimestamp()
       });
+      tx.update(userRef,{
+        pendingMessId:messId,
+        pendingMessName:S.found.name,
+        pendingMessCode:S.found.code,
+        pendingMessType:S.found.type||'regular',
+        pendingJoinStatus:'pending'
+      });
     });
 
     S.pend={name:n,s:'p'};
+    S.pendingJoin={
+      id:messId,
+      name:S.found.name||'',
+      code:S.found.code||'',
+      type:S.found.type||'regular'
+    };
+    M={
+      id:messId,name:S.found.name||'',code:S.found.code||'',
+      type:S.found.type||'regular',cur:S.found.cur||'BDT',
+      role:'pending',members:[],memberUids:[],memberPhones:[],
+      allMembers:[],reqs:[],exp:[],deposits:[],meals:{},
+      mealCountsByUid:{},dailyMeals:[]
+    };
+    S.screen='app';
+    S.tab='home';
     say(T('যোগদানের অনুরোধ পাঠানো হয়েছে।','Join request sent successfully.'));
     render();
+    window._smartMessUserUnsub=db.collection('users').doc(uid).onSnapshot(snap=>{
+      if(!snap.exists) return;
+      const latest=snap.data()||{};
+      if(latest.messId){
+        if(window._smartMessUserUnsub){
+          window._smartMessUserUnsub();
+          window._smartMessUserUnsub=null;
+        }
+        after();
+      }else if(latest.pendingJoinStatus==='rejected'){
+        if(window._smartMessUserUnsub){
+          window._smartMessUserUnsub();
+          window._smartMessUserUnsub=null;
+        }
+        S.pendingJoin=null;M=null;S.screen='welcome';render();
+        say(T('আপনার যোগদানের অনুরোধ অ্যাডমিন বাতিল করেছেন।','Your join request was rejected by the admin.'));
+      }
+    },error=>{
+      console.error('PENDING MEMBERSHIP SYNC ERROR:',error);
+    });
 
   }catch(e){
     console.error(e);
@@ -1889,7 +1992,12 @@ if(memberSnap.exists){
 }
 
         tx.update(userRef,{
-          messId:messId
+          messId:messId,
+          pendingMessId:firebase.firestore.FieldValue.delete(),
+          pendingMessName:firebase.firestore.FieldValue.delete(),
+          pendingMessCode:firebase.firestore.FieldValue.delete(),
+          pendingMessType:firebase.firestore.FieldValue.delete(),
+          pendingJoinStatus:'accepted'
         });
 
         tx.update(requestRef,{
@@ -1901,6 +2009,13 @@ if(memberSnap.exists){
         tx.update(requestRef,{
           status:'rejected',
           updatedAt:firebase.firestore.FieldValue.serverTimestamp()
+        });
+        tx.update(userRef,{
+          pendingMessId:firebase.firestore.FieldValue.delete(),
+          pendingMessName:firebase.firestore.FieldValue.delete(),
+          pendingMessCode:firebase.firestore.FieldValue.delete(),
+          pendingMessType:firebase.firestore.FieldValue.delete(),
+          pendingJoinStatus:'rejected'
         });
       }
     });
@@ -3418,6 +3533,42 @@ M.allMembers=allMembersSnap.docs.map(d=>({
 }
 
 function homeView(){
+  if(S.pendingJoin){
+    return `
+      <div class="regular-welcome">
+        <h1>${T('হোম','Home')}</h1>
+      </div>
+      <div class="regular-summary-head">
+        <h2 class="regular-section-title">${T('মেসের সারসংক্ষেপ','Mess Summary')}</h2>
+      </div>
+      <div class="regular-summary">
+        <div class="regular-card regular-market">
+          <div class="regular-card-icon">🛒</div>
+          <small>${T('মোট বাজার খরচ','Total market expenses')}</small>
+          <b>০০</b>
+        </div>
+        <div class="regular-card regular-other">
+          <div class="regular-card-icon">🧾</div>
+          <small>${T('অন্যান্য খরচ','Other expenses')}</small>
+          <b>০০</b>
+        </div>
+        <div class="regular-card regular-deposit">
+          <div class="regular-card-icon">🏦</div>
+          <small>${T('মোট জমা','Total deposits')}</small>
+          <b>০০</b>
+        </div>
+        <div class="regular-card regular-members">
+          <div class="regular-card-icon">👥</div>
+          <small>${T('মোট সদস্য','Total members')}</small>
+          <b>০০</b>
+        </div>
+      </div>
+      <div class="card" style="margin-top:16px;text-align:center">
+        <b>${T('অনুমোদনের অপেক্ষায়','Waiting for approval')}</b>
+        <div class="mut" style="margin-top:7px">${T('আপনার যোগদানের অনুরোধ অ্যাডমিনের কাছে পাঠানো হয়েছে। অনুমোদন হলে মেসের তথ্য স্বয়ংক্রিয়ভাবে লোড হবে।','Your join request has been sent to the admin. Mess information will load automatically after approval.')}</div>
+      </div>
+    `;
+  }
   const c=calc();
   const meal=M.type=='meal';
   const p=pend();
@@ -4510,7 +4661,7 @@ function render(){
   let v,nav='';
   if(S.screen=='auth')v=authView();else if(S.screen=='welcome')v=welcomeView();else if(S.screen=='create')v=createView();else if(S.screen=='join')v=joinView();
   else{
-      const tabs=[['home','home',T('হোম','Home')],['add','add',T('খরচ যোগ','Add')],['expenses','receipt',T('খরচের তালিকা','Expenses')],['task','task',T('টাস্ক','Tasks')]].concat(M.type=='meal'?[['meal','meals',T('মিল','Meals')]]:[]);   
+      const tabs=S.pendingJoin?[['home','home',T('হোম','Home')]]:[['home','home',T('হোম','Home')],['add','add',T('খরচ যোগ','Add')],['expenses','receipt',T('খরচের তালিকা','Expenses')],['task','task',T('টাস্ক','Tasks')]].concat(M.type=='meal'?[['meal','meals',T('মিল','Meals')]]:[]);   
       v=({home:homeView,add:addView,meal:mealView,rep:reportView,task:taskView,req:reqView,expenses:expenseListView,members:memberListView,settings:settingsView,deposits:depositView,depositDetail:depositDetailView,history:historyView,historyDetail:historyDetailView,formerMembers:formerMembersView,about:aboutView,profile:profileView,editnumber:editNumberView,editname:editNameView}[S.tab]||homeView)();   
     nav=`<nav><div>${tabs.map(t=>`<button class="${S.tab==t[0]?'on':''}" onclick="go('${t[0]}')"><span class="sm-icon nav-icon i-${t[1]}"></span><small class="nav-label">${t[2]}</small></button>`).join('')}</div></nav>`;
   }
