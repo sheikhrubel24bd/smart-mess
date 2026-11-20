@@ -1351,7 +1351,9 @@ const messId=userData.messId;
   name:d.data().name,
   status:d.data().status,
   joinedAt:d.data().joinedAt,
-  leftAt:d.data().leftAt||null
+  leftAt:d.data().leftAt||null,
+  currentPeriodId:d.data().currentPeriodId||null,
+  periodCount:Number(d.data().periodCount)||1
 })),
       me:memberUids.indexOf(uid),
       meals:{},
@@ -1406,6 +1408,8 @@ const messId=userData.messId;
   payer:memberUids.indexOf(e.payerUid),
   payerUid:e.payerUid,
   memberUidsAtTime:e.memberUidsAtTime||null,
+  participantsAtTime:e.participantsAtTime||null,
+  payerPeriodId:e.payerPeriodId||null,
   source:e.source||'pocket',         
   amt:e.amt,
   d:e.d,
@@ -1969,6 +1973,7 @@ async function decide(i,ok){
     const userRef=db.collection('users').doc(r.uid);
     const memberRef=messRef.collection('members').doc(r.uid);
     const adminRef=messRef.collection('members').doc(uid);
+    const periodRef=messRef.collection('membershipPeriods').doc();
 
     await db.runTransaction(async tx=>{
       const requestSnap=await tx.get(requestRef);
@@ -1991,6 +1996,7 @@ async function decide(i,ok){
       if(ok){
         const data=requestSnap.data();
 
+const joinedAt=firebase.firestore.FieldValue.serverTimestamp();
 const memberData={
   uid:r.uid,
   name:data.name,
@@ -1998,7 +2004,8 @@ const memberData={
   phone:data.phone||'',
   role:'member',
   status:'active',
-  joinedAt:firebase.firestore.FieldValue.serverTimestamp()
+  joinedAt:joinedAt,
+  currentPeriodId:periodRef.id
 };
 
 if(memberSnap.exists){
@@ -2011,12 +2018,28 @@ if(memberSnap.exists){
   phone:data.phone||'',
   role:'member',
   status:'active',
-  rejoinedAt:firebase.firestore.FieldValue.serverTimestamp()
+  joinedAt:joinedAt,
+  rejoinedAt:joinedAt,
+  currentPeriodId:periodRef.id
 });
 
 }else{
   tx.set(memberRef,memberData);
 }
+
+const nextPeriodNo=memberSnap.exists
+  ? (Number(memberSnap.data().periodCount)||1)+1
+  : 1;
+tx.set(periodRef,{
+  uid:r.uid,
+  name:data.name,
+  periodNo:nextPeriodNo,
+  status:'active',
+  joinedAt:joinedAt,
+  leftAt:null,
+  createdAt:firebase.firestore.FieldValue.serverTimestamp()
+});
+tx.set(memberRef,{periodCount:nextPeriodNo},{merge:true});
 
         tx.update(userRef,{
           messId:messId,
@@ -2159,10 +2182,23 @@ function whoBlock(c){
       if(memberData.status!=='active' || userSnap.data().messId!==M.id)
         throw new Error('NOT_ACTIVE_MEMBER');
 
-      // শুধু সদস্যের status বন্ধ হবে; পুরোনো সদস্য ও হিসাবের রেকর্ড থাকবে।
+      // বর্তমান যোগদান-কাল বন্ধ হবে; আগের হিসাবকাল আলাদা থাকবে।
+      const leftAt=firebase.firestore.FieldValue.serverTimestamp();
+      if(memberData.currentPeriodId){
+        const periodRef=messRef.collection('membershipPeriods').doc(memberData.currentPeriodId);
+        const periodSnap=await tx.get(periodRef);
+        if(periodSnap.exists){
+          tx.update(periodRef,{
+            status:'closed',
+            leftAt:leftAt,
+            closedAt:firebase.firestore.FieldValue.serverTimestamp()
+          });
+        }
+      }
       tx.update(memberRef,{
         status:'left',
-        leftAt:firebase.firestore.FieldValue.serverTimestamp()
+        leftAt:leftAt,
+        currentPeriodId:firebase.firestore.FieldValue.delete()
       });
 
       // একই account-কে অন্য মেসে যোগ দেওয়ার সুযোগ দেওয়া হবে।
@@ -3388,9 +3424,23 @@ async function removeMember(i){
   throw new Error('INVALID_MEMBER');
 
       // পুরোনো সদস্যের রেকর্ড থাকবে, শুধু Status পরিবর্তন হবে
+      const targetData=targetSnap.data();
+      const leftAt=firebase.firestore.FieldValue.serverTimestamp();
+      if(targetData.currentPeriodId){
+        const periodRef=messRef.collection('membershipPeriods').doc(targetData.currentPeriodId);
+        const periodSnap=await tx.get(periodRef);
+        if(periodSnap.exists){
+          tx.update(periodRef,{
+            status:'closed',
+            leftAt:leftAt,
+            closedAt:firebase.firestore.FieldValue.serverTimestamp()
+          });
+        }
+      }
       tx.update(targetRef,{
         status:'left',
-        leftAt:firebase.firestore.FieldValue.serverTimestamp()
+        leftAt:leftAt,
+        currentPeriodId:firebase.firestore.FieldValue.delete()
       });
 
       // সদস্যের Account অন্য মেসে যোগ দেওয়ার জন্য মুক্ত হবে
@@ -3416,7 +3466,9 @@ M.allMembers=allMembersSnap.docs.map(d=>({
   name:d.data().name,
   status:d.data().status,
   joinedAt:d.data().joinedAt,
-  leftAt:d.data().leftAt||null
+  leftAt:d.data().leftAt||null,
+  currentPeriodId:d.data().currentPeriodId||null,
+  periodCount:Number(d.data().periodCount)||1
 }));
 
     say(T(
@@ -3793,7 +3845,12 @@ if(item==='other' && !(S.otherName||'').trim()){
       item:item,
       otherName:item==='other'?(S.otherName||'').trim():null,
       payerUid:M.memberUids[payer],
+      payerPeriodId:(M.allMembers||[]).find(m=>m.uid===M.memberUids[payer])?.currentPeriodId||null,
       memberUidsAtTime:[...M.memberUids],
+      participantsAtTime:M.memberUids.map(memberUid=>{
+        const member=(M.allMembers||[]).find(m=>m.uid===memberUid);
+        return {uid:memberUid,periodId:member?.currentPeriodId||null};
+      }),
       source:S.expSource||'pocket',
       amt:amt,
       d:Date.now(),
