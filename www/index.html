@@ -918,7 +918,7 @@ function calc(){
     if(Array.isArray(e.participantsAtTime)&&e.participantsAtTime.length){
       participants=e.participantsAtTime
         .map(x=>byId[x.periodId])
-        .filter(p=>p&&!p.frozen);
+        .filter(p=>!!p);
     }
     // পরীক্ষামূলক পুরোনো রেকর্ডে periodId null থাকলে বর্তমান সক্রিয় period ব্যবহার।
     if(!participants.length&&Array.isArray(e.memberUidsAtTime)&&e.memberUidsAtTime.length){
@@ -931,7 +931,8 @@ function calc(){
     if(!participants.length)return;
     const amount=Number(e.amt)||0;
     const share=amount/participants.length;
-    participants.forEach(p=>p.share+=share);
+    // Closed/frozen period-এর ভাগ denominator-এ থাকবে, কিন্তু balance আর বদলাবে না।
+    participants.forEach(p=>{if(!p.frozen)p.share+=share;});
 
     if((e.source||'pocket')==='pocket'){
       let payer=e.payerPeriodId?byId[e.payerPeriodId]:null;
