@@ -2586,10 +2586,10 @@ async function editDeposit(id){
   if(!Number.isFinite(amount)||amount<=0)return say(T('সঠিক টাকার পরিমাণ দিন','Enter a valid amount'));
 
   try{
+    // Firestore rules currently allow only amt/date fields to be updated.
+    // Keep the edit within the existing permitted field set.
     await db.collection('messes').doc(M.id).collection('deposits').doc(id).update({
-      amt:amount,
-      editedAt:firebase.firestore.FieldValue.serverTimestamp(),
-      editedBy:auth.currentUser.uid
+      amt:amount
     });
     say(T('জমার পরিমাণ সংশোধন হয়েছে','Deposit updated successfully'));
   }catch(e){
@@ -2678,26 +2678,30 @@ async function deleteDeposit(id){
       </div>
     </div>
 
-    <div class="card">
-      <h2>${T('নতুন জমা যোগ করুন','Add New Deposit')}</h2>
+    <div class="card" style="padding:16px">
+      <h2 style="margin:0 0 16px">${T('নতুন জমা যোগ করুন','Add New Deposit')}</h2>
 
       ${admin?`
-        <label>${T('সদস্য নির্বাচন','Select Member')}</label>
-        <select id="depositMember">
-          ${M.members.map((name,i)=>`
-            <option value="${i}" ${i===M.me?'selected':''}>${esc(name)}</option>
-          `).join('')}
-        </select>
+        <div style="margin-bottom:14px">
+          <label for="depositMember" style="display:block;font-size:14px;font-weight:700;margin-bottom:7px">${T('সদস্য নির্বাচন','Select Member')}</label>
+          <select id="depositMember" style="display:block;width:100%;max-width:100%;min-height:48px;padding:10px 12px;border:1.5px solid #cbd8d0;border-radius:10px;background:var(--card);color:var(--ink);font:inherit">
+            ${M.members.map((name,i)=>`
+              <option value="${i}" ${i===M.me?'selected':''}>${esc(name)}</option>
+            `).join('')}
+          </select>
+        </div>
       `:`
-        <div class="mut" style="margin:0 0 10px">
+        <div class="mut" style="margin:0 0 14px;padding:10px 12px;background:#f0f8f2;border:1px solid #d5e9db;border-radius:10px">
           ${T('আপনার নামে জমা হবে','Deposit will be added to your account')}: <b>${esc(M.members[M.me]||'')}</b>
         </div>
       `}
 
-      <label>${T('জমার পরিমাণ','Deposit Amount')}</label>
-      <input id="depositAmount" type="number" min="1" step="0.01" placeholder="0">
+      <div style="margin-bottom:14px">
+        <label for="depositAmount" style="display:block;font-size:14px;font-weight:700;margin-bottom:7px">${T('জমার পরিমাণ','Deposit Amount')}</label>
+        <input id="depositAmount" type="number" inputmode="decimal" min="0.01" step="0.01" placeholder="0.00" style="display:block;width:100%;min-height:50px;padding:12px;border:1.5px solid #cbd8d0;border-radius:10px;background:var(--card);color:var(--ink);font:inherit;font-size:18px">
+      </div>
 
-      <button class="primary" onclick="saveDeposit()" ${S.savingDeposit?'disabled':''}>
+      <button class="primary" style="display:block;width:100%;min-height:48px" onclick="saveDeposit()" ${S.savingDeposit?'disabled':''}>
         ${S.savingDeposit?T('সংরক্ষণ হচ্ছে...','Saving...'):T('জমা সংরক্ষণ','Save Deposit')}
       </button>
     </div>
