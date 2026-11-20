@@ -2681,7 +2681,7 @@ async function deleteDeposit(id){
     <div class="card" style="padding:16px">
       <h2 style="margin:0 0 16px">${T('নতুন জমা যোগ করুন','Add New Deposit')}</h2>
 
-      ${admin?`
+      ${!S.editDepositId&&admin?`
         <div style="margin-bottom:14px">
           <label for="depositMember" style="display:block;font-size:14px;font-weight:700;margin-bottom:7px">${T('সদস্য নির্বাচন','Select Member')}</label>
           <select id="depositMember" style="display:block;width:100%;max-width:100%;min-height:48px;padding:10px 12px;border:1.5px solid #cbd8d0;border-radius:10px;background:var(--card);color:var(--ink);font:inherit">
@@ -2690,18 +2690,18 @@ async function deleteDeposit(id){
             `).join('')}
           </select>
         </div>
-      `:`
+      `:` ${!S.editDepositId&&!admin?`
         <div class="mut" style="margin:0 0 14px;padding:10px 12px;background:#f0f8f2;border:1px solid #d5e9db;border-radius:10px">
           ${T('আপনার নামে জমা হবে','Deposit will be added to your account')}: <b>${esc(M.members[M.me]||'')}</b>
         </div>
-      `}
+      ` : ''}
 
       <div style="margin-bottom:14px">
         <label for="depositAmount" style="display:block;font-size:14px;font-weight:700;margin-bottom:7px">${T('জমার পরিমাণ','Deposit Amount')}</label>
         <input id="depositAmount" type="number" inputmode="decimal" min="0.01" step="0.01" value="${S.editDepositId?(Number(deposits.find(d=>d.id===S.editDepositId)?.amt)||''): ''}" placeholder="0.00" style="display:block;width:100%;min-height:50px;padding:12px;border:1.5px solid #cbd8d0;border-radius:10px;background:var(--card);color:var(--ink);font:inherit;font-size:18px">
       </div>
 
-      <button class="primary" style="display:block;width:100%;min-height:48px;background:#16a34a;color:#fff;border:1px solid #16a34a" onclick="saveDeposit()" ${S.savingDeposit?'disabled':''}>
+      <button class="primary" style="display:block;width:100%;min-height:48px;background:var(--pri);color:var(--on);border:1px solid var(--pri);border-radius:999px" onclick="saveDeposit()" ${S.savingDeposit?'disabled':''}>
         ${S.savingDeposit?T('সংরক্ষণ হচ্ছে...','Saving...'):S.editDepositId?T('পরিবর্তন সংরক্ষণ','Save Changes'):T('জমা সংরক্ষণ','Save Deposit')}
       </button>
       ${S.editDepositId?'<button class="secondary" style="display:block;width:100%;min-height:42px;margin-top:8px" onclick="cancelDepositEdit()">'+T('এডিট বাতিল','Cancel Edit')+'</button>':''}
