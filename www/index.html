@@ -804,23 +804,53 @@ function calc(){
   const n=M.members.length;
   let baz=0,fix=0;
 
+  (M.exp||[]).forEach(e=>{
+    const amount=Number(e.amt)||0;
+    IT[e.item]?.[3]==='b'?baz+=amount:fix+=amount;
+  });
+
+  const meal=M.type==='meal';
+
+  // Regular Mess: প্রতিটি খরচের সময়কার সদস্য তালিকা অনুযায়ী ভাগ।
+  // নতুন সদস্যের আগের খরচ এবং চলে যাওয়া সদস্যের পরের খরচ বাদ থাকবে।
+  if(!meal){
+    const allAccounts=calcAllMembers();
+    const activeAccounts=M.memberUids.map(uid=>
+      allAccounts.find(a=>a.uid===uid)||{
+        deposited:0,personalExpenses:0,share:0,bal:0
+      }
+    );
+
+    const deposited=activeAccounts.map(a=>Number(a.deposited)||0);
+    const paid=activeAccounts.map(a=>
+      (Number(a.deposited)||0)+(Number(a.personalExpenses)||0)
+    );
+    const due=activeAccounts.map(a=>Number(a.share)||0);
+    const bal=activeAccounts.map(a=>Number(a.bal)||0);
+    const tm=0;
+    const rate=0;
+    const per=n?due.reduce((sum,value)=>sum+value,0)/n:0;
+
+    return{
+      n,baz,fix,paid,deposited,tm,rate,due,bal,
+      tot:baz+fix,per
+    };
+  }
+
+  // Meal Mess-এর আগের হিসাব অপরিবর্তিত রাখা হলো।
   const deposited=M.members.map(()=>0);
   const paid=M.members.map(()=>0);
 
-  // প্রত্যেক সদস্যের মোট জমা
   (M.deposits||[]).forEach(d=>{
     const i=M.memberUids.indexOf(d.uid);
     if(i>=0) deposited[i]+=Number(d.amt)||0;
   });
 
-  // জমা + পকেট থেকে বাজার
   M.members.forEach((_,i)=>{
     paid[i]=deposited[i];
   });
 
   M.exp.forEach(e=>{
-    IT[e.item][3]=='b'?baz+=e.amt:fix+=e.amt;
-
     if((e.source||'pocket')==='pocket'){
       const i=M.memberUids.indexOf(e.payerUid);
       if(i>=0)paid[i]+=e.amt;
@@ -829,13 +859,10 @@ function calc(){
   });
 
   const tm=M.members.reduce((a,_,i)=>a+(M.meals[i]||0),0);
-  const meal=M.type=='meal';
-  const rate=meal&&tm?baz/tm:0;
-
+  const rate=tm?baz/tm:0;
   const due=M.members.map((_,i)=>
-    meal?(M.meals[i]||0)*rate+fix/n:(baz+fix)/n
+    (M.meals[i]||0)*rate+fix/n
   );
-
   const bal=due.map((d,i)=>paid[i]-d);
 
   return{
