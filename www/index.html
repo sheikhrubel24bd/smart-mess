@@ -4388,7 +4388,7 @@ function reportView(){
       return `
       <div class="li">
         <div class="t">
-          <b>${esc(a.name||T('সাবেক সদস্য','Former member'))}</b>
+          <b>${esc(a.name||T('সাবেক সদস্য','Former member'))} <span class="mut" style="font-size:13px;font-weight:normal">(${T('সাবেক সদস্য','Former member')})</span></b>
           ${b>0
             ?T('মেস থেকে ফেরত পাবে','Gets refund from mess')
             :T('মেসে দেবে','Pays to mess')}
