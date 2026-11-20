@@ -2070,6 +2070,8 @@ if(ok){
     currentPeriodId:d.data().currentPeriodId||null,
     periodCount:Number(d.data().periodCount)||1
   }));
+  const periodsSnap=await messRef.collection('membershipPeriods').get();
+  M.periods=periodsSnap.docs.map(d=>({id:d.id,...d.data()}));
 }
 
     say(ok?'মেম্বার সফলভাবে যোগ হয়েছে।':'অনুরোধ বাতিল হয়েছে।');
@@ -3432,6 +3434,8 @@ M.allMembers=allMembersSnap.docs.map(d=>({
   currentPeriodId:d.data().currentPeriodId||null,
   periodCount:Number(d.data().periodCount)||1
 }));
+const periodsSnap=await messRef.collection('membershipPeriods').get();
+M.periods=periodsSnap.docs.map(d=>({id:d.id,...d.data()}));
 
     say(T(
       'সদস্যকে সফলভাবে বিদায় দেওয়া হয়েছে। পুরোনো হিসাব সংরক্ষিত আছে।',
