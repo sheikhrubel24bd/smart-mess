@@ -956,6 +956,14 @@ function calc(){
 
   return periods;
 }
+function formerSettlementSummary(periodId, originalBalance){
+  const records=(M.formerSettlements||[]).filter(x=>x.periodId===periodId);
+  const paidToMess=records.filter(x=>x.kind==='payment'&&x.direction==='toMess').reduce((s,x)=>s+(Number(x.amount)||0),0);
+  const paidFromMess=records.filter(x=>x.kind==='payment'&&x.direction==='fromMess').reduce((s,x)=>s+(Number(x.amount)||0),0);
+  const paid=originalBalance<0?paidToMess:paidFromMess;
+  const remaining=originalBalance<0?Math.min(0,originalBalance+paidToMess):Math.max(0,originalBalance-paidFromMess);
+  return {records,paidToMess,paidFromMess,paid,remaining,completed:records.some(x=>x.kind==='completed')};
+}
 function settle(bal){
   const d=[],c=[];bal.forEach((b,i)=>{if(b<-0.5)d.push([i,-b]);else if(b>0.5)c.push([i,b])});
   d.sort((a,b)=>b[1]-a[1]);c.sort((a,b)=>b[1]-a[1]);const r=[];
@@ -1180,6 +1188,7 @@ function stopMessListeners(){
     '_smartMessExpenseUnsub',
     '_smartMessMealUnsub',
     '_smartMessDepositUnsub',
+    '_smartMessSettlementUnsub',
     '_smartMessDailyMealUnsub',
     '_smartMessTaskUnsub',
     '_smartMessUserUnsub'
@@ -1386,6 +1395,7 @@ const messId=userData.messId;
       mealCountsByUid:{},
       dailyMeals:{},
       deposits:[],
+      formerSettlements:[],
       exp:[],
       reqs:requestsSnap.docs.map(d=>{
         const r=d.data();
@@ -1523,6 +1533,13 @@ snapshot.docs.forEach(doc=>{
         console.error('DEPOSIT SYNC ERROR:',error);
         say('জমার হিসাব আপডেট করা যায়নি।');
       });
+
+    // FORMER MEMBER SETTLEMENT LIVE SYNC
+    window._smartMessSettlementUnsub=messRef.collection('formerSettlements').onSnapshot(snapshot=>{
+      if(!M || M.id!=messId)return;
+      M.formerSettlements=snapshot.docs.map(doc=>({id:doc.id,...doc.data()}));
+      render();
+    },error=>{console.error('FORMER SETTLEMENT SYNC ERROR:',error);say('সাবেক সদস্যদের পরিশোধের হিসাব আপডেট করা যায়নি।');});
 
     // TASK LIVE SYNC
 window._smartMessTaskUnsub=
@@ -4227,7 +4244,7 @@ function reportView(){
     allAccounts.find(a=>a.uid===uid)
   );
 
-  const formerAccounts=allAccounts.filter(a=>a.frozen);
+  const formerAccounts=allAccounts.filter(a=>a.frozen).map(a=>({...a,bal:formerSettlementSummary(a.periodId,Number(a.bal)||0).remaining}));
 
   const totalDeposit=c.deposited.reduce((a,b)=>a+b,0);
 
@@ -4239,7 +4256,9 @@ function reportView(){
     .filter(e=>(e.source||'pocket')==='pocket')
     .reduce((a,e)=>a+(Number(e.amt)||0),0);
 
-  const cashLeft=totalDeposit-depositSpent;
+  const formerPaidToMess=(M.formerSettlements||[]).filter(x=>x.kind==='payment'&&x.direction==='toMess').reduce((s,x)=>s+(Number(x.amount)||0),0);
+  const formerPaidFromMess=(M.formerSettlements||[]).filter(x=>x.kind==='payment'&&x.direction==='fromMess').reduce((s,x)=>s+(Number(x.amount)||0),0);
+  const cashLeft=totalDeposit-depositSpent+formerPaidToMess-formerPaidFromMess;
 
   const totalReceivable=[...currentAccounts,...formerAccounts]
     .filter(a=>a && a.bal>0)
