@@ -3202,9 +3202,7 @@ async function deleteDeposit(id){
 
   try{
     await db.collection('messes').doc(M.id).update({
-      name:name,
-      updatedAt:firebase.firestore.FieldValue.serverTimestamp(),
-      updatedBy:auth.currentUser.uid
+      name:name
     });
     M.name=name;
     say(T('মেসের নাম সফলভাবে পরিবর্তন হয়েছে','Mess name updated successfully'));
