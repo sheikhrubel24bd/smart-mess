@@ -1191,6 +1191,54 @@ function stopMessListeners(){
   });
 }
 
+async function ensureActiveMembershipPeriods(){
+  if(!M || M.role!=='admin')return;
+  const messRef=db.collection('messes').doc(M.id);
+  const activeSnap=await messRef.collection('members').where('status','==','active').get();
+
+  for(const doc of activeSnap.docs){
+    if(doc.data().currentPeriodId)continue;
+    const memberRef=doc.ref;
+    const periodRef=messRef.collection('membershipPeriods').doc();
+
+    await db.runTransaction(async tx=>{
+      const fresh=await tx.get(memberRef);
+      if(!fresh.exists || fresh.data().status!=='active' || fresh.data().currentPeriodId)return;
+      const data=fresh.data();
+      const joinedAt=data.joinedAt||firebase.firestore.FieldValue.serverTimestamp();
+      const periodNo=Math.max(1,Number(data.periodCount)||1);
+      tx.set(periodRef,{
+        uid:doc.id,
+        name:data.name||'',
+        periodNo:periodNo,
+        status:'active',
+        joinedAt:joinedAt,
+        leftAt:null,
+        createdAt:firebase.firestore.FieldValue.serverTimestamp()
+      });
+      tx.update(memberRef,{
+        currentPeriodId:periodRef.id,
+        periodCount:periodNo
+      });
+    });
+  }
+
+  const [membersSnap,periodsSnap]=await Promise.all([
+    messRef.collection('members').get(),
+    messRef.collection('membershipPeriods').get()
+  ]);
+  M.allMembers=membersSnap.docs.map(d=>({
+    uid:d.id,
+    name:d.data().name,
+    status:d.data().status,
+    joinedAt:d.data().joinedAt,
+    leftAt:d.data().leftAt||null,
+    currentPeriodId:d.data().currentPeriodId||null,
+    periodCount:Number(d.data().periodCount)||1
+  }));
+  M.periods=periodsSnap.docs.map(d=>({id:d.id,...d.data()}));
+}
+
 async function after(){
   try{
     const uid=auth.currentUser.uid;
@@ -1345,6 +1393,15 @@ const messId=userData.messId;
         };
       })
     };
+
+    if(M.role==='admin'){
+      try{
+        await ensureActiveMembershipPeriods();
+      }catch(periodError){
+        console.error('PERIOD MIGRATION ERROR:',periodError);
+        say('সদস্যদের হিসাবকাল তৈরি করা যায়নি: '+(periodError.code||periodError.message));
+      }
+    }
 
     S.members=[...members];
     S.payer=M.me;
