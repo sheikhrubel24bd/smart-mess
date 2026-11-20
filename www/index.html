@@ -3132,13 +3132,13 @@ async function deleteDeposit(id){
 }
   
     function settingsView(){
-  const row=(icon,label,action)=>`
+  const row=(iconFile,label,action)=>`
     <button onclick="${action}" style="
       width:100%;
       display:flex;
       align-items:center;
       gap:14px;
-      padding:15px;
+      padding:13px 15px;
       margin-bottom:9px;
       background:var(--card);
       border:1px solid var(--line);
@@ -3148,7 +3148,7 @@ async function deleteDeposit(id){
       font-size:15px;
       font-weight:600;
     ">
-      <span style="font-size:22px;width:28px;text-align:center">${icon}</span>
+      <img src="icons/${iconFile}" alt="" style="width:36px;height:36px;object-fit:contain;flex:0 0 36px">
       <span style="flex:1">${label}</span>
       <span style="color:var(--muted);font-size:19px">›</span>
     </button>`;
@@ -3157,19 +3157,19 @@ async function deleteDeposit(id){
     <h1>⚙️ ${T('সেটিংস','Settings')}</h1>
 
     <div style="padding:5px 0">
-      ${row('👤',T('প্রোফাইল এডিট','Edit Profile'),"go('profile')")}
-      ${row('👥',T('সদস্য তালিকা','Member List'),"go('members')")}
-      ${M.role=='admin'?row('📋',T('সাবেক সদস্য','Former Members'),'loadFormerMembers()'):''}
-      ${M.role=='admin'?row('🏷️',T('মেসের নাম পরিবর্তন','Change Mess Name'),"go('editMessName')"):''}
-      ${row('💰',T('ডিপোজিট ম্যানেজমেন্ট','Deposit Management'),"go('deposits')")}
-      ${row('📊',T('মাসিক রিপোর্ট','Monthly Report'),"go('rep')")}
-      ${row('📚',T('আগের হিসাব','History'),'openHistory()')}
-      ${M.role=='admin'?row('♻️',T('মেস রিসেট','Reset Mess'),'resetMess()'):''}
+      ${row('01_profile_edit.png',T('প্রোফাইল এডিট','Edit Profile'),"go('profile')")}
+      ${row('02_member_list.png',T('সদস্য তালিকা','Member List'),"go('members')")}
+      ${M.role=='admin'?row('03_former_members.png',T('সাবেক সদস্য','Former Members'),'loadFormerMembers()'):''}
+      ${M.role=='admin'?row('04_change_mess_name.png',T('মেসের নাম পরিবর্তন','Change Mess Name'),"go('editMessName')"):''}
+      ${row('05_deposit_management.png',T('ডিপোজিট ম্যানেজমেন্ট','Deposit Management'),"go('deposits')")}
+      ${row('06_monthly_report.png',T('মাসিক রিপোর্ট','Monthly Report'),"go('rep')")}
+      ${row('07_previous_accounts.png',T('আগের হিসাব','History'),'openHistory()')}
+      ${M.role=='admin'?row('08_mess_reset.png',T('মেস রিসেট','Reset Mess'),'resetMess()'):''}
 
-      ${row('👨‍💻',T('ডেভেলপার পরিচিতি','About Developer'),"go('about')")}
+      ${row('09_about_developer.png',T('ডেভেলপার পরিচিতি','About Developer'),"go('about')")}
 
-      ${M.role==='member'?row('🚪',T('মেস ত্যাগ করুন','Leave Mess'),'leaveMess()'):''}
-      ${row('🚪',T('লগআউট','Logout'),'logout()')}
+      ${M.role==='member'?row('11_leave_mess.png',T('মেস ত্যাগ করুন','Leave Mess'),'leaveMess()'):''}
+      ${row('10_logout.png',T('লগআউট','Logout'),'logout()')}
     </div>
   `;
 }
