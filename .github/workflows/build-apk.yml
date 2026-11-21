@@ -68,9 +68,20 @@ jobs:
       - name: Build debug APK
         working-directory: android
         run: chmod +x gradlew && ./gradlew assembleDebug
+      - name: Create Android debug keystore if missing
+        run: |
+          mkdir -p "$HOME/.android"
+          if [ ! -f "$HOME/.android/debug.keystore" ]; then
+            keytool -genkeypair -v -keystore "$HOME/.android/debug.keystore" -storepass android -alias androiddebugkey -keypass android -keyalg RSA -keysize 2048 -validity 10000 -dname "CN=Android Debug,O=Android,C=US"
+          fi
       - name: Print Android debug SHA-1
         run: |
           keytool -list -v -keystore "$HOME/.android/debug.keystore" -alias androiddebugkey -storepass android -keypass android | grep -m 1 "SHA1:"
+      - name: Upload debug keystore for reuse
+        uses: actions/upload-artifact@v4
+        with:
+          name: Smart-Mess-Debug-Keystore
+          path: $HOME/.android/debug.keystore
       - name: Upload APK
         uses: actions/upload-artifact@v4
         with:
