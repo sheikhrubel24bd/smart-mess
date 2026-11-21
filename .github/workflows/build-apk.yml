@@ -58,7 +58,7 @@ jobs:
               path.write_text(source)
           print(f"Disabled WebView overscroll in {path}")
           PY
-      - name: Match Android status bar with app header
+      - name: Set Smart-Mess green status bar and white icons
         run: |
           python3 - <<'PY'
           from pathlib import Path
@@ -68,29 +68,34 @@ jobs:
           if not style_files:
               raise SystemExit("Android styles.xml not found")
 
-          style_pattern = re.compile(r'<style[^>]*>.*?</style>', re.S)
-          updated = [0]
+          names = {
+              "android:statusBarColor": "#16794f",
+              "android:windowLightStatusBar": "false",
+              "android:windowOptOutEdgeToEdgeEnforcement": "true",
+          }
 
+          updated = 0
           for path in style_files:
               source = path.read_text()
-
               def patch_style(match):
+                  nonlocal_dummy = None
                   block = match.group(0)
-                  additions = []
-                  if 'name="android:statusBarColor"' not in block:
-                      additions.append('    <item name="android:statusBarColor">#f0fff7</item>')
-                  if 'name="android:windowLightStatusBar"' not in block:
-                      additions.append('    <item name="android:windowLightStatusBar">false</item>')
-                  if additions:
-                      updated[0] += 1
-                      return block.replace("</style>", chr(10) + chr(10).join(additions) + chr(10) + "  </style>")
+                  for name, value in names.items():
+                      item = f'<item name="{name}">{value}</item>'
+                      pattern = re.compile(r'<item\\s+name="' + re.escape(name) + r'">.*?</item>', re.S)
+                      if pattern.search(block):
+                          block = pattern.sub(item, block)
+                      else:
+                          block = block.replace("</style>", "    " + item + "\\n  </style>")
                   return block
+              changed = re.sub(r'<style[^>]*>.*?</style>', patch_style, source, flags=re.S)
+              if changed != source:
+                  updated += 1
+                  path.write_text(changed)
 
-              path.write_text(style_pattern.sub(patch_style, source))
-
-          if updated[0] == 0:
+          if updated == 0:
               raise SystemExit("No Android theme was updated")
-          print(f"Updated {updated[0]} Android theme(s)")
+          print(f"Updated {updated} Android theme file(s)")
           PY
       - name: Prepare app icon source
         run: |
