@@ -14,6 +14,14 @@
       },
       "oauth_client": [
         {
+          "client_id": "1009030541190-v6fk7la8o2h3v7dimpb1nthh4ln2cv6r.apps.googleusercontent.com",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "com.smartmess.app",
+            "certificate_hash": "d689651a34f87aad8a29e223f9ccc6af88ccb303"
+          }
+        },
+        {
           "client_id": "1009030541190-olne73hiklegje74gmq9uet78n7c1gkm.apps.googleusercontent.com",
           "client_type": 3
         }
