@@ -14,6 +14,9 @@ window.SmartMessPdf = html2pdf;
 
 // Keep light (white) status-bar icons on the Smart-Mess green background.
 // Native StatusBar configuration handles the background before the WebView starts.
+StatusBar.setBackgroundColor({ color: '#16794f' }).catch(error => {
+  console.warn('Status bar background setup:', error);
+});
 StatusBar.setStyle({ style: Style.Dark }).catch(error => {
   console.warn('Status bar style setup:', error);
 });
