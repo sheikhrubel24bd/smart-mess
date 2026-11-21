@@ -4543,10 +4543,10 @@ function reportView(){
     )}
   </div>
     <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:18px">
-      <button class="btn" style="min-width:0;padding:12px 6px" onclick="exportMonthlyPdf('download')">
+      <button id="pdfDownloadBtn" class="btn" style="min-width:0;padding:12px 6px" onclick="exportMonthlyPdf('download')">
         📥 ${T('PDF ডাউনলোড','Download PDF')}
       </button>
-      <button class="secondary" style="min-width:0;padding:12px 6px;background:#198754;color:#fff;border:1px solid #198754;border-radius:13px;font-weight:700" onclick="exportMonthlyPdf('share')">
+      <button id="pdfShareBtn" class="secondary" style="min-width:0;padding:12px 6px;background:#198754;color:#fff;border:1px solid #198754;border-radius:13px;font-weight:700" onclick="exportMonthlyPdf('share')">
         ↗ ${T('PDF শেয়ার','Share PDF')}
       </button>
     </div>
@@ -4560,6 +4560,26 @@ async function exportMonthlyPdf(mode='download'){
   if(!window.SmartMessPdf || !window.SmartMessFiles)return say(T('PDF সুবিধাটি লোড হয়নি। অ্যাপ আপডেট করুন।','PDF tools are unavailable. Please update the app.'));
 
   window._smartMessPdfBusy=true;
+  const downloadBtn=document.getElementById('pdfDownloadBtn');
+  const shareBtn=document.getElementById('pdfShareBtn');
+  const activeBtn=mode==='share'?shareBtn:downloadBtn;
+  const btns=[downloadBtn,shareBtn].filter(Boolean);
+  btns.forEach(btn=>{
+    if(!btn.dataset.readyHtml)btn.dataset.readyHtml=btn.innerHTML;
+    btn.disabled=true;
+    btn.style.opacity='.72';
+    btn.style.cursor='wait';
+  });
+  if(activeBtn){
+    activeBtn.innerHTML='<span style="display:inline-block;width:15px;height:15px;border:2px solid currentColor;border-right-color:transparent;border-radius:50%;vertical-align:-3px;margin-right:7px;animation:smartPdfSpin .7s linear infinite"></span>'+T('PDF তৈরি হচ্ছে...','Creating PDF...');
+    activeBtn.setAttribute('aria-busy','true');
+  }
+  if(!document.getElementById('smartPdfSpinStyle')){
+    const spinStyle=document.createElement('style');
+    spinStyle.id='smartPdfSpinStyle';
+    spinStyle.textContent='@keyframes smartPdfSpin{to{transform:rotate(360deg)}}';
+    document.head.appendChild(spinStyle);
+  }
   let pdfStage='রিপোর্ট প্রস্তুত করা';
   const frame=document.createElement('iframe');
   frame.style.cssText='position:fixed;left:-10000px;top:0;width:794px;height:1400px;border:0;visibility:visible;opacity:1;pointer-events:none;background:#fff';
@@ -4725,27 +4745,16 @@ async function exportMonthlyPdf(mode='download'){
           else throw shareError;
         }
       }else{
-        // আগে Documents-এ লিখে stat দিয়ে নিশ্চিত করি ফাইল সত্যিই তৈরি হয়েছে।
+        // Download বাটন শুধু Documents-এ সরাসরি সেভ করবে; Share মেনু খুলবে না।
+        const savePath='Smart-Mess/'+filename;
         try{
-          await Filesystem.writeFile({path:filename,data:base64,directory:Directory.Documents,recursive:true});
-          const saved=await Filesystem.stat({path:filename,directory:Directory.Documents});
+          await Filesystem.writeFile({path:savePath,data:base64,directory:Directory.Documents,recursive:true});
+          const saved=await Filesystem.stat({path:savePath,directory:Directory.Documents});
           if(!saved||Number(saved.size)<=0)throw new Error('DOCUMENTS_FILE_NOT_CREATED');
-          say(T('PDF রিপোর্ট ফোনের Documents ফোল্ডারে সংরক্ষণ হয়েছে','PDF report saved in the app Documents folder'));
+          say(T('PDF রিপোর্ট Documents/Smart-Mess ফোল্ডারে সংরক্ষণ হয়েছে','PDF report saved in Documents/Smart-Mess'));
         }catch(saveError){
           console.error('PDF DOCUMENTS SAVE FAILED:',saveError);
-          // ফোনের Documents ফোল্ডারে লেখা না গেলে ফাইল Cache-এ রেখে Save/Share শিট খুলুন।
-          const fallbackPath='Smart-Mess/'+filename;
-          await Filesystem.writeFile({path:fallbackPath,data:base64,directory:Directory.Cache,recursive:true});
-          const fallbackInfo=await Filesystem.stat({path:fallbackPath,directory:Directory.Cache});
-          if(!fallbackInfo||Number(fallbackInfo.size)<=0)throw saveError;
-          const fallbackFile=await Filesystem.getUri({path:fallbackPath,directory:Directory.Cache});
-          try{
-            await window.SmartMessShare.share({title:'Smart-Mess PDF Report',text:T('PDF তৈরি হয়েছে। Save to device নির্বাচন করে সংরক্ষণ করুন।','PDF created. Choose Save to device to store it.'),files:[fallbackFile.uri],dialogTitle:T('PDF সংরক্ষণ করুন','Save PDF')});
-            say(T('PDF তৈরি হয়েছে। Documents-এ সরাসরি রাখা যায়নি; শেয়ার মেনু থেকে Save to device নির্বাচন করুন।','PDF created. Direct save was unavailable; choose Save to device in the share menu.'));
-          }catch(shareError){
-            if(/cancel/i.test(String(shareError?.message||shareError)))say(T('PDF তৈরি হয়েছে, কিন্তু আপনি সংরক্ষণের মেনু বন্ধ করেছেন। PDF ফোনে সেভ হয়নি। আবার Download চাপুন এবং Save to device নির্বাচন করুন।','PDF was created, but the save sheet was closed. It was not saved. Tap Download again and choose Save to device.'));
-            else throw shareError;
-          }
+          throw new Error('PDF তৈরি হয়েছে, কিন্তু Documents ফোল্ডারে সেভ করা যায়নি: '+String(saveError?.message||saveError));
         }
       }
     }else if(mode==='share'&&navigator.canShare&&navigator.share){
@@ -4762,6 +4771,13 @@ async function exportMonthlyPdf(mode='download'){
     say(T('PDF তৈরি করা যায়নি ('+pdfStage+')। '+detail,'PDF failed ('+pdfStage+'): '+detail));
   }finally{
     frame.remove();
+    btns.forEach(btn=>{
+      btn.disabled=false;
+      btn.style.opacity='';
+      btn.style.cursor='';
+      btn.innerHTML=btn.dataset.readyHtml||btn.innerHTML;
+      btn.removeAttribute('aria-busy');
+    });
     window._smartMessPdfBusy=false;
   }
 }
