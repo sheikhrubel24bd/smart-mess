@@ -4923,8 +4923,20 @@ async function exportMonthlyPdf(mode='download'){
       table{width:100%;border-collapse:collapse;font-size:10px;page-break-inside:auto}thead{display:table-header-group}
       tr{page-break-inside:avoid;break-inside:avoid}th{background:#e8f5ed;color:#176b43;text-align:left}
       th,td{padding:6px 5px;border:1px solid #d9e7de;vertical-align:top}tbody tr:nth-child(even){background:#fafdfa}
-      .financial-summary td:last-child{text-align:right;padding-right:15px;white-space:nowrap}
-      .member-accounts th:not(:first-child),.member-accounts td:not(:first-child){text-align:center;vertical-align:middle}
+      /* Keep report amount columns aligned to the right edge of their cells. */
+      .financial-summary{width:100%;table-layout:fixed}
+      .financial-summary td:first-child{width:78%}
+      .financial-summary td:last-child{width:22%;text-align:right!important;padding-right:10px;white-space:nowrap}
+      /* Fixed column widths prevent member values from drifting under the wrong headings. */
+      .member-accounts{width:100%;table-layout:fixed}
+      .member-accounts th:first-child,.member-accounts td:first-child{width:22%;text-align:left}
+      .member-accounts th:nth-child(2),.member-accounts td:nth-child(2){width:8%}
+      .member-accounts th:nth-child(3),.member-accounts td:nth-child(3){width:14%}
+      .member-accounts th:nth-child(4),.member-accounts td:nth-child(4){width:22%}
+      .member-accounts th:nth-child(5),.member-accounts td:nth-child(5){width:17%}
+      .member-accounts th:nth-child(6),.member-accounts td:nth-child(6){width:17%}
+      .member-accounts th:not(:first-child),.member-accounts td:not(:first-child){text-align:right!important;vertical-align:middle;padding-right:8px;white-space:nowrap}
+      .member-accounts th{overflow-wrap:anywhere;word-break:normal}
       .note{font-size:9px;color:#60766a;margin-top:10px}.center-pocket td{text-align:center!important;font-weight:700;background:#f5fbf7}
     </style></head><body><main class="report">
       <div class="mess-meta">Mess: ${escPdf(M.name)} | ${escPdf(dateLabel)} | ${escPdf(M.type==='meal'?'Meal Mess':'Regular Mess')}</div>
