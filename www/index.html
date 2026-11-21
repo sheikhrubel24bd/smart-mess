@@ -116,8 +116,10 @@ body{margin:0;background:var(--bg);color:var(--ink);font-family:"Noto Sans Benga
 #app{max-width:480px;margin:0 auto;padding:16px 14px 112px}
 .top.app-topbar{
   display:flex;align-items:center;gap:9px;
-  min-height:62px;margin:-16px -14px 14px;
-  padding:0 14px;background:#16794f;color:#fff;
+  min-height:calc(62px + env(safe-area-inset-top,0px));
+  margin:calc(-16px - env(safe-area-inset-top,0px)) -14px 14px;
+  padding:env(safe-area-inset-top,0px) 14px 0;
+  background:#16794f;color:#fff;
   box-shadow:0 3px 10px #0c513326;
 }
 .app-brand{display:flex;align-items:center;gap:9px;margin-right:auto;font-size:19px;font-weight:800;white-space:nowrap}
@@ -213,9 +215,9 @@ body{margin:0;background:var(--bg);color:var(--ink);font-family:"Noto Sans Benga
 /* PULL TO REFRESH */
 #pullRefresh{
   position:fixed;
-  top:env(safe-area-inset-top, 8px);
+  top:calc(env(safe-area-inset-top, 0px) + 8px);
   left:50%;
-  transform:translate(-50%,-60px);
+  transform:translate(-50%,-100px);
   width:42px;
   height:42px;
   border-radius:50%;
@@ -5286,7 +5288,7 @@ render();
     const distance=e.changedTouches[0].clientY-startY;
 
     if(distance<limit){
-      indicator.style.transform='translate(-50%,-60px)';
+      indicator.style.transform='translate(-50%,-100px)';
       return;
     }
 
