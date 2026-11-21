@@ -39,9 +39,9 @@ jobs:
                   "package ",
                   1
               )
-              package_end = source.find("\\n")
-              source = source[:package_end + 1] + "\\nimport android.os.Bundle;\\nimport android.view.View;\\n" + source[package_end + 1:]
-              class_match = re.search(r"public class MainActivity extends BridgeActivity\\s*\\{", source)
+              package_end = source.find("\n")
+              source = source[:package_end + 1] + "\nimport android.os.Bundle;\nimport android.view.View;\n" + source[package_end + 1:]
+              class_match = re.search(r"public class MainActivity extends BridgeActivity\s*\{", source)
               if not class_match:
                   raise SystemExit("MainActivity class declaration not found")
               method = """
