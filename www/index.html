@@ -4560,8 +4560,9 @@ async function exportMonthlyPdf(mode='download'){
   if(!window.SmartMessPdf || !window.SmartMessFiles)return say(T('PDF সুবিধাটি লোড হয়নি। অ্যাপ আপডেট করুন।','PDF tools are unavailable. Please update the app.'));
 
   window._smartMessPdfBusy=true;
+  let pdfStage='রিপোর্ট প্রস্তুত করা';
   const frame=document.createElement('iframe');
-  frame.style.cssText='position:fixed;left:-10000px;top:0;width:794px;height:1100px;border:0;visibility:hidden';
+  frame.style.cssText='position:fixed;left:-10000px;top:0;width:794px;height:1400px;border:0;visibility:visible;opacity:1;pointer-events:none;background:#fff';
   try{
     const c=calc();
     const accounts=calcAllMembers();
@@ -4599,7 +4600,7 @@ async function exportMonthlyPdf(mode='download'){
 
     const reportHtml=`<!doctype html><html lang="bn"><head><meta charset="utf-8"><style>
       *{box-sizing:border-box}html,body{margin:0;padding:0;background:#fff;color:#183b2c;font-family:Arial,'Noto Sans Bengali',sans-serif;font-size:12px;line-height:1.45}
-      .report{width:100%;padding:0}.title{font-size:19px;margin:0 0 3px;color:#176b43}.muted{color:#61796c;font-size:10px;margin-bottom:10px}
+      .report{width:100%;padding:0}.mess-meta{font-size:10px;color:#61796c;margin:0 0 10px}.muted{color:#61796c;font-size:10px;margin-bottom:10px}
       h2{font-size:14px;margin:0 0 9px;color:#176b43;padding:0 0 6px;border-bottom:1px solid #cfe5d7}.section-card{border:1.5px solid #cfe5d7;border-radius:10px;background:#fff;padding:11px;margin:12px 0;box-shadow:0 1px 3px rgba(22,107,67,.06)}
       .summary{display:flex;gap:7px;margin:10px 0}.metric{flex:1;border:1px solid #cfe5d7;border-radius:7px;padding:8px;background:#f5fbf7}
       .metric span{display:block;font-size:10px;color:#557566}.metric b{font-size:13px;color:#176b43}
@@ -4608,8 +4609,7 @@ async function exportMonthlyPdf(mode='download'){
       th,td{padding:6px 5px;border:1px solid #d9e7de;vertical-align:top}tbody tr:nth-child(even){background:#fafdfa}
       .note{font-size:9px;color:#60766a;margin-top:10px}
     </style></head><body><main class="report">
-      <h1 class="title">${escPdf(M.name)}</h1>
-      <div class="muted">${L==='bn'?'মাসিক হিসাবের প্রতিবেদন':'Monthly Account Report'} — ${escPdf(dateLabel)} — ${escPdf(M.type==='meal'?'Meal Mess':'Regular Mess')}</div>
+      <div class="mess-meta">Mess: ${escPdf(M.name)} | ${escPdf(dateLabel)} | ${escPdf(M.type==='meal'?'Meal Mess':'Regular Mess')}</div>
       <div class="summary">
         <div class="metric"><span>মোট খরচ / Total expenses</span><b>${money(c.tot)}</b></div>
         <div class="metric"><span>মোট জমা / Deposits</span><b>${money(totalDeposit)}</b></div>
@@ -4633,22 +4633,27 @@ async function exportMonthlyPdf(mode='download'){
       <div class="note">এই রিপোর্টটি Smart-Mess অ্যাপের সংরক্ষিত তথ্য থেকে তৈরি। হিসাব যাচাইয়ের জন্য মূল অ্যাপের তথ্যের সঙ্গে মিলিয়ে নিন।</div>
     </main></body></html>`;
 
+    pdfStage='রিপোর্টের পৃষ্ঠা প্রস্তুত করা';
     document.body.appendChild(frame);
     const doc=frame.contentDocument;
     doc.open();doc.write(reportHtml);doc.close();
-    await new Promise(resolve=>setTimeout(resolve,250));
+    await new Promise(resolve=>setTimeout(resolve,700));
     if(doc.fonts?.ready)await doc.fonts.ready;
+    frame.style.height=Math.max(1400,doc.documentElement.scrollHeight+80)+'px';
+    await new Promise(resolve=>setTimeout(resolve,150));
 
     const worker=window.SmartMessPdf().set({
       margin:[31,13,27,13],
       filename:'Smart-Mess-Report-'+new Date().toISOString().slice(0,10)+'.pdf',
       image:{type:'jpeg',quality:0.98},
-      html2canvas:{scale:2,useCORS:true,backgroundColor:'#ffffff',windowWidth:794,scrollY:0},
+      html2canvas:{scale:1.5,useCORS:true,backgroundColor:'#ffffff',windowWidth:794,scrollY:0,logging:false},
       jsPDF:{unit:'mm',format:'a4',orientation:'portrait'},
       pagebreak:{mode:['css','legacy']}
     }).from(doc.querySelector('.report')).toPdf();
+    pdfStage='PDF ফাইল তৈরি করা';
     const pdf=await worker.get('pdf');
 
+    pdfStage='রিপোর্টের লোগো ও সিল যোগ করা';
     const logoImg=new Image();
     logoImg.src=new URL('logo.png',location.href).href;
     await new Promise((resolve,reject)=>{logoImg.onload=resolve;logoImg.onerror=reject;});
@@ -4678,12 +4683,12 @@ async function exportMonthlyPdf(mode='download'){
       headCanvas.width=1200;headCanvas.height=180;
       const hctx=headCanvas.getContext('2d');
       hctx.fillStyle='#176b43';hctx.textAlign='left';hctx.textBaseline='top';
-      hctx.font='bold 34px Arial, "Noto Sans Bengali", sans-serif';
-      hctx.fillText(String(M.name||''),12,5,1120);
-      hctx.font='bold 25px Arial, sans-serif';
-      hctx.fillText('SMART-MESS  |  Monthly Account Report',12,57,1120);
-      hctx.font='20px Arial, sans-serif';
-      hctx.fillText(String(dateLabel),12,105,1120);
+      hctx.font='bold 42px Arial, sans-serif';
+      hctx.fillText('SMART-MESS',12,4,1120);
+      hctx.font='bold 23px Arial, sans-serif';
+      hctx.fillText('Monthly Account Report',12,61,1120);
+      hctx.font='17px Arial, "Noto Sans Bengali", sans-serif';
+      hctx.fillText('Mess: '+String(M.name||'')+' | '+String(dateLabel),12,105,1120);
       pdf.addImage(headCanvas.toDataURL('image/png'),'PNG',31,3,160,24);
       pdf.setDrawColor(25,135,84);pdf.setLineWidth(0.5);pdf.line(13,30,pw-13,30);
       pdf.setDrawColor(183,216,197);pdf.setLineWidth(0.3);pdf.line(13,273,pw-13,273);
@@ -4692,11 +4697,13 @@ async function exportMonthlyPdf(mode='download'){
       pdf.text('Page '+page+' / '+pageCount,pw-13,289,{align:'right'});
     }
 
+    pdfStage='PDF ফাইল সংরক্ষণের জন্য প্রস্তুত করা';
     const filename='Smart-Mess-Report-'+new Date().toISOString().slice(0,10)+'.pdf';
     const dataUri=pdf.output('datauristring');
     const base64=dataUri.split(',')[1];
     const {Filesystem,Directory}=window.SmartMessFiles;
     if(window.Capacitor?.isNativePlatform?.()){
+      pdfStage=mode==='share'?'PDF শেয়ার করার জন্য প্রস্তুত করা':'ফোনে PDF সংরক্ষণ করা';
       if(mode==='share'){
         const path='Smart-Mess/'+filename;
         await Filesystem.writeFile({path,data:base64,directory:Directory.Cache,recursive:true});
@@ -4716,8 +4723,9 @@ async function exportMonthlyPdf(mode='download'){
       pdf.save(filename);
     }
   }catch(e){
-    console.error('PDF EXPORT ERROR:',e);
-    say(T('PDF তৈরি করা যায়নি। আবার চেষ্টা করুন।','Could not create PDF. Please try again.'));
+    console.error('PDF EXPORT ERROR at '+pdfStage+':',e);
+    const detail=String(e?.message||e||'Unknown error').slice(0,110);
+    say(T('PDF তৈরি করা যায়নি ('+pdfStage+')। '+detail,'PDF failed ('+pdfStage+'): '+detail));
   }finally{
     frame.remove();
     window._smartMessPdfBusy=false;
