@@ -4696,7 +4696,7 @@ async function exportMonthlyPdf(mode='download'){
       hctx.fillText('Mess: '+String(M.name||''),1385,61,510);
       hctx.font='19px Arial, sans-serif';
       hctx.fillText('Month: '+String(dateLabel),1385,111,510);
-      pdf.addImage(headCanvas.toDataURL('image/png'),'PNG',40,2,pw-53,27);
+      pdf.addImage(headCanvas.toDataURL('image/png'),'PNG',13,2,pw-26,27);
       pdf.setDrawColor(25,135,84);pdf.setLineWidth(0.5);pdf.line(13,30,pw-13,30);
       pdf.setDrawColor(183,216,197);pdf.setLineWidth(0.3);pdf.line(13,273,pw-13,273);
       pdf.addImage(sealData,'PNG',13,275,19,19);
