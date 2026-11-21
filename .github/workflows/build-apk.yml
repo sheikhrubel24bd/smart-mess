@@ -86,7 +86,7 @@ jobs:
                       if pattern.search(block):
                           block = pattern.sub(item, block)
                       else:
-                          block = block.replace("</style>", "    " + item + "\\n  </style>")
+                          block = block.replace("</style>", "    " + item + "\n  </style>")
                   return block
               changed = re.sub(r'<style[^>]*>.*?</style>', patch_style, source, flags=re.S)
               if changed != source:
