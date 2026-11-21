@@ -32,6 +32,19 @@
   pointer-events:none;
 }
 
+/* Keep the native status-bar area green on Login and Sign Up screens too. */
+body.auth-screen::before{
+  content:"";
+  position:fixed;
+  top:0;
+  left:0;
+  right:0;
+  height:max(env(safe-area-inset-top, 0px), 28px);
+  background:#16794f;
+  z-index:99998;
+  pointer-events:none;
+}
+
 .splash-stage{
   position:relative;
   width:min(78vw, 34vh, 320px);
