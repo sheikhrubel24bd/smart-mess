@@ -12,10 +12,8 @@ window.SmartMessGoogleSignIn = GoogleSignIn;
 window.SmartMessStatusBar = StatusBar;
 window.SmartMessPdf = html2pdf;
 
-// Draw the app behind the Android status bar so the green header reaches the top.
-StatusBar.setOverlaysWebView({ overlay: true }).catch(error => {
-  console.warn('Status bar overlay setup:', error);
-});
+// Keep light (white) status-bar icons on the Smart-Mess green background.
+// Native StatusBar configuration handles the background before the WebView starts.
 StatusBar.setStyle({ style: Style.Dark }).catch(error => {
   console.warn('Status bar style setup:', error);
 });
