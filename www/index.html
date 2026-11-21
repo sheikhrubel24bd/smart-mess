@@ -2005,6 +2005,7 @@ async function start(){
         code:code,
         type:S.type,
         currency:S.cur,
+        status:'active',
         adminUid:uid,
         ownerUid:uid,
         createdAt:now
@@ -2119,6 +2120,13 @@ async function search(){
     }
 
     const data=messSnap.data();
+
+    if(data.status==='deleted'){
+      S.found=false;
+      render();
+      say(T('এই মেসটি বন্ধ করা হয়েছে।','This mess has been closed.'));
+      return;
+    }
 
     S.found={
       id:messId,
