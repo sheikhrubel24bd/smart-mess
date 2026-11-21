@@ -1136,7 +1136,18 @@ function topbar(){
   <button class="btn" id="authBtn" onclick="authAction()">
     ${m?T('একাউন্ট তৈরি করুন','Create account'):T('লগইন করুন','Log in')}
   </button>
-  ${!m?`<button class="btn ghost" style="margin-top:10px" onclick="resetPassword()">${T('পাসওয়ার্ড ভুলে গেছেন?','Forgot password?')}</button>`:''}
+  ${!m?`
+    <button class="btn ghost" style="margin-top:10px" onclick="resetPassword()">${T('পাসওয়ার্ড ভুলে গেছেন?','Forgot password?')}</button>
+    <div style="display:flex;align-items:center;gap:12px;margin:18px 0;color:var(--mut)">
+      <span style="height:1px;flex:1;background:var(--bd)"></span>
+      <small>${T('অথবা','OR')}</small>
+      <span style="height:1px;flex:1;background:var(--bd)"></span>
+    </div>
+    <button class="btn ghost" id="googleAuthBtn" onclick="googleAuthAction()" style="display:flex;align-items:center;justify-content:center;gap:10px;width:100%">
+      <svg width="20" height="20" viewBox="0 0 48 48" aria-hidden="true"><path fill="#FFC107" d="M43.6 24.5c0-1.4-.1-2.8-.4-4.1H24v7.8h11a9.4 9.4 0 0 1-4.1 6.2v5.1h6.6c3.9-3.6 6.1-8.8 6.1-15z"/><path fill="#FF3D00" d="M24 44c5.5 0 10.1-1.8 13.5-4.9l-6.6-5.1c-1.8 1.2-4.1 1.9-6.9 1.9-5.3 0-9.8-3.6-11.4-8.4H5.8v5.3A20 20 0 0 0 24 44z"/><path fill="#4CAF50" d="M12.6 27.5a12 12 0 0 1 0-7v-5.3H5.8a20 20 0 0 0 0 17.6z"/><path fill="#1976D2" d="M24 12.1c3 0 5.7 1 7.8 3.1l5.8-5.8C34.1 6.1 29.5 4 24 4A20 20 0 0 0 5.8 15.2l6.8 5.3c1.6-4.8 6.1-8.4 11.4-8.4z"/></svg>
+      <span>${T('Google দিয়ে চালিয়ে যান','Continue with Google')}</span>
+    </button>
+  `:''}
   `;
 }
 
@@ -1219,6 +1230,53 @@ async function authAction(){
     }
   }
 }
+let googleSignInReady=false;
+async function googleAuthAction(){
+  const btn=document.getElementById('googleAuthBtn');
+  if(!btn || btn.disabled)return;
+  const oldText=btn.innerHTML;
+  btn.disabled=true;
+  const loadingTimer=setTimeout(()=>{
+    btn.innerHTML=T('Google-এ সংযোগ হচ্ছে...','Connecting to Google...');
+  },500);
+
+  try{
+    const GoogleSignIn=window.SmartMessGoogleSignIn;
+    if(!GoogleSignIn)throw new Error('GOOGLE_PLUGIN_UNAVAILABLE');
+
+    if(!googleSignInReady){
+      await GoogleSignIn.initialize({
+        clientId:'1009030541190-olne73hiklegje74gmq9uet78n7c1gkm.apps.googleusercontent.com'
+      });
+      googleSignInReady=true;
+    }
+
+    const result=await GoogleSignIn.signIn();
+    if(!result?.idToken)throw new Error('GOOGLE_ID_TOKEN_MISSING');
+
+    const credential=firebase.auth.GoogleAuthProvider.credential(result.idToken);
+    await auth.signInWithCredential(credential);
+    // Existing auth observer and after() handle profile creation and routing.
+  }catch(e){
+    console.error('GOOGLE AUTH ERROR:',e);
+    if(e.code==='SIGN_IN_CANCELED' || e.code==='CANCELED' || /cancel/i.test(e.message||'')){
+      say(T('Google লগইন বাতিল করা হয়েছে','Google sign-in was canceled'));
+    }else if(e.code==='auth/account-exists-with-different-credential'){
+      say(T('এই ইমেইলে আগে অন্য পদ্ধতিতে একাউন্ট করা হয়েছে। ইমেইল ও পাসওয়ার্ড দিয়ে লগইন করুন।','An account already exists with this email using another sign-in method. Please log in with email and password.'));
+    }else if(e.message==='GOOGLE_PLUGIN_UNAVAILABLE'){
+      say(T('Google লগইন প্রস্তুত নয়। অ্যাপটি আপডেট করুন।','Google sign-in is unavailable. Please update the app.'));
+    }else{
+      say(T('Google দিয়ে লগইন করা যায়নি। আবার চেষ্টা করুন।','Could not sign in with Google. Please try again.'));
+    }
+  }finally{
+    clearTimeout(loadingTimer);
+    if(btn){
+      btn.disabled=false;
+      btn.innerHTML=oldText;
+    }
+  }
+}
+
 async function resetPassword(){
   const email=document.getElementById('authEmail').value.trim();
   if(!email||!email.includes('@'))
