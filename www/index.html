@@ -1991,6 +1991,8 @@ async function start(){
   const uid=auth.currentUser.uid;
   const userRef=db.collection('users').doc(uid);
   const messRef=db.collection('messes').doc();
+  // নতুন মেসের অ্যাডমিনের প্রথম হিসাবকাল মেস তৈরির সাথেই তৈরি হবে।
+  const adminPeriodRef=messRef.collection('membershipPeriods').doc();
 
   try{
     say(T('মেস তৈরি হচ্ছে...','Creating mess...'));
@@ -2038,6 +2040,16 @@ async function start(){
         messId:messRef.id
       });
 
+      tx.set(adminPeriodRef,{
+        uid:uid,
+        name:S.user.name,
+        periodNo:1,
+        status:'active',
+        joinedAt:now,
+        leftAt:null,
+        createdAt:now
+      });
+
       tx.set(
         messRef.collection('members').doc(uid),
         {
@@ -2045,7 +2057,9 @@ async function start(){
           name:S.user.name,
           role:'admin',
           status:'active',
-          joinedAt:now
+          joinedAt:now,
+          currentPeriodId:adminPeriodRef.id,
+          periodCount:1
         }
       );
 
@@ -2068,6 +2082,23 @@ async function start(){
   memberUids:[uid],
   members:[S.user.name],
   memberPhones:[''],
+  allMembers:[{
+    uid:uid,
+    name:S.user.name,
+    status:'active',
+    joinedAt:new Date(),
+    leftAt:null,
+    currentPeriodId:adminPeriodRef.id,
+    periodCount:1
+  }],
+  periods:[{
+    id:adminPeriodRef.id,
+    uid:uid,
+    name:S.user.name,
+    periodNo:1,
+    status:'active',
+    balanceFrozen:false
+  }],
   me:0,
   meals:{},
   exp:[],
@@ -4272,16 +4303,35 @@ if(item==='other' && !(S.otherName||'').trim()){
   try{
     say('খরচ সংরক্ষণ হচ্ছে...');
 
+    // নতুন/পুরোনো মেসে কোনো সক্রিয় সদস্যের হিসাবকাল অনুপস্থিত থাকলে আগে তৈরি ও রিফ্রেশ করুন।
+    if(M.role==='admin'){
+      await ensureActiveMembershipPeriods();
+    }
+
+    const activeMembers=(M.allMembers||[]).filter(m=>
+      M.memberUids.includes(m.uid) && m.status==='active'
+    );
+    if(activeMembers.length!==M.memberUids.length ||
+       activeMembers.some(m=>!m.currentPeriodId)){
+      throw new Error('MEMBERSHIP_PERIOD_MISSING');
+    }
+
+    const payerUid=M.memberUids[payer];
+    const payerMember=activeMembers.find(m=>m.uid===payerUid);
+    if(!payerMember?.currentPeriodId){
+      throw new Error('PAYER_PERIOD_MISSING');
+    }
+
     const expense={
       item:item,
       otherName:item==='other'?(S.otherName||'').trim():null,
-      payerUid:M.memberUids[payer],
-      payerPeriodId:(M.allMembers||[]).find(m=>m.uid===M.memberUids[payer])?.currentPeriodId||null,
+      payerUid:payerUid,
+      payerPeriodId:payerMember.currentPeriodId,
       memberUidsAtTime:[...M.memberUids],
-      participantsAtTime:M.memberUids.map(memberUid=>{
-        const member=(M.allMembers||[]).find(m=>m.uid===memberUid);
-        return {uid:memberUid,periodId:member?.currentPeriodId||null};
-      }),
+      participantsAtTime:activeMembers.map(member=>({
+        uid:member.uid,
+        periodId:member.currentPeriodId
+      })),
       source:S.expSource||'pocket',
       amt:amt,
       d:Date.now(),
@@ -4308,7 +4358,11 @@ if(item==='other' && !(S.otherName||'').trim()){
 
     }catch(e){
     console.error('EXPENSE SAVE ERROR:',e);
-    say('খরচ সংরক্ষণ হয়নি: '+(e.code||e.message));
+    const expenseErrors={
+      MEMBERSHIP_PERIOD_MISSING:'সদস্যদের হিসাবকাল তৈরি হয়নি। ইন্টারনেট সংযোগ পরীক্ষা করে আবার চেষ্টা করুন।',
+      PAYER_PERIOD_MISSING:'যার নামে খরচ দিচ্ছেন তার হিসাবকাল পাওয়া যায়নি।'
+    };
+    say('খরচ সংরক্ষণ হয়নি: '+(expenseErrors[e.message]||e.code||e.message));
   }finally{
     S.savingExp=false;
   }
