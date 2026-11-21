@@ -4542,96 +4542,179 @@ function reportView(){
       'Every member settles directly with the mess, not with another member.'
     )}
   </div>
-    <div style="margin-top:18px">
-      <button class="btn" style="width:100%" onclick="exportMonthlyPdf()">
-        📄 ${T('PDF রিপোর্ট ডাউনলোড','Download PDF Report')}
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:18px">
+      <button class="btn" style="min-width:0;padding:12px 6px" onclick="exportMonthlyPdf('download')">
+        📥 ${T('PDF ডাউনলোড','Download PDF')}
+      </button>
+      <button class="secondary" style="min-width:0;padding:12px 6px" onclick="exportMonthlyPdf('share')">
+        ↗ ${T('PDF শেয়ার','Share PDF')}
       </button>
     </div>
   `;
 }
   
 
-function exportMonthlyPdf(){
-  if(!M || !auth.currentUser) return say(T('রিপোর্ট তৈরি করা যাচ্ছে না','Report is unavailable'));
+async function exportMonthlyPdf(mode='download'){
+  if(window._smartMessPdfBusy)return;
+  if(!M || !auth.currentUser)return say(T('রিপোর্ট তৈরি করা যাচ্ছে না','Report is unavailable'));
+  if(!window.SmartMessPdf || !window.SmartMessFiles)return say(T('PDF সুবিধাটি লোড হয়নি। অ্যাপ আপডেট করুন।','PDF tools are unavailable. Please update the app.'));
 
-  const c=calc();
-  const accounts=calcAllMembers();
-  const current=M.memberUids.map(uid=>{
-    const member=(M.allMembers||[]).find(x=>x.uid===uid);
-    const a=accounts.find(x=>x.periodId===member?.currentPeriodId);
-    return a||{name:M.members[M.memberUids.indexOf(uid)],meals:Number(M.meals?.[M.memberUids.indexOf(uid)])||0,deposited:0,personalExpenses:0,share:0,bal:0};
-  });
-  const former=accounts.filter(a=>a.frozen).map(a=>({...a,bal:formerSettlementSummary(a.periodId,Number(a.bal)||0).remaining}));
-  const totalDeposit=(c.deposited||[]).reduce((a,b)=>a+(Number(b)||0),0);
-  const depositSpent=(M.exp||[]).filter(e=>(e.source||'pocket')==='deposit').reduce((s,e)=>s+(Number(e.amt)||0),0);
-  const pocketSpent=(M.exp||[]).filter(e=>(e.source||'pocket')==='pocket').reduce((s,e)=>s+(Number(e.amt)||0),0);
-  const formerIn=(M.formerSettlements||[]).filter(x=>x.kind==='payment'&&x.direction==='toMess').reduce((s,x)=>s+(Number(x.amount)||0),0);
-  const formerOut=(M.formerSettlements||[]).filter(x=>x.kind==='payment'&&x.direction==='fromMess').reduce((s,x)=>s+(Number(x.amount)||0),0);
-  const cashLeft=totalDeposit-depositSpent+formerIn-formerOut;
-  const totalOwed=[...current,...former].filter(a=>a&&a.bal<0).reduce((s,a)=>s+Math.abs(a.bal),0);
-  const totalReceivable=[...current,...former].filter(a=>a&&a.bal>0).reduce((s,a)=>s+a.bal,0);
-  const escPdf=v=>String(v??'').replace(/[&<>"']/g,ch=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[ch]));
-  const money=v=>escPdf(M.cur||'')+' '+(Number(v)||0).toFixed(2);
-  const dateLabel=new Date().toLocaleDateString(L==='bn'?'bn-BD':'en-US',{year:'numeric',month:'long'});
-  const logoUrl=new URL('logo.png',location.href).href;
-  const memberRows=current.map((a,i)=>'<tr><td>'+escPdf(M.members[i])+'</td><td>'+escPdf(M.type==='meal'?(M.meals?.[i]||0):(a.meals||0))+'</td><td>'+money(a.deposited)+'</td><td>'+money(a.personalExpenses)+'</td><td>'+money(a.share)+'</td><td>'+money(a.bal)+'</td></tr>').join('');
-  const depositRows=(M.deposits||[]).slice().sort((a,b)=>{const da=a.date?.toDate?.()?.getTime?.()||0;const db=b.date?.toDate?.()?.getTime?.()||0;return da-db;}).map(d=>{const member=(M.allMembers||[]).find(x=>x.uid===d.uid);const when=d.date?.toDate?.()?.toLocaleDateString(L==='bn'?'bn-BD':'en-US')||'—';return '<tr><td>'+escPdf(when)+'</td><td>'+escPdf(member?.name||'—')+'</td><td>'+money(d.amt)+'</td></tr>';}).join('');
-  const formerRows=former.map(a=>'<tr><td>'+escPdf(a.name)+' (সাবেক সদস্য)</td><td>—</td><td>'+money(a.deposited)+'</td><td>'+money(a.personalExpenses)+'</td><td>'+money(a.share)+'</td><td>'+money(a.bal)+'</td></tr>').join('');
-  const expenseRows=(M.exp||[]).slice().sort((a,b)=>(Number(a.d)||0)-(Number(b.d)||0)).map(e=>{
-    const item=e.item==='other'?(e.otherName||'অন্যান্য খরচ'):(typeof nm==='function'?nm(e.item):e.item);
-    const payer=e.payerUid?(M.members[M.memberUids.indexOf(e.payerUid)]||((M.allMembers||[]).find(x=>x.uid===e.payerUid)?.name)||'—'):(M.members[e.payer]||'—');
-    const when=e.d?new Date(Number(e.d)).toLocaleDateString(L==='bn'?'bn-BD':'en-US'):'—';
-    return '<tr><td>'+escPdf(when)+'</td><td>'+escPdf(item)+'</td><td>'+escPdf(payer)+'</td><td>'+escPdf((e.source||'pocket')==='deposit'?'মেসের জমা':'পকেট')+'</td><td>'+money(e.amt)+'</td></tr>';
-  }).join('');
-  const stamp='<div class="seal"><b>SMART-MESS</b><strong>✓ VERIFIED</strong><span>হিসাব যাচাইকৃত</span><small>✦ ✦ ✦</small></div>';
-  const w=window.open('','_blank');
-  if(!w) return say(T('পপ-আপ অনুমতি দিন, তারপর আবার চেষ্টা করুন','Allow pop-ups and try again'));
-  w.document.open();
-  w.document.write(`<!doctype html><html lang="bn"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Smart-Mess Report</title><style>
-    *{box-sizing:border-box}body{font-family:Arial,'Noto Sans Bengali',sans-serif;color:#183b2c;margin:0;font-size:12px;line-height:1.45}
-    @page{size:A4;margin:27mm 13mm 28mm}
-    .running-head{position:fixed;top:-23mm;left:0;right:0;height:19mm;border-bottom:2px solid #198754;display:flex;align-items:center;gap:12px;background:white}
-    .running-head img{width:48px;height:48px;object-fit:contain}.brand{font-size:18px;font-weight:800;color:#167447}.sub{font-size:10px;color:#557566}
-    .running-foot{position:fixed;bottom:-24mm;left:0;right:0;height:21mm;display:flex;align-items:center;justify-content:space-between;border-top:1px solid #b7d8c5;background:white}
-    .seal{width:76px;height:76px;border:3px double #198754;border-radius:50%;display:flex;flex-direction:column;align-items:center;justify-content:center;color:#167447;line-height:1.2;transform:rotate(-8deg);background:white}
-    .seal b{font-size:9px;letter-spacing:1px}.seal strong{font-size:9px}.seal span{font-size:8px}.seal small{font-size:8px}
-    .page-number{font-size:9px;color:#567;align-self:flex-end;padding-bottom:3px}.page-number:after{content:counter(page)}
-    h1{font-size:19px;margin:0 0 3px;color:#176b43}h2{font-size:14px;margin:16px 0 7px;color:#176b43;border-bottom:1px solid #cfe5d7;padding-bottom:4px}
-    .muted{color:#61796c;font-size:10px;margin-bottom:10px}.summary{display:grid;grid-template-columns:repeat(3,1fr);gap:7px;margin:10px 0}
-    .metric{border:1px solid #cfe5d7;border-radius:7px;padding:8px;background:#f5fbf7}.metric span{display:block;font-size:10px;color:#557566}.metric b{font-size:13px;color:#176b43}
-    table{width:100%;border-collapse:collapse;font-size:10px;page-break-inside:auto}thead{display:table-header-group}tr{page-break-inside:avoid;page-break-after:auto}th{background:#e8f5ed;color:#176b43;text-align:left}
-    th,td{padding:6px 5px;border:1px solid #d9e7de;vertical-align:top}tbody tr:nth-child(even){background:#fafdfa}
-    .note{font-size:9px;color:#60766a;margin-top:10px}.positive{color:#16804b;font-weight:700}.negative{color:#c33;font-weight:700}
-    @media screen{body{max-width:800px;margin:20px auto;padding:20px}.running-head,.running-foot{position:static}.running-foot{margin-top:25px}}
-  </style></head><body>
-    <header class="running-head"><img src="${logoUrl}"><div><div class="brand">SMART-MESS</div><div class="sub">${escPdf(M.name)} · ${escPdf(dateLabel)}</div></div></header>
-    <footer class="running-foot">${stamp}<div class="page-number">Page </div></footer>
-    <h1>${L==='bn'?'মাসিক হিসাব':'Monthly Report'}</h1>
-    <div class="muted">${escPdf(M.name)} · ${escPdf(dateLabel)} · ${escPdf(M.type==='meal'?'Meal Mess':'Regular Mess')}</div>
-    <div class="summary">
-      <div class="metric"><span>মোট খরচ / Total expenses</span><b>${money(c.tot)}</b></div>
-      <div class="metric"><span>মোট জমা / Deposits</span><b>${money(totalDeposit)}</b></div>
-      <div class="metric"><span>নগদ অবশিষ্ট / Cash balance</span><b>${money(cashLeft)}</b></div>
-    </div>
-    <h2>মেসের আর্থিক সারসংক্ষেপ / Financial Summary</h2>
-    <table><tbody>
-      <tr><td>বাজার ও অন্যান্য খরচ / Market & other expenses</td><td>${money(c.tot)}</td></tr>
-      <tr><td>জমা থেকে খরচ / Expenses from deposits</td><td>${money(depositSpent)}</td></tr>
-      <tr><td>পকেট থেকে খরচ / Pocket expenses</td><td>${money(pocketSpent)}</td></tr>
-      <tr><td>মেসের নগদ অবশিষ্ট / Cash remaining</td><td><b>${money(cashLeft)}</b></td></tr>
-      <tr><td>সদস্যদের কাছ থেকে আদায় / To collect</td><td>${money(totalOwed)}</td></tr>
-      <tr><td>সদস্যদের মোট পাওনা / Member credits</td><td>${money(totalReceivable)}</td></tr>
-    </tbody></table>
-    <h2>সদস্যভিত্তিক হিসাব / Member Accounts</h2>
-    <table><thead><tr><th>সদস্য / Member</th><th>মিল / Meals</th><th>জমা / Deposit</th><th>পকেট খরচ / Pocket</th><th>খরচের ভাগ / Share</th><th>ব্যালেন্স / Balance</th></tr></thead><tbody>${memberRows}${formerRows}</tbody></table>
-    <h2>ডিপোজিটের বিস্তারিত / Deposit Details</h2>
-    <table><thead><tr><th>তারিখ / Date</th><th>সদস্য / Member</th><th>জমা / Deposit</th></tr></thead><tbody>${depositRows||'<tr><td colspan="3">কোনো জমা নেই / No deposits</td></tr>'}</tbody></table>
-    <h2>খরচের বিস্তারিত / Expense Details</h2>
-    <table><thead><tr><th>তারিখ / Date</th><th>বিবরণ / Description</th><th>প্রদানকারী / Paid by</th><th>উৎস / Source</th><th>পরিমাণ / Amount</th></tr></thead><tbody>${expenseRows||'<tr><td colspan="5">কোনো খরচ নেই / No expenses</td></tr>'}</tbody></table>
-    <div class="note">এই রিপোর্টটি Smart-Mess অ্যাপের সংরক্ষিত তথ্য থেকে তৈরি। হিসাব যাচাইয়ের জন্য মূল অ্যাপের তথ্যের সঙ্গে মিলিয়ে নিন।</div>
-    <script>window.addEventListener('load',()=>{const img=document.querySelector('.running-head img');const go=()=>setTimeout(()=>window.print(),400);if(img.complete)go();else{img.onload=go;img.onerror=go;setTimeout(go,1800)}});<\\/script>
-  </body></html>`);
-  w.document.close();
+  window._smartMessPdfBusy=true;
+  const frame=document.createElement('iframe');
+  frame.style.cssText='position:fixed;left:-10000px;top:0;width:794px;height:1100px;border:0;visibility:hidden';
+  try{
+    const c=calc();
+    const accounts=calcAllMembers();
+    const current=M.memberUids.map((uid,i)=>{
+      const member=(M.allMembers||[]).find(x=>x.uid===uid);
+      return accounts.find(x=>x.periodId===member?.currentPeriodId)||{
+        name:M.members[i],meals:Number(M.meals?.[i])||0,deposited:0,personalExpenses:0,share:0,bal:0
+      };
+    });
+    const former=accounts.filter(a=>a.frozen).map(a=>({...a,bal:formerSettlementSummary(a.periodId,Number(a.bal)||0).remaining}));
+    const totalDeposit=(c.deposited||[]).reduce((a,b)=>a+(Number(b)||0),0);
+    const depositSpent=(M.exp||[]).filter(e=>(e.source||'pocket')==='deposit').reduce((s,e)=>s+(Number(e.amt)||0),0);
+    const pocketSpent=(M.exp||[]).filter(e=>(e.source||'pocket')==='pocket').reduce((s,e)=>s+(Number(e.amt)||0),0);
+    const formerIn=(M.formerSettlements||[]).filter(x=>x.kind==='payment'&&x.direction==='toMess').reduce((s,x)=>s+(Number(x.amount)||0),0);
+    const formerOut=(M.formerSettlements||[]).filter(x=>x.kind==='payment'&&x.direction==='fromMess').reduce((s,x)=>s+(Number(x.amount)||0),0);
+    const cashLeft=totalDeposit-depositSpent+formerIn-formerOut;
+    const totalOwed=[...current,...former].filter(a=>a&&a.bal<0).reduce((s,a)=>s+Math.abs(a.bal),0);
+    const totalReceivable=[...current,...former].filter(a=>a&&a.bal>0).reduce((s,a)=>s+a.bal,0);
+    const escPdf=v=>String(v??'').replace(/[&<>"']/g,ch=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[ch]));
+    const money=v=>escPdf(M.cur||'')+' '+(Number(v)||0).toFixed(2);
+    const dateLabel=new Date().toLocaleDateString(L==='bn'?'bn-BD':'en-US',{year:'numeric',month:'long'});
+    const memberRows=current.map((a,i)=>'<tr><td>'+escPdf(M.members[i])+'</td><td>'+escPdf(M.type==='meal'?(M.meals?.[i]||0):(a.meals||0))+'</td><td>'+money(a.deposited)+'</td><td>'+money(a.personalExpenses)+'</td><td>'+money(a.share)+'</td><td>'+money(a.bal)+'</td></tr>').join('');
+    const formerRows=former.map(a=>'<tr><td>'+escPdf(a.name)+' (সাবেক সদস্য)</td><td>—</td><td>'+money(a.deposited)+'</td><td>'+money(a.personalExpenses)+'</td><td>'+money(a.share)+'</td><td>'+money(a.bal)+'</td></tr>').join('');
+    const depositRows=(M.deposits||[]).slice().sort((a,b)=>(a.date?.toDate?.()?.getTime?.()||0)-(b.date?.toDate?.()?.getTime?.()||0)).map(d=>{
+      const member=(M.allMembers||[]).find(x=>x.uid===d.uid);
+      const when=d.date?.toDate?.()?.toLocaleDateString(L==='bn'?'bn-BD':'en-US')||'—';
+      return '<tr><td>'+escPdf(when)+'</td><td>'+escPdf(member?.name||'—')+'</td><td>'+money(d.amt)+'</td></tr>';
+    }).join('');
+    const expenseRows=(M.exp||[]).slice().sort((a,b)=>(Number(a.d)||0)-(Number(b.d)||0)).map(e=>{
+      const item=e.item==='other'?(e.otherName||'অন্যান্য খরচ'):(typeof nm==='function'?nm(e.item):e.item);
+      const payer=e.payerUid?(M.members[M.memberUids.indexOf(e.payerUid)]||((M.allMembers||[]).find(x=>x.uid===e.payerUid)?.name)||'—'):(M.members[e.payer]||'—');
+      const when=e.d?new Date(Number(e.d)).toLocaleDateString(L==='bn'?'bn-BD':'en-US'):'—';
+      return '<tr><td>'+escPdf(when)+'</td><td>'+escPdf(item)+'</td><td>'+escPdf(payer)+'</td><td>'+escPdf((e.source||'pocket')==='deposit'?'মেসের জমা':'পকেট')+'</td><td>'+money(e.amt)+'</td></tr>';
+    }).join('');
+
+    const reportHtml=`<!doctype html><html lang="bn"><head><meta charset="utf-8"><style>
+      *{box-sizing:border-box}html,body{margin:0;padding:0;background:#fff;color:#183b2c;font-family:Arial,'Noto Sans Bengali',sans-serif;font-size:12px;line-height:1.45}
+      .report{width:100%;padding:0}.title{font-size:19px;margin:0 0 3px;color:#176b43}.muted{color:#61796c;font-size:10px;margin-bottom:10px}
+      h2{font-size:14px;margin:15px 0 7px;color:#176b43;border-bottom:1px solid #cfe5d7;padding-bottom:4px}
+      .summary{display:flex;gap:7px;margin:10px 0}.metric{flex:1;border:1px solid #cfe5d7;border-radius:7px;padding:8px;background:#f5fbf7}
+      .metric span{display:block;font-size:10px;color:#557566}.metric b{font-size:13px;color:#176b43}
+      table{width:100%;border-collapse:collapse;font-size:10px;page-break-inside:auto}thead{display:table-header-group}
+      tr{page-break-inside:avoid;break-inside:avoid}th{background:#e8f5ed;color:#176b43;text-align:left}
+      th,td{padding:6px 5px;border:1px solid #d9e7de;vertical-align:top}tbody tr:nth-child(even){background:#fafdfa}
+      .note{font-size:9px;color:#60766a;margin-top:10px}
+    </style></head><body><main class="report">
+      <h1 class="title">${L==='bn'?'মাসিক হিসাব':'Monthly Report'}</h1>
+      <div class="muted">${escPdf(M.name)} · ${escPdf(dateLabel)} · ${escPdf(M.type==='meal'?'Meal Mess':'Regular Mess')}</div>
+      <div class="summary">
+        <div class="metric"><span>মোট খরচ / Total expenses</span><b>${money(c.tot)}</b></div>
+        <div class="metric"><span>মোট জমা / Deposits</span><b>${money(totalDeposit)}</b></div>
+        <div class="metric"><span>নগদ অবশিষ্ট / Cash balance</span><b>${money(cashLeft)}</b></div>
+      </div>
+      <h2>মেসের আর্থিক সারসংক্ষেপ / Financial Summary</h2>
+      <table><tbody>
+        <tr><td>বাজার ও অন্যান্য খরচ / Market & other expenses</td><td>${money(c.tot)}</td></tr>
+        <tr><td>জমা থেকে খরচ / Expenses from deposits</td><td>${money(depositSpent)}</td></tr>
+        <tr><td>পকেট থেকে খরচ / Pocket expenses</td><td>${money(pocketSpent)}</td></tr>
+        <tr><td>মেসের নগদ অবশিষ্ট / Cash remaining</td><td><b>${money(cashLeft)}</b></td></tr>
+        <tr><td>সদস্যদের কাছ থেকে আদায় / To collect</td><td>${money(totalOwed)}</td></tr>
+        <tr><td>সদস্যদের মোট পাওনা / Member credits</td><td>${money(totalReceivable)}</td></tr>
+      </tbody></table>
+      <h2>সদস্যভিত্তিক হিসাব / Member Accounts</h2>
+      <table><thead><tr><th>সদস্য / Member</th><th>মিল / Meals</th><th>জমা / Deposit</th><th>পকেট খরচ / Pocket</th><th>খরচের ভাগ / Share</th><th>ব্যালেন্স / Balance</th></tr></thead><tbody>${memberRows}${formerRows}</tbody></table>
+      <h2>ডিপোজিটের বিস্তারিত / Deposit Details</h2>
+      <table><thead><tr><th>তারিখ / Date</th><th>সদস্য / Member</th><th>জমা / Deposit</th></tr></thead><tbody>${depositRows||'<tr><td colspan="3">কোনো জমা নেই / No deposits</td></tr>'}</tbody></table>
+      <h2>খরচের বিস্তারিত / Expense Details</h2>
+      <table><thead><tr><th>তারিখ / Date</th><th>বিবরণ / Description</th><th>প্রদানকারী / Paid by</th><th>উৎস / Source</th><th>পরিমাণ / Amount</th></tr></thead><tbody>${expenseRows||'<tr><td colspan="5">কোনো খরচ নেই / No expenses</td></tr>'}</tbody></table>
+      <div class="note">এই রিপোর্টটি Smart-Mess অ্যাপের সংরক্ষিত তথ্য থেকে তৈরি। হিসাব যাচাইয়ের জন্য মূল অ্যাপের তথ্যের সঙ্গে মিলিয়ে নিন।</div>
+    </main></body></html>`;
+
+    document.body.appendChild(frame);
+    const doc=frame.contentDocument;
+    doc.open();doc.write(reportHtml);doc.close();
+    await new Promise(resolve=>setTimeout(resolve,250));
+    if(doc.fonts?.ready)await doc.fonts.ready;
+
+    const worker=window.SmartMessPdf().set({
+      margin:[26,13,27,13],
+      filename:'Smart-Mess-Report-'+new Date().toISOString().slice(0,10)+'.pdf',
+      image:{type:'jpeg',quality:0.98},
+      html2canvas:{scale:2,useCORS:true,backgroundColor:'#ffffff',windowWidth:794,scrollY:0},
+      jsPDF:{unit:'mm',format:'a4',orientation:'portrait'},
+      pagebreak:{mode:['css','legacy']}
+    }).from(doc.querySelector('.report')).toPdf();
+    const pdf=await worker.get('pdf');
+
+    const logoImg=new Image();
+    logoImg.src=new URL('logo.png',location.href).href;
+    await new Promise((resolve,reject)=>{logoImg.onload=resolve;logoImg.onerror=reject;});
+    const logoCanvas=document.createElement('canvas');
+    logoCanvas.width=logoImg.naturalWidth||256;logoCanvas.height=logoImg.naturalHeight||256;
+    logoCanvas.getContext('2d').drawImage(logoImg,0,0,logoCanvas.width,logoCanvas.height);
+    const logoData=logoCanvas.toDataURL('image/png');
+
+    const sealCanvas=document.createElement('canvas');
+    sealCanvas.width=180;sealCanvas.height=180;
+    const ctx=sealCanvas.getContext('2d');
+    ctx.strokeStyle='#198754';ctx.lineWidth=5;ctx.beginPath();ctx.arc(90,90,82,0,Math.PI*2);ctx.stroke();
+    ctx.lineWidth=2;ctx.beginPath();ctx.arc(90,90,73,0,Math.PI*2);ctx.stroke();
+    ctx.fillStyle='#167447';ctx.textAlign='center';
+    ctx.font='bold 15px Arial';ctx.fillText('SMART-MESS',90,67);
+    ctx.font='bold 19px Arial';ctx.fillText('✓ VERIFIED',90,94);
+    ctx.font='bold 14px Arial, Noto Sans Bengali';ctx.fillText('হিসাব যাচাইকৃত',90,119);
+    ctx.font='14px Arial';ctx.fillText('✦  ✦  ✦',90,143);
+    const sealData=sealCanvas.toDataURL('image/png');
+
+    const pageCount=pdf.internal.getNumberOfPages();
+    for(let page=1;page<=pageCount;page++){
+      pdf.setPage(page);
+      const pw=pdf.internal.pageSize.getWidth(),ph=pdf.internal.pageSize.getHeight();
+      pdf.addImage(logoData,'PNG',13,4,13,13);
+      pdf.setTextColor(22,116,71);pdf.setFont('helvetica','bold');pdf.setFontSize(13);
+      pdf.text('SMART-MESS',29,10);
+      pdf.setFont('helvetica','normal');pdf.setFontSize(8);
+      pdf.text(String(M.name||'')+' · '+dateLabel,29,15);
+      pdf.setDrawColor(25,135,84);pdf.setLineWidth(0.5);pdf.line(13,21,pw-13,21);
+      pdf.setDrawColor(183,216,197);pdf.setLineWidth(0.3);pdf.line(13,273,pw-13,273);
+      pdf.addImage(sealData,'PNG',13,275,19,19);
+      pdf.setTextColor(86,112,99);pdf.setFontSize(8);
+      pdf.text('Page '+page+' / '+pageCount,pw-13,289,{align:'right'});
+    }
+
+    const filename='Smart-Mess-Report-'+new Date().toISOString().slice(0,10)+'.pdf';
+    const dataUri=pdf.output('datauristring');
+    const base64=dataUri.split(',')[1];
+    const {Filesystem,Directory}=window.SmartMessFiles;
+    if(window.Capacitor?.isNativePlatform?.()){
+      if(mode==='share'){
+        const path='Smart-Mess/'+filename;
+        await Filesystem.writeFile({path,data:base64,directory:Directory.Cache,recursive:true});
+        const file=await Filesystem.getUri({path,directory:Directory.Cache});
+        await window.SmartMessShare.share({title:'Smart-Mess Report',text:'Monthly mess report',files:[file.uri],dialogTitle:T('PDF রিপোর্ট শেয়ার করুন','Share PDF Report')});
+        say(T('PDF শেয়ার করার জন্য প্রস্তুত','PDF is ready to share'));
+      }else{
+        await Filesystem.writeFile({path:filename,data:base64,directory:Directory.Documents,recursive:true});
+        say(T('PDF রিপোর্ট ফোনের Documents ফোল্ডারে সংরক্ষণ হয়েছে','PDF report saved in the app Documents folder'));
+      }
+    }else if(mode==='share'&&navigator.canShare&&navigator.share){
+      const blob=pdf.output('blob');
+      const file=new File([blob],filename,{type:'application/pdf'});
+      if(navigator.canShare({files:[file]}))await navigator.share({files:[file],title:'Smart-Mess Report'});
+      else pdf.save(filename);
+    }else{
+      pdf.save(filename);
+    }
+  }catch(e){
+    console.error('PDF EXPORT ERROR:',e);
+    say(T('PDF তৈরি করা যায়নি। আবার চেষ্টা করুন।','Could not create PDF. Please try again.'));
+  }finally{
+    frame.remove();
+    window._smartMessPdfBusy=false;
+  }
 }
 
 function taskView(){
