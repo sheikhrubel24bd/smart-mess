@@ -3366,7 +3366,73 @@ async function deleteDeposit(id){
   `;
 }
   
-    function settingsView(){
+    async function deleteMess(){
+  if(!M || M.role!=='admin' || !auth.currentUser)
+    return say(T('শুধু Admin মেস ডিলিট করতে পারবেন।','Only the admin can delete this mess.'));
+
+  if(S.deletingMess)return;
+
+  const messName=M.name||'';
+  const messCode=String(M.code||'').toUpperCase();
+
+  if(!confirm(T(
+    'আপনি কি "'+messName+'" মেসটি বন্ধ করতে চান?\\n\\nসব সদস্যের অ্যাকাউন্ট এই মেস থেকে বিচ্ছিন্ন হবে। পুরোনো হিসাব ও লেনদেন সংরক্ষিত থাকবে।',
+    'Close "'+messName+'"?\\n\\nAll members will be disconnected from this mess. Previous accounts and transactions will be preserved.'
+  ))) return;
+
+  const enteredCode=prompt(T(
+    'নিশ্চিত করতে মেসের কোড লিখুন: '+messCode,
+    'Enter the mess code to confirm: '+messCode
+  ));
+
+  if(enteredCode===null)return;
+  if(enteredCode.trim().toUpperCase()!==messCode)
+    return say(T('মেসের কোড সঠিক নয়। ডিলিট করা হয়নি।','Incorrect mess code. Nothing was deleted.'));
+
+  S.deletingMess=true;
+
+  try{
+    const uid=auth.currentUser.uid;
+    const messRef=db.collection('messes').doc(M.id);
+    const userRef=db.collection('users').doc(uid);
+
+    // পুরোনো হিসাব বা subcollection কোনো কিছুই delete করা হবে না।
+    stopMessListeners();
+
+    await messRef.update({
+      status:'deleted',
+      deletedAt:firebase.firestore.FieldValue.serverTimestamp(),
+      deletedBy:uid
+    });
+
+    // Admin-ও নিজের account থেকে এই mess বিচ্ছিন্ন করবেন।
+    await userRef.update({messId:null});
+
+    M=null;
+    S.pendingJoin=null;
+    S.screen='welcome';
+    S.tab='home';
+    S.deletingMess=false;
+    render();
+
+    say(T(
+      'মেসটি বন্ধ করা হয়েছে। পুরোনো হিসাব সংরক্ষিত আছে।',
+      'The mess has been closed. Previous records are preserved.'
+    ));
+  }catch(e){
+    console.error('DELETE MESS ERROR:',e);
+    S.deletingMess=false;
+    try{await after();}catch(reloadError){
+      console.error('DELETE MESS RECOVERY ERROR:',reloadError);
+    }
+    say(T(
+      'মেস বন্ধ করা যায়নি: '+(e.message||e.code||'Unknown error'),
+      'Could not close the mess: '+(e.message||e.code||'Unknown error')
+    ));
+  }
+}
+
+function settingsView(){
   const row=(iconFile,label,action)=>`
     <button onclick="${action}" style="
       width:100%;
@@ -3400,6 +3466,7 @@ async function deleteDeposit(id){
       ${row('06_monthly_report.png',T('মাসিক রিপোর্ট','Monthly Report'),"go('rep')")}
       ${row('07_previous_accounts.png',T('আগের হিসাব','History'),'openHistory()')}
       ${M.role=='admin'?row('08_mess_reset.png',T('মেস রিসেট','Reset Mess'),'resetMess()'):''}
+      ${M.role=='admin'?row('11_leave_mess.png',T('মেস ডিলিট করুন','Delete Mess'),'deleteMess()'):''}
 
       ${row('09_about_developer.png',T('ডেভেলপার পরিচিতি','About Developer'),"go('about')")}
 
