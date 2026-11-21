@@ -111,8 +111,8 @@ box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:en
 @media (prefers-color-scheme:dark){:root:not([data-theme="light"]){--bg:#121a16;--card:#1b2620;--ink:#e8f0ea;--mut:#92a89b;--pri:#3dbd85;--pri2:#1f3a2e;--on:#0b1a12;--bad:#ff7b7b;--bad2:#3b2222;--bd:#2b3a32}}
 :root[data-theme="dark"]{--bg:#121a16;--card:#1b2620;--ink:#e8f0ea;--mut:#92a89b;--pri:#3dbd85;--pri2:#1f3a2e;--on:#0b1a12;--bad:#ff7b7b;--bad2:#3b2222;--bd:#2b3a32}
 *{box-sizing:border-box}
-html{scroll-padding-top:env(safe-area-inset-top,0px)}
-body{margin:0;background:var(--bg);color:var(--ink);font-family:"Noto Sans Bengali","Hind Siliguri","Kalpurush",system-ui,sans-serif;font-size:16px;line-height:1.5;-webkit-tap-highlight-color:transparent}
+html{scroll-padding-top:env(safe-area-inset-top,0px);overscroll-behavior-y:none}
+body{margin:0;background:var(--bg);color:var(--ink);font-family:"Noto Sans Bengali","Hind Siliguri","Kalpurush",system-ui,sans-serif;font-size:16px;line-height:1.5;-webkit-tap-highlight-color:transparent;overscroll-behavior-y:none}
 #app{max-width:480px;margin:0 auto;padding:16px 14px 112px}
 .top.app-topbar{
   display:flex;align-items:center;gap:9px;
