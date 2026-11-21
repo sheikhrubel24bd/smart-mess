@@ -827,6 +827,34 @@ body.app-screen #app .app-content{
   body.app-screen #app .app-content{padding:28px 34px 132px}
   body.app-screen #app .top.app-topbar{padding:env(safe-area-inset-top,0px) 34px 0}
 }
+
+/* Compact professional dropdowns for member and former-member actions */
+.member-action-menu,
+.former-action-menu{
+  display:flex;
+  flex-direction:column;
+  align-items:flex-end;
+  gap:5px;
+  width:max-content;
+  max-width:100%;
+  margin-left:auto;
+  padding:7px;
+  border:1px solid var(--line);
+  border-radius:10px;
+  background:var(--card,#fff);
+  box-shadow:0 4px 14px rgba(0,0,0,.10);
+}
+.member-action-menu .btn,
+.former-action-menu .btn{
+  width:auto;
+  min-height:32px;
+  margin:0;
+  padding:6px 10px;
+  border-radius:7px;
+  font-size:12px;
+  line-height:1.25;
+  white-space:nowrap;
+}
 </style>
 </head>
 <body>
@@ -3599,7 +3627,7 @@ function formerMembersView(){
           <div style="padding:13px 0;border-bottom:1px solid var(--line)">
             <div style="display:flex;align-items:center;justify-content:space-between;gap:8px"><b>${i+1}. ${esc(p.name||'নাম নেই')}</b>
             ${M.role==='admin'?`<button type="button" aria-label="Former member actions" style="appearance:none;background:transparent;border:0;box-shadow:none;padding:0 4px;color:var(--muted);font-size:24px;line-height:1;cursor:pointer;flex-shrink:0" onclick="S.formerMenuPeriod=S.formerMenuPeriod==='${p.id}'?null:'${p.id}';render()">⋮</button>`:''}</div>
-            ${M.role==='admin'&&S.formerMenuPeriod===p.id?`<div style="display:flex;gap:7px;margin:8px 0;flex-wrap:wrap"><button class="btn" onclick="S.formerMenuPeriod=null;addFormerPayment('${p.id}')">${T('পরিশোধের পরিমাণ যোগ করুন','Add payment')}</button><button class="btn secondary" onclick="S.formerMenuPeriod=null;completeFormerPayment('${p.id}')">${T('পরিশোধ সম্পন্ন','Mark paid')}</button></div>`:''}
+            ${M.role==='admin'&&S.formerMenuPeriod===p.id?`<div class="former-action-menu" style="display:flex;gap:6px;margin:6px 0 8px;flex-wrap:wrap"><button class="btn" onclick="S.formerMenuPeriod=null;addFormerPayment('${p.id}')">${T('পরিশোধের পরিমাণ যোগ করুন','Add payment')}</button><button class="btn secondary" onclick="S.formerMenuPeriod=null;completeFormerPayment('${p.id}')">${T('পরিশোধ সম্পন্ন','Mark paid')}</button></div>`:''}
             <div class="mut" style="margin-top:6px">${T('যোগদান','Joined')}: ${p.joinedAt?.toDate?p.joinedAt.toDate().toLocaleDateString():'—'}</div>
             <div class="mut" style="margin-top:4px">${T('ছাড়ার তারিখ','Left')}: ${p.leftAt?.toDate?p.leftAt.toDate().toLocaleDateString():'—'}</div>
             <div style="margin-top:8px">${T('মোট জমা','Deposits')}: <b>${deposited.toFixed(2)} ${M.cur}</b></div>
@@ -3836,16 +3864,14 @@ M.periods=periodsSnap.docs.map(d=>({id:d.id,...d.data()}));
 
             ${canManage?`
               <div id="member-menu-${i}" class="member-action-menu"
-                style="display:none;margin-top:8px;text-align:right">
+                style="display:none;margin-top:6px;text-align:right">
 
                 <button class="btn"
-                  style="margin:3px"
                   onclick="removeMember(${i})">
                   ${T('মেস থেকে বিদায়','Remove from mess')}
                 </button>
 
                 <button class="btn"
-                  style="margin:3px"
                   onclick="transferAdmin(${i})">
                   ${T('এডমিনশিপ হস্তান্তর','Transfer adminship')}
                 </button>
