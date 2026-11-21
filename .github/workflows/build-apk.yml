@@ -105,6 +105,14 @@ jobs:
         run: npx @capacitor/assets generate --android --iconBackgroundColor '#f0fff7'
       - name: Add camera permission
         run: sed -i 's#<application#<uses-permission android:name="android.permission.CAMERA" />\n    <application#' android/app/src/main/AndroidManifest.xml
+      - name: Generate Delete Mess PNG icon
+        run: |
+          python3 -m pip install --quiet cairosvg
+          python3 - <<'PY'
+          import cairosvg
+          cairosvg.svg2png(url='www/icons/delete-mess.svg', write_to='www/icons/delete-mess.png', output_width=128, output_height=128)
+          print('Generated www/icons/delete-mess.png')
+          PY
       - name: Sync web files
         run: npx cap sync android
       - name: Restore or create stable Android debug keystore
