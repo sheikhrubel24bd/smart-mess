@@ -5502,11 +5502,19 @@ render();
 
 
 function hideSplash(){
+  clearTimeout(window._smartMessSplashFallback);
   setTimeout(()=>{
     const splash=document.getElementById('splash');
     if(splash) splash.remove();
   },1200);
 }
+
+// Firebase Auth বা Firestore ধীর/নেটওয়ার্কে আটকে গেলেও স্প্ল্যাশ অনির্দিষ্টকাল থাকবে না।
+window._smartMessSplashFallback=setTimeout(()=>{
+  console.warn('SPLASH FALLBACK: startup is taking longer than expected.');
+  const splash=document.getElementById('splash');
+  if(splash) splash.remove();
+},15000);
 
 auth.onAuthStateChanged(async user=>{
   
