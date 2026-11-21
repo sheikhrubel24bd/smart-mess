@@ -3440,7 +3440,7 @@ function formerMembersView(){
             <div class="mut" style="margin-top:6px">${T('যোগদান','Joined')}: ${p.joinedAt?.toDate?p.joinedAt.toDate().toLocaleDateString():'—'}</div>
             <div class="mut" style="margin-top:4px">${T('ছাড়ার তারিখ','Left')}: ${p.leftAt?.toDate?p.leftAt.toDate().toLocaleDateString():'—'}</div>
             <div style="margin-top:8px">${T('মোট জমা','Deposits')}: <b>${deposited.toFixed(2)} ${M.cur}</b></div>
-            <div style="margin-top:4px">${T('পকেট খরচ','Pocket expenses')}: <b>${personal.toFixed(2)} ${M.cur}</b></div>
+            <div style="margin-top:4px">${T('পকেট থেকে মেসের খরচ','Mess expenses paid from pocket')}: <b>${personal.toFixed(2)} ${M.cur}</b></div>
             <div style="margin-top:4px">${T('খরচের ভাগ','Expense share')}: <b>${share.toFixed(2)} ${M.cur}</b></div>
             <div style="margin-top:8px">${T('মূল চূড়ান্ত ব্যালেন্স','Original final balance')}: <b>${Math.abs(balance).toFixed(2)} ${M.cur}</b></div>
             <div style="margin-top:5px">${T('পরিশোধ হয়েছে','Paid')}: <b>${st.paid.toFixed(2)} ${M.cur}</b></div>
@@ -4546,7 +4546,7 @@ function reportView(){
       <button class="btn" style="min-width:0;padding:12px 6px" onclick="exportMonthlyPdf('download')">
         📥 ${T('PDF ডাউনলোড','Download PDF')}
       </button>
-      <button class="secondary" style="min-width:0;padding:12px 6px" onclick="exportMonthlyPdf('share')">
+      <button class="secondary" style="min-width:0;padding:12px 6px;background:#198754;color:#fff;border:1px solid #198754;border-radius:13px;font-weight:700" onclick="exportMonthlyPdf('share')">
         ↗ ${T('PDF শেয়ার','Share PDF')}
       </button>
     </div>
@@ -4609,7 +4609,7 @@ async function exportMonthlyPdf(mode='download'){
       .note{font-size:9px;color:#60766a;margin-top:10px}
     </style></head><body><main class="report">
       <h1 class="title">${L==='bn'?'মাসিক হিসাব':'Monthly Report'}</h1>
-      <div class="muted">${escPdf(M.name)} · ${escPdf(dateLabel)} · ${escPdf(M.type==='meal'?'Meal Mess':'Regular Mess')}</div>
+      <div class="muted">${escPdf(M.name)}<br>Monthly Account Report — ${escPdf(dateLabel)} — ${escPdf(M.type==='meal'?'Meal Mess':'Regular Mess')}</div>
       <div class="summary">
         <div class="metric"><span>মোট খরচ / Total expenses</span><b>${money(c.tot)}</b></div>
         <div class="metric"><span>মোট জমা / Deposits</span><b>${money(totalDeposit)}</b></div>
@@ -4619,13 +4619,13 @@ async function exportMonthlyPdf(mode='download'){
       <table><tbody>
         <tr><td>বাজার ও অন্যান্য খরচ / Market & other expenses</td><td>${money(c.tot)}</td></tr>
         <tr><td>জমা থেকে খরচ / Expenses from deposits</td><td>${money(depositSpent)}</td></tr>
-        <tr><td>পকেট থেকে খরচ / Pocket expenses</td><td>${money(pocketSpent)}</td></tr>
+        <tr><td>পকেট থেকে মেসের খরচ / Mess expenses paid from pocket</td><td>${money(pocketSpent)}</td></tr>
         <tr><td>মেসের নগদ অবশিষ্ট / Cash remaining</td><td><b>${money(cashLeft)}</b></td></tr>
         <tr><td>সদস্যদের কাছ থেকে আদায় / To collect</td><td>${money(totalOwed)}</td></tr>
         <tr><td>সদস্যদের মোট পাওনা / Member credits</td><td>${money(totalReceivable)}</td></tr>
       </tbody></table>
       <h2>সদস্যভিত্তিক হিসাব / Member Accounts</h2>
-      <table><thead><tr><th>সদস্য / Member</th><th>মিল / Meals</th><th>জমা / Deposit</th><th>পকেট খরচ / Pocket</th><th>খরচের ভাগ / Share</th><th>ব্যালেন্স / Balance</th></tr></thead><tbody>${memberRows}${formerRows}</tbody></table>
+      <table><thead><tr><th>সদস্য / Member</th><th>মিল / Meals</th><th>জমা / Deposit</th><th>পকেট থেকে মেসের খরচ / Paid from pocket</th><th>খরচের ভাগ / Share</th><th>ব্যালেন্স / Balance</th></tr></thead><tbody>${memberRows}${formerRows}</tbody></table>
       <h2>ডিপোজিটের বিস্তারিত / Deposit Details</h2>
       <table><thead><tr><th>তারিখ / Date</th><th>সদস্য / Member</th><th>জমা / Deposit</th></tr></thead><tbody>${depositRows||'<tr><td colspan="3">কোনো জমা নেই / No deposits</td></tr>'}</tbody></table>
       <h2>খরচের বিস্তারিত / Expense Details</h2>
@@ -4640,7 +4640,7 @@ async function exportMonthlyPdf(mode='download'){
     if(doc.fonts?.ready)await doc.fonts.ready;
 
     const worker=window.SmartMessPdf().set({
-      margin:[26,13,27,13],
+      margin:[29,13,27,13],
       filename:'Smart-Mess-Report-'+new Date().toISOString().slice(0,10)+'.pdf',
       image:{type:'jpeg',quality:0.98},
       html2canvas:{scale:2,useCORS:true,backgroundColor:'#ffffff',windowWidth:794,scrollY:0},
@@ -4673,11 +4673,11 @@ async function exportMonthlyPdf(mode='download'){
     for(let page=1;page<=pageCount;page++){
       pdf.setPage(page);
       const pw=pdf.internal.pageSize.getWidth(),ph=pdf.internal.pageSize.getHeight();
-      pdf.addImage(logoData,'PNG',13,4,13,13);
+      pdf.addImage(logoData,'PNG',(pw-13)/2,3,13,13);
       pdf.setTextColor(22,116,71);pdf.setFont('helvetica','bold');pdf.setFontSize(13);
-      pdf.text('SMART-MESS',29,10);
+      pdf.text('SMART-MESS',pw/2,14,{align:'center'});
       pdf.setFont('helvetica','normal');pdf.setFontSize(8);
-      pdf.text(String(M.name||'')+' · '+dateLabel,29,15);
+      pdf.setFontSize(8);pdf.text('Monthly Account Report',pw/2,17,{align:'center'});pdf.setFontSize(7);pdf.text(String(dateLabel),pw/2,20,{align:'center'});
       pdf.setDrawColor(25,135,84);pdf.setLineWidth(0.5);pdf.line(13,21,pw-13,21);
       pdf.setDrawColor(183,216,197);pdf.setLineWidth(0.3);pdf.line(13,273,pw-13,273);
       pdf.addImage(sealData,'PNG',13,275,19,19);
