@@ -3597,8 +3597,8 @@ function formerMembersView(){
         const share=p.balanceFrozen===true?(Number(p.finalShare)||0):(Number(a.share)||0);
         return `
           <div style="padding:13px 0;border-bottom:1px solid var(--line)">
-            <div class="row" style="justify-content:space-between"><b>${i+1}. ${esc(p.name||'নাম নেই')}</b>
-            ${M.role==='admin'?`<button class="btn secondary" style="padding:4px 10px" onclick="S.formerMenuPeriod=S.formerMenuPeriod==='${p.id}'?null:'${p.id}';render()">⋮</button>`:''}</div>
+            <div style="display:flex;align-items:center;justify-content:space-between;gap:8px"><b>${i+1}. ${esc(p.name||'নাম নেই')}</b>
+            ${M.role==='admin'?`<button type="button" aria-label="Former member actions" style="appearance:none;background:transparent;border:0;box-shadow:none;padding:0 4px;color:var(--muted);font-size:24px;line-height:1;cursor:pointer;flex-shrink:0" onclick="S.formerMenuPeriod=S.formerMenuPeriod==='${p.id}'?null:'${p.id}';render()">⋮</button>`:''}</div>
             ${M.role==='admin'&&S.formerMenuPeriod===p.id?`<div style="display:flex;gap:7px;margin:8px 0;flex-wrap:wrap"><button class="btn" onclick="S.formerMenuPeriod=null;addFormerPayment('${p.id}')">${T('পরিশোধের পরিমাণ যোগ করুন','Add payment')}</button><button class="btn secondary" onclick="S.formerMenuPeriod=null;completeFormerPayment('${p.id}')">${T('পরিশোধ সম্পন্ন','Mark paid')}</button></div>`:''}
             <div class="mut" style="margin-top:6px">${T('যোগদান','Joined')}: ${p.joinedAt?.toDate?p.joinedAt.toDate().toLocaleDateString():'—'}</div>
             <div class="mut" style="margin-top:4px">${T('ছাড়ার তারিখ','Left')}: ${p.leftAt?.toDate?p.leftAt.toDate().toLocaleDateString():'—'}</div>
@@ -3828,7 +3828,8 @@ M.periods=periodsSnap.docs.map(d=>({id:d.id,...d.data()}));
               </b>
 
               ${canManage?`
-                <button class="btn" style="padding:4px 10px"
+                <button type="button" aria-label="Member actions"
+                  style="appearance:none;background:transparent;border:0;box-shadow:none;padding:0 4px;color:var(--muted);font-size:24px;line-height:1;cursor:pointer;flex-shrink:0"
                   onclick="toggleMemberMenu(${i})">⋮</button>
               `:''}
             </div>
