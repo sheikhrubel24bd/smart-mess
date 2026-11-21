@@ -5498,6 +5498,38 @@ render();
 })();
 
 
+async function hasInternetConnection(){
+  if(!navigator.onLine) return false;
+  let timer;
+  try{
+    const controller=new AbortController();
+    timer=setTimeout(()=>controller.abort(),4000);
+    await fetch('https://www.gstatic.com/generate_204?smartmess='+Date.now(),{
+      method:'GET',
+      mode:'no-cors',
+      cache:'no-store',
+      signal:controller.signal
+    });
+    return true;
+  }catch(e){
+    return false;
+  }finally{
+    clearTimeout(timer);
+  }
+}
+
+async function waitForStartupInternet(){
+  clearTimeout(window._smartMessSplashFallback);
+  let notified=false;
+  while(!(await hasInternetConnection())){
+    if(!notified){
+      notified=true;
+      alert(T('আপনি অফলাইনে আছেন। প্রথমে ডাটা চালু করুন।','You are offline. Please turn on mobile data first.'));
+    }
+    await new Promise(resolve=>setTimeout(resolve,2500));
+  }
+}
+
 function hideSplash(){
   clearTimeout(window._smartMessSplashFallback);
   setTimeout(()=>{
@@ -5506,14 +5538,17 @@ function hideSplash(){
   },1200);
 }
 
-// Firebase Auth বা Firestore ধীর/নেটওয়ার্কে আটকে গেলেও স্প্ল্যাশ অনির্দিষ্টকাল থাকবে না।
-window._smartMessSplashFallback=setTimeout(()=>{
+// ইন্টারনেট না থাকলে স্প্ল্যাশ স্ক্রিন সরানো হবে না।
+window._smartMessSplashFallback=setTimeout(async()=>{
+  const online=await hasInternetConnection();
+  if(!online) return;
   console.warn('SPLASH FALLBACK: startup is taking longer than expected.');
   const splash=document.getElementById('splash');
   if(splash) splash.remove();
 },15000);
 
 auth.onAuthStateChanged(async user=>{
+  await waitForStartupInternet();
   
   if(user){
     S.user={
@@ -5523,6 +5558,7 @@ auth.onAuthStateChanged(async user=>{
     };
 
     await after();
+    await waitForStartupInternet();
     hideSplash();
 
   }else{
