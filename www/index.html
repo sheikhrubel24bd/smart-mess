@@ -4607,7 +4607,7 @@ async function exportMonthlyPdf(mode='download'){
       table{width:100%;border-collapse:collapse;font-size:10px;page-break-inside:auto}thead{display:table-header-group}
       tr{page-break-inside:avoid;break-inside:avoid}th{background:#e8f5ed;color:#176b43;text-align:left}
       th,td{padding:6px 5px;border:1px solid #d9e7de;vertical-align:top}tbody tr:nth-child(even){background:#fafdfa}
-      .note{font-size:9px;color:#60766a;margin-top:10px}
+      .note{font-size:9px;color:#60766a;margin-top:10px}.center-pocket td{text-align:center!important;font-weight:700;background:#f5fbf7}
     </style></head><body><main class="report">
       <div class="mess-meta">Mess: ${escPdf(M.name)} | ${escPdf(dateLabel)} | ${escPdf(M.type==='meal'?'Meal Mess':'Regular Mess')}</div>
       <div class="summary">
@@ -4619,7 +4619,7 @@ async function exportMonthlyPdf(mode='download'){
       <table><tbody>
         <tr><td>বাজার ও অন্যান্য খরচ / Market & other expenses</td><td>${money(c.tot)}</td></tr>
         <tr><td>জমা থেকে খরচ / Expenses from deposits</td><td>${money(depositSpent)}</td></tr>
-        <tr><td>পকেট থেকে মেসের খরচ / Mess expenses paid from pocket</td><td>${money(pocketSpent)}</td></tr>
+        <tr class="center-pocket"><td>পকেট থেকে মেসের খরচ / Mess expenses paid from pocket</td><td>${money(pocketSpent)}</td></tr>
         <tr><td>মেসের নগদ অবশিষ্ট / Cash remaining</td><td><b>${money(cashLeft)}</b></td></tr>
         <tr><td>সদস্যদের কাছ থেকে আদায় / To collect</td><td>${money(totalOwed)}</td></tr>
         <tr><td>সদস্যদের মোট পাওনা / Member credits</td><td>${money(totalReceivable)}</td></tr>
@@ -4643,7 +4643,7 @@ async function exportMonthlyPdf(mode='download'){
     await new Promise(resolve=>setTimeout(resolve,150));
 
     const worker=window.SmartMessPdf().set({
-      margin:[31,13,27,13],
+      margin:[35,13,27,13],
       filename:'Smart-Mess-Report-'+new Date().toISOString().slice(0,10)+'.pdf',
       image:{type:'jpeg',quality:0.98},
       html2canvas:{scale:1.5,useCORS:true,backgroundColor:'#ffffff',windowWidth:794,scrollY:0,logging:false},
@@ -4678,18 +4678,25 @@ async function exportMonthlyPdf(mode='download'){
     for(let page=1;page<=pageCount;page++){
       pdf.setPage(page);
       const pw=pdf.internal.pageSize.getWidth(),ph=pdf.internal.pageSize.getHeight();
-      pdf.addImage(logoData,'PNG',13,4,15,15);
+      // প্রতি পাতায় বড় লোগোসহ দুই পাশে ভাগ করা হেডার
+      pdf.addImage(logoData,'PNG',13,3,24,24);
       const headCanvas=document.createElement('canvas');
-      headCanvas.width=1200;headCanvas.height=180;
+      headCanvas.width=1400;headCanvas.height=200;
       const hctx=headCanvas.getContext('2d');
-      hctx.fillStyle='#176b43';hctx.textAlign='left';hctx.textBaseline='top';
-      hctx.font='bold 42px Arial, sans-serif';
-      hctx.fillText('SMART-MESS',12,4,1120);
-      hctx.font='bold 23px Arial, sans-serif';
-      hctx.fillText('Monthly Account Report',12,61,1120);
-      hctx.font='17px Arial, "Noto Sans Bengali", sans-serif';
-      hctx.fillText('Mess: '+String(M.name||'')+' | '+String(dateLabel),12,105,1120);
-      pdf.addImage(headCanvas.toDataURL('image/png'),'PNG',31,3,160,24);
+      hctx.fillStyle='#176b43';hctx.textBaseline='top';
+      hctx.textAlign='left';
+      hctx.font='bold 47px Arial, sans-serif';
+      hctx.fillText('SMART-MESS',215,14,600);
+      hctx.font='21px Arial, sans-serif';
+      hctx.fillText('Smart Accounting, Easy Mess Life',218,79,600);
+      hctx.textAlign='right';
+      hctx.font='bold 27px Arial, sans-serif';
+      hctx.fillText('MONTHLY MESS',1385,8,510);
+      hctx.font='bold 19px Arial, "Noto Sans Bengali", sans-serif';
+      hctx.fillText('Mess: '+String(M.name||''),1385,61,510);
+      hctx.font='19px Arial, sans-serif';
+      hctx.fillText('Month: '+String(dateLabel),1385,111,510);
+      pdf.addImage(headCanvas.toDataURL('image/png'),'PNG',40,2,pw-53,27);
       pdf.setDrawColor(25,135,84);pdf.setLineWidth(0.5);pdf.line(13,30,pw-13,30);
       pdf.setDrawColor(183,216,197);pdf.setLineWidth(0.3);pdf.line(13,273,pw-13,273);
       pdf.addImage(sealData,'PNG',13,275,19,19);
@@ -4707,12 +4714,29 @@ async function exportMonthlyPdf(mode='download'){
       if(mode==='share'){
         const path='Smart-Mess/'+filename;
         await Filesystem.writeFile({path,data:base64,directory:Directory.Cache,recursive:true});
+        const info=await Filesystem.stat({path,directory:Directory.Cache});
+        if(!info||Number(info.size)<=0)throw new Error('SHARE_FILE_EMPTY');
         const file=await Filesystem.getUri({path,directory:Directory.Cache});
         await window.SmartMessShare.share({title:'Smart-Mess Report',text:'Monthly mess report',files:[file.uri],dialogTitle:T('PDF রিপোর্ট শেয়ার করুন','Share PDF Report')});
         say(T('PDF শেয়ার করার জন্য প্রস্তুত','PDF is ready to share'));
       }else{
-        await Filesystem.writeFile({path:filename,data:base64,directory:Directory.Documents,recursive:true});
-        say(T('PDF রিপোর্ট ফোনের Documents ফোল্ডারে সংরক্ষণ হয়েছে','PDF report saved in the app Documents folder'));
+        // আগে Documents-এ লিখে stat দিয়ে নিশ্চিত করি ফাইল সত্যিই তৈরি হয়েছে।
+        try{
+          await Filesystem.writeFile({path:filename,data:base64,directory:Directory.Documents,recursive:true});
+          const saved=await Filesystem.stat({path:filename,directory:Directory.Documents});
+          if(!saved||Number(saved.size)<=0)throw new Error('DOCUMENTS_FILE_NOT_CREATED');
+          say(T('PDF রিপোর্ট ফোনের Documents ফোল্ডারে সংরক্ষণ হয়েছে','PDF report saved in the app Documents folder'));
+        }catch(saveError){
+          console.error('PDF DOCUMENTS SAVE FAILED:',saveError);
+          // ফোনের Documents ফোল্ডারে লেখা না গেলে ফাইল Cache-এ রেখে Save/Share শিট খুলুন।
+          const fallbackPath='Smart-Mess/'+filename;
+          await Filesystem.writeFile({path:fallbackPath,data:base64,directory:Directory.Cache,recursive:true});
+          const fallbackInfo=await Filesystem.stat({path:fallbackPath,directory:Directory.Cache});
+          if(!fallbackInfo||Number(fallbackInfo.size)<=0)throw saveError;
+          const fallbackFile=await Filesystem.getUri({path:fallbackPath,directory:Directory.Cache});
+          await window.SmartMessShare.share({title:'Smart-Mess PDF Report',text:T('PDF তৈরি হয়েছে। Save to device নির্বাচন করে সংরক্ষণ করুন।','PDF created. Choose Save to device to store it.'),files:[fallbackFile.uri],dialogTitle:T('PDF সংরক্ষণ করুন','Save PDF')});
+          say(T('PDF তৈরি হয়েছে। Documents-এ সরাসরি রাখা যায়নি; শেয়ার মেনু থেকে Save to device নির্বাচন করুন।','PDF created. Direct save was unavailable; choose Save to device in the share menu.'));
+        }
       }
     }else if(mode==='share'&&navigator.canShare&&navigator.share){
       const blob=pdf.output('blob');
