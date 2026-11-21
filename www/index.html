@@ -1358,6 +1358,16 @@ async function googleAuthAction(){
       googleSignInReady=true;
     }
 
+    // Android Credential Manager-এর আগের Google credential state পরিষ্কার করে নতুন sign-in শুরু করুন।
+    // এটি Firebase Auth session sign-out করে না; শুধু Google plugin-এর credential state reset করে।
+    if(typeof GoogleSignIn.signOut==='function'){
+      try{
+        await GoogleSignIn.signOut();
+      }catch(resetError){
+        console.warn('GOOGLE CREDENTIAL RESET WARNING:',resetError);
+      }
+    }
+
     const result=await GoogleSignIn.signIn();
     if(!result?.idToken)throw new Error('GOOGLE_ID_TOKEN_MISSING');
 
