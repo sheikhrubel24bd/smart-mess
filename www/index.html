@@ -4675,7 +4675,7 @@ async function exportMonthlyPdf(mode='download'){
       const pw=pdf.internal.pageSize.getWidth(),ph=pdf.internal.pageSize.getHeight();
       pdf.addImage(logoData,'PNG',(pw-13)/2,3,13,13);
       pdf.setTextColor(22,116,71);pdf.setFont('helvetica','bold');pdf.setFontSize(13);
-      pdf.text('SMART-MESS',pw/2,14,{align:'center'});
+      pdf.text('SMART-MESS',pw/2,19,{align:'center'});
       pdf.setFont('helvetica','normal');pdf.setFontSize(8);
       pdf.setFontSize(8);pdf.text('Monthly Account Report',pw/2,22,{align:'center'});pdf.setFontSize(7);pdf.text(String(dateLabel),pw/2,26,{align:'center'});
       pdf.setDrawColor(25,135,84);pdf.setLineWidth(0.5);pdf.line(13,31,pw-13,31);
