@@ -3406,19 +3406,36 @@ async function deleteDeposit(id){
     });
 
     // Admin-ও নিজের account থেকে এই mess বিচ্ছিন্ন করবেন।
-    await userRef.update({messId:null});
+    // Parent mess বন্ধ হয়ে গেলে UI-কে সঙ্গে সঙ্গে Welcome screen-এ নিতে হবে।
+    let detachFailed=false;
+    try{
+      await userRef.update({messId:null});
+    }catch(detachError){
+      detachFailed=true;
+      console.warn('ADMIN DETACH UPDATE FAILED; RECOVERING FROM DELETED MESS:',detachError);
+    }
 
     M=null;
     S.pendingJoin=null;
     S.screen='welcome';
     S.tab='home';
     S.deletingMess=false;
+    S.toast='';
     render();
 
-    say(T(
-      'মেসটি বন্ধ করা হয়েছে। পুরোনো হিসাব সংরক্ষিত আছে।',
-      'The mess has been closed. Previous records are preserved.'
-    ));
+    if(detachFailed){
+      try{await after();}catch(recoveryError){
+        console.error('DELETE MESS DETACH RECOVERY ERROR:',recoveryError);
+      }
+    }
+
+    // Native confirmation popup নিশ্চিতভাবে দেখাবে; toast-এর উপর নির্ভর করবে না।
+    setTimeout(()=>{
+      alert(T(
+        'মেসটি সফলভাবে ডিলিট হয়েছে। পুরোনো হিসাব সংরক্ষিত আছে।',
+        'The mess was deleted successfully. Previous records are preserved.'
+      ));
+    },150);
   }catch(e){
     console.error('DELETE MESS ERROR:',e);
     S.deletingMess=false;
