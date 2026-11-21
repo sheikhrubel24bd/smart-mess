@@ -21,6 +21,43 @@ jobs:
         run: npx --yes esbuild@0.24.2 www/app-plugin.js --bundle --format=iife --outfile=www/app-plugin.bundle.js
       - name: Create Android project
         run: npx cap add android
+      - name: Disable Android WebView overscroll bounce
+        run: |
+          python3 - <<'PY'
+          from pathlib import Path
+          import re
+
+          files = list(Path("android/app/src/main/java").rglob("MainActivity.java"))
+          if len(files) != 1:
+              raise SystemExit(f"Expected one MainActivity.java, found {len(files)}")
+
+          path = files[0]
+          source = path.read_text()
+          if "OVER_SCROLL_NEVER" not in source:
+              source = source.replace(
+                  "package ",
+                  "package ",
+                  1
+              )
+              package_end = source.find("\\n")
+              source = source[:package_end + 1] + "\\nimport android.os.Bundle;\\nimport android.view.View;\\n" + source[package_end + 1:]
+              class_match = re.search(r"public class MainActivity extends BridgeActivity\\s*\\{", source)
+              if not class_match:
+                  raise SystemExit("MainActivity class declaration not found")
+              method = """
+                  @Override
+                  public void onCreate(Bundle savedInstanceState) {
+                      super.onCreate(savedInstanceState);
+                      if (getBridge() != null && getBridge().getWebView() != null) {
+                          getBridge().getWebView().setOverScrollMode(View.OVER_SCROLL_NEVER);
+                      }
+                  }
+              """
+              insert_at = class_match.end()
+              source = source[:insert_at] + method + source[insert_at:]
+              path.write_text(source)
+          print(f"Disabled WebView overscroll in {path}")
+          PY
       - name: Match Android status bar with app header
         run: |
           python3 - <<'PY'
