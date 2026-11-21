@@ -4600,7 +4600,7 @@ async function exportMonthlyPdf(mode='download'){
     const reportHtml=`<!doctype html><html lang="bn"><head><meta charset="utf-8"><style>
       *{box-sizing:border-box}html,body{margin:0;padding:0;background:#fff;color:#183b2c;font-family:Arial,'Noto Sans Bengali',sans-serif;font-size:12px;line-height:1.45}
       .report{width:100%;padding:0}.title{font-size:19px;margin:0 0 3px;color:#176b43}.muted{color:#61796c;font-size:10px;margin-bottom:10px}
-      h2{font-size:14px;margin:15px 0 7px;color:#176b43;border-bottom:1px solid #cfe5d7;padding-bottom:4px}
+      h2{font-size:14px;margin:15px 0 7px;color:#176b43;background:#f2faf5;border:1px solid #cfe5d7;border-radius:8px;padding:7px 9px}
       .summary{display:flex;gap:7px;margin:10px 0}.metric{flex:1;border:1px solid #cfe5d7;border-radius:7px;padding:8px;background:#f5fbf7}
       .metric span{display:block;font-size:10px;color:#557566}.metric b{font-size:13px;color:#176b43}
       table{width:100%;border-collapse:collapse;font-size:10px;page-break-inside:auto}thead{display:table-header-group}
@@ -4608,8 +4608,8 @@ async function exportMonthlyPdf(mode='download'){
       th,td{padding:6px 5px;border:1px solid #d9e7de;vertical-align:top}tbody tr:nth-child(even){background:#fafdfa}
       .note{font-size:9px;color:#60766a;margin-top:10px}
     </style></head><body><main class="report">
-      <h1 class="title">${L==='bn'?'মাসিক হিসাব':'Monthly Report'}</h1>
-      <div class="muted">${escPdf(M.name)}<br>Monthly Account Report — ${escPdf(dateLabel)} — ${escPdf(M.type==='meal'?'Meal Mess':'Regular Mess')}</div>
+      <h1 class="title">${escPdf(M.name)}</h1>
+      <div class="muted">${L==='bn'?'মাসিক হিসাবের প্রতিবেদন':'Monthly Account Report'} — ${escPdf(dateLabel)} — ${escPdf(M.type==='meal'?'Meal Mess':'Regular Mess')}</div>
       <div class="summary">
         <div class="metric"><span>মোট খরচ / Total expenses</span><b>${money(c.tot)}</b></div>
         <div class="metric"><span>মোট জমা / Deposits</span><b>${money(totalDeposit)}</b></div>
@@ -4640,7 +4640,7 @@ async function exportMonthlyPdf(mode='download'){
     if(doc.fonts?.ready)await doc.fonts.ready;
 
     const worker=window.SmartMessPdf().set({
-      margin:[29,13,27,13],
+      margin:[37,13,27,13],
       filename:'Smart-Mess-Report-'+new Date().toISOString().slice(0,10)+'.pdf',
       image:{type:'jpeg',quality:0.98},
       html2canvas:{scale:2,useCORS:true,backgroundColor:'#ffffff',windowWidth:794,scrollY:0},
@@ -4677,8 +4677,8 @@ async function exportMonthlyPdf(mode='download'){
       pdf.setTextColor(22,116,71);pdf.setFont('helvetica','bold');pdf.setFontSize(13);
       pdf.text('SMART-MESS',pw/2,14,{align:'center'});
       pdf.setFont('helvetica','normal');pdf.setFontSize(8);
-      pdf.setFontSize(8);pdf.text('Monthly Account Report',pw/2,17,{align:'center'});pdf.setFontSize(7);pdf.text(String(dateLabel),pw/2,20,{align:'center'});
-      pdf.setDrawColor(25,135,84);pdf.setLineWidth(0.5);pdf.line(13,21,pw-13,21);
+      pdf.setFontSize(8);pdf.text('Monthly Account Report',pw/2,22,{align:'center'});pdf.setFontSize(7);pdf.text(String(dateLabel),pw/2,26,{align:'center'});
+      pdf.setDrawColor(25,135,84);pdf.setLineWidth(0.5);pdf.line(13,31,pw-13,31);
       pdf.setDrawColor(183,216,197);pdf.setLineWidth(0.3);pdf.line(13,273,pw-13,273);
       pdf.addImage(sealData,'PNG',13,275,19,19);
       pdf.setTextColor(86,112,99);pdf.setFontSize(8);
