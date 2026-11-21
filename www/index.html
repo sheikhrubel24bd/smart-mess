@@ -1542,13 +1542,38 @@ const messId=userData.messId;
 
     const messRef=db.collection('messes').doc(messId);
 
-    const [messSnap,myMemberSnap,membersSnap,allMembersSnap,periodsSnap]=await Promise.all([
-  messRef.get(),
-  messRef.collection('members').doc(uid).get(),
-  messRef.collection('members').where('status','==','active').get(),
-  messRef.collection('members').get(),
-  messRef.collection('membershipPeriods').get()
-]);
+    // Deleted mess হলে subcollection access করার আগেই নিজের account detach করুন।
+    const messSnap=await messRef.get();
+
+    if(!messSnap.exists)
+      throw new Error('MESS_NOT_FOUND');
+
+    if(messSnap.data().status==='deleted'){
+      stopMessListeners();
+
+      await db.collection('users').doc(uid).update({
+        messId:null
+      });
+
+      M=null;
+      S.pendingJoin=null;
+      S.screen='welcome';
+      S.tab='home';
+      render();
+
+      say(T(
+        'এই মেসটি বন্ধ করা হয়েছে। এখন নতুন মেস তৈরি বা অন্য মেসে যোগ দিতে পারবেন।',
+        'This mess has been closed. You can now create or join another mess.'
+      ));
+      return;
+    }
+
+    const [myMemberSnap,membersSnap,allMembersSnap,periodsSnap]=await Promise.all([
+      messRef.collection('members').doc(uid).get(),
+      messRef.collection('members').where('status','==','active').get(),
+      messRef.collection('members').get(),
+      messRef.collection('membershipPeriods').get()
+    ]);
 
     let requestsSnap={docs:[]};
 
@@ -1556,7 +1581,7 @@ const messId=userData.messId;
       requestsSnap=await messRef.collection('joinRequests').get();
     }
 
-    if(!messSnap.exists || !myMemberSnap.exists)
+    if(!myMemberSnap.exists)
       throw new Error('MESS_NOT_FOUND');
 
     const myMember=myMemberSnap.data();
