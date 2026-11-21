@@ -62,7 +62,7 @@ jobs:
       - name: Generate Android app icons
         run: npx @capacitor/assets generate --android --iconBackgroundColor '#f0fff7'
       - name: Add camera permission
-        run: sed -i 's#<application#<uses-permission android:name="android.permission.CAMERA" />\\n    <application#' android/app/src/main/AndroidManifest.xml
+        run: sed -i 's#<application#<uses-permission android:name="android.permission.CAMERA" />\n    <application#' android/app/src/main/AndroidManifest.xml
       - name: Sync web files
         run: npx cap sync android
       - name: Build debug APK
