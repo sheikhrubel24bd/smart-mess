@@ -121,6 +121,11 @@ body{margin:0;background:var(--bg);color:var(--ink);font-family:"Noto Sans Benga
   padding:env(safe-area-inset-top,0px) 14px 0;
   background:#16794f;color:#fff;
   box-shadow:0 3px 10px #0c513326;
+  position:sticky;
+  top:0;
+  z-index:60;
+  flex-shrink:0;
+  isolation:isolate;
 }
 .app-brand{display:flex;align-items:center;gap:9px;margin-right:auto;font-size:19px;font-weight:800;white-space:nowrap}
 .app-brand-mark{width:33px;height:33px;border:1.7px solid #ffffffb8;border-radius:11px;display:grid;place-items:center;font-size:21px;line-height:1}
