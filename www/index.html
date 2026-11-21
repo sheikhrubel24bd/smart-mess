@@ -116,7 +116,6 @@ body{margin:0;background:var(--bg);color:var(--ink);font-family:"Noto Sans Benga
 #app{max-width:480px;margin:0 auto;padding:16px 14px 112px}
 .top.app-topbar{
   display:flex;align-items:center;gap:9px;
-  position:sticky;top:0;z-index:60;
   min-height:calc(62px + env(safe-area-inset-top,0px));
   margin:calc(-16px - env(safe-area-inset-top,0px)) -14px 14px;
   padding:env(safe-area-inset-top,0px) 14px 0;
@@ -775,6 +774,34 @@ body.auth-screen #app{max-width:480px}
   body:not(.auth-screen) nav{bottom:5px;min-height:56px}
   body:not(.auth-screen) nav button{min-height:42px}
 }
+/* APP SCREEN: fixed header/footer, only middle content scrolls */
+body.app-screen{overflow:hidden;overscroll-behavior:none}
+body.app-screen #app{
+  position:fixed;inset:0 auto 0 50%;transform:translateX(-50%);
+  width:100%;max-width:1180px;height:100%;height:100dvh;
+  margin:0;padding:0;display:flex;flex-direction:column;
+  overflow:hidden;overscroll-behavior:none;
+}
+body.app-screen #app .top.app-topbar{
+  position:relative;top:auto;z-index:60;flex:0 0 auto;
+  width:100%;min-height:calc(62px + env(safe-area-inset-top,0px));
+  height:calc(62px + env(safe-area-inset-top,0px));
+  margin:0;padding:env(safe-area-inset-top,0px) 14px 0;
+}
+body.app-screen #app .app-content{
+  flex:1 1 auto;min-height:0;width:100%;
+  overflow-y:auto;overflow-x:hidden;
+  -webkit-overflow-scrolling:touch;overscroll-behavior-y:contain;
+  padding:16px 14px 112px;
+}
+@media(min-width:700px){
+  body.app-screen #app .app-content{padding:24px 26px 126px}
+  body.app-screen #app .top.app-topbar{padding:env(safe-area-inset-top,0px) 26px 0}
+}
+@media(min-width:1024px){
+  body.app-screen #app .app-content{padding:28px 34px 132px}
+  body.app-screen #app .top.app-topbar{padding:env(safe-area-inset-top,0px) 34px 0}
+}
 </style>
 </head>
 <body>
@@ -1052,7 +1079,7 @@ function go(t){
   S.tab=t;
   S.item=null;
   render();
-  window.scrollTo(0,0);
+  (document.querySelector('.app-content') ? document.querySelector('.app-content').scrollTo(0,0) : window.scrollTo(0,0));
 }
 
 function tl(){L=L=='bn'?'en':'bn';render()}
@@ -1065,7 +1092,7 @@ function to(s){
   S.found=null;
   S.pend=null;
   render();
-  window.scrollTo(0,0);
+  (document.querySelector('.app-content') ? document.querySelector('.app-content').scrollTo(0,0) : window.scrollTo(0,0));
 }
   function goBack(fallback){
  const prev=NAV_HISTORY.pop();
@@ -1075,13 +1102,13 @@ function to(s){
   S.item=prev.item;
   S.view=prev.view;
   render();
-  window.scrollTo(0,0);
+  (document.querySelector('.app-content') ? document.querySelector('.app-content').scrollTo(0,0) : window.scrollTo(0,0));
   return;
  }
  if(fallback){
   S.tab=fallback;
   render();
-  window.scrollTo(0,0);
+  (document.querySelector('.app-content') ? document.querySelector('.app-content').scrollTo(0,0) : window.scrollTo(0,0));
  }
 }
 
@@ -3736,7 +3763,7 @@ M.periods=periodsSnap.docs.map(d=>({id:d.id,...d.data()}));
   S.depositMemberIndex=i;
   S.tab='depositDetail';
   render();
-  window.scrollTo(0,0);
+  (document.querySelector('.app-content') ? document.querySelector('.app-content').scrollTo(0,0) : window.scrollTo(0,0));
 }
   function toggleMemberMenu(i){
   const menu=document.getElementById('member-menu-'+i);
@@ -4147,7 +4174,7 @@ if(item==='other' && !(S.otherName||'').trim()){
   S.tab='add';
 
   render();
-  window.scrollTo(0,0);
+  (document.querySelector('.app-content') ? document.querySelector('.app-content').scrollTo(0,0) : window.scrollTo(0,0));
 }
   async function updateExp(){
   if(S.updatingExp)return;
@@ -5246,6 +5273,7 @@ async function deleteTask(id){
 
 function render(){
   document.body.classList.toggle('auth-screen',S.screen==='auth');
+  document.body.classList.toggle('app-screen',S.screen==='app');
   document.documentElement.lang=L;
   let v,nav='';
   if(S.screen=='auth')v=authView();else if(S.screen=='welcome')v=welcomeView();else if(S.screen=='create')v=createView();else if(S.screen=='join')v=joinView();
@@ -5254,7 +5282,7 @@ function render(){
       v=({home:homeView,add:addView,meal:mealView,rep:reportView,task:taskView,req:reqView,expenses:expenseListView,members:memberListView,settings:settingsView,editMessName:editMessNameView,deposits:depositView,depositDetail:depositDetailView,history:historyView,historyDetail:historyDetailView,formerMembers:formerMembersView,about:aboutView,profile:profileView,editnumber:editNumberView,editname:editNameView}[S.tab]||homeView)();   
     nav=`<nav><div>${tabs.map(t=>`<button class="${S.tab==t[0]?'on':''}" onclick="go('${t[0]}')"><span class="sm-icon nav-icon i-${t[1]}"></span><small class="nav-label">${t[2]}</small></button>`).join('')}</div></nav>`;
   }
-  document.getElementById('app').innerHTML=topbar()+v+nav+(S.view!=null&&M.exp[S.view]?`<div class="ov" onclick="S.view=null;render()"><img src="${M.exp[S.view].memo}" alt=""></div>`:'')+(S.toast?`<div class="toast">${esc(S.toast)}</div>`:'');
+  document.getElementById('app').innerHTML=topbar()+(S.screen==='app'?'<div class="app-content">'+v+'</div>':v)+nav+(S.view!=null&&M.exp[S.view]?`<div class="ov" onclick="S.view=null;render()"><img src="${M.exp[S.view].memo}" alt=""></div>`:'')+(S.toast?`<div class="toast">${esc(S.toast)}</div>`:'');
 }
 render();
 // PULL TO REFRESH
@@ -5266,7 +5294,8 @@ render();
   const indicator=document.getElementById('pullRefresh');
 
   document.addEventListener('touchstart',e=>{
-    if(refreshing || window.scrollY>0) return;
+    const area=document.querySelector('.app-content');
+    if(refreshing || (area?area.scrollTop:window.scrollY)>0) return;
     startY=e.touches[0].clientY;
     pulling=true;
   },{passive:true});
@@ -5276,7 +5305,8 @@ render();
 
     const distance=e.touches[0].clientY-startY;
 
-    if(distance>0 && window.scrollY<=0){
+    const area=document.querySelector('.app-content');
+    if(distance>0 && (area?area.scrollTop:window.scrollY)<=0){
       indicator.style.transform=
         `translate(-50%,${Math.min(distance-60,12)}px)`;
     }
