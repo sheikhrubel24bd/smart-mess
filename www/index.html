@@ -3376,8 +3376,8 @@ async function deleteDeposit(id){
   const messCode=String(M.code||'').toUpperCase();
 
   if(!confirm(T(
-    'আপনি কি "'+messName+'" মেসটি বন্ধ করতে চান?\\n\\nসব সদস্যের অ্যাকাউন্ট এই মেস থেকে বিচ্ছিন্ন হবে। পুরোনো হিসাব ও লেনদেন সংরক্ষিত থাকবে।',
-    'Close "'+messName+'"?\\n\\nAll members will be disconnected from this mess. Previous accounts and transactions will be preserved.'
+    'আপনি কি "'+messName+'" মেসটি বন্ধ করতে চান?\n\nসব সদস্যের অ্যাকাউন্ট এই মেস থেকে বিচ্ছিন্ন হবে। পুরোনো হিসাব ও লেনদেন সংরক্ষিত থাকবে।',
+    'Close "'+messName+'"?\n\nAll members will be disconnected from this mess. Previous accounts and transactions will be preserved.'
   ))) return;
 
   const enteredCode=prompt(T(
