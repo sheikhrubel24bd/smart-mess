@@ -1260,7 +1260,8 @@ async function googleAuthAction(){
   }catch(e){
     console.error('GOOGLE AUTH ERROR:',e);
     if(e.code==='SIGN_IN_CANCELED' || e.code==='CANCELED' || /cancel/i.test(e.message||'')){
-      say(T('Google লগইন বাতিল করা হয়েছে','Google sign-in was canceled'));
+      const detail=[e.code,e.message].filter(Boolean).join(' | ');
+      say(T('Google ত্রুটি: '+(detail||'কারণ জানা যায়নি'),'Google error: '+(detail||'No error details available')));
     }else if(e.code==='auth/account-exists-with-different-credential'){
       say(T('এই ইমেইলে আগে অন্য পদ্ধতিতে একাউন্ট করা হয়েছে। ইমেইল ও পাসওয়ার্ড দিয়ে লগইন করুন।','An account already exists with this email using another sign-in method. Please log in with email and password.'));
     }else if(e.message==='GOOGLE_PLUGIN_UNAVAILABLE'){
