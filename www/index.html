@@ -4915,21 +4915,33 @@ async function exportMonthlyPdf(mode='download'){
     }).join('');
 
     const reportHtml=`<!doctype html><html lang="bn"><head><meta charset="utf-8"><style>
-      *{box-sizing:border-box}html,body{margin:0;padding:0;background:#fff;color:#183b2c;font-family:Arial,'Noto Sans Bengali',sans-serif;font-size:12px;line-height:1.45}
-      .report{width:100%;padding:0}.mess-meta{font-size:10px;color:#61796c;margin:0 0 10px}.muted{color:#61796c;font-size:10px;margin-bottom:10px}
-      h2{font-size:14px;margin:0 0 9px;color:#176b43;padding:0 0 6px;border-bottom:1px solid #cfe5d7}.section-card{border:1.5px solid #cfe5d7;border-radius:10px;background:#fff;padding:11px;margin:12px 0;box-shadow:0 1px 3px rgba(22,107,67,.06)}
-      .summary{display:flex;gap:7px;margin:10px 0}.metric{flex:1;border:1px solid #cfe5d7;border-radius:7px;padding:8px;background:#f5fbf7}
-      .metric span{display:block;font-size:10px;color:#557566}.metric b{font-size:13px;color:#176b43}
-      table{width:100%;border-collapse:collapse;font-size:10px;page-break-inside:auto}thead{display:table-header-group}
-      tr{page-break-inside:avoid;break-inside:avoid}th{background:#e8f5ed;color:#176b43;text-align:left}
-      th,td{padding:6px 5px;border:1px solid #d9e7de;vertical-align:top}tbody tr:nth-child(even){background:#fafdfa}
-      /* Keep report amount columns aligned to the right edge of their cells. */
+      *{box-sizing:border-box}
+      html,body{margin:0;padding:0;background:#fff!important;color:#17251d!important;font-family:Arial,'Noto Sans Bengali',sans-serif;font-size:12px;line-height:1.45;opacity:1!important;filter:none!important}
+      /* Force fully opaque, readable text in the PDF capture (including Android WebView). */
+      .report,.report *{opacity:1!important;filter:none!important;text-shadow:none!important}
+      .report{width:100%;padding:0;color:#17251d!important}
+      .mess-meta{font-size:10px;color:#35483d!important;margin:0 0 10px}
+      .muted{color:#35483d!important;font-size:10px;margin-bottom:10px}
+      h2{font-size:14px;margin:0 0 9px;color:#176b43!important;-webkit-text-fill-color:#176b43!important;padding:0 0 6px;border-bottom:1px solid #cfe5d7}
+      .section-card{border:1.5px solid #cfe5d7;border-radius:10px;background:#fff!important;padding:11px;margin:12px 0;box-shadow:0 1px 3px rgba(22,107,67,.06)}
+      .summary{display:flex;gap:7px;margin:10px 0}
+      .metric{flex:1;border:1px solid #cfe5d7;border-radius:7px;padding:8px;background:#f5fbf7!important}
+      .metric span{display:block;font-size:10px;color:#35483d!important;-webkit-text-fill-color:#35483d!important}
+      .metric b{font-size:13px;color:#176b43!important;-webkit-text-fill-color:#176b43!important}
+      table{width:100%;border-collapse:collapse;font-size:10px;page-break-inside:auto;color:#17251d!important}
+      thead{display:table-header-group}
+      tr{page-break-inside:avoid;break-inside:avoid}
+      th{background:#e8f5ed!important;color:#176b43!important;-webkit-text-fill-color:#176b43!important;text-align:left}
+      th,td{padding:6px 5px;border:1px solid #d9e7de;vertical-align:top}
+      td{color:#17251d!important;-webkit-text-fill-color:#17251d!important}
+      tbody tr:nth-child(even){background:#fafdfa!important}
+      /* Keep all financial amounts inside their own right-hand value cells. */
       .financial-summary{width:100%;table-layout:fixed}
-      .financial-summary td:first-child{width:78%}
+      .financial-summary td:first-child{width:78%;text-align:left!important}
       .financial-summary td:last-child{width:22%;text-align:right!important;padding-right:10px;white-space:nowrap}
-      /* Fixed column widths prevent member values from drifting under the wrong headings. */
+      /* Fixed member columns keep each value directly under its heading. */
       .member-accounts{width:100%;table-layout:fixed}
-      .member-accounts th:first-child,.member-accounts td:first-child{width:22%;text-align:left}
+      .member-accounts th:first-child,.member-accounts td:first-child{width:22%;text-align:left!important}
       .member-accounts th:nth-child(2),.member-accounts td:nth-child(2){width:8%}
       .member-accounts th:nth-child(3),.member-accounts td:nth-child(3){width:14%}
       .member-accounts th:nth-child(4),.member-accounts td:nth-child(4){width:22%}
@@ -4937,7 +4949,8 @@ async function exportMonthlyPdf(mode='download'){
       .member-accounts th:nth-child(6),.member-accounts td:nth-child(6){width:17%}
       .member-accounts th:not(:first-child),.member-accounts td:not(:first-child){text-align:right!important;vertical-align:middle;padding-right:8px;white-space:nowrap}
       .member-accounts th{overflow-wrap:anywhere;word-break:normal}
-      .note{font-size:9px;color:#60766a;margin-top:10px}.center-pocket td{text-align:center!important;font-weight:700;background:#f5fbf7}
+      .note{font-size:9px;color:#35483d!important;-webkit-text-fill-color:#35483d!important;margin-top:10px}
+      .center-pocket td{font-weight:700;background:#f5fbf7!important;text-align:right!important}
     </style></head><body><main class="report">
       <div class="mess-meta">Mess: ${escPdf(M.name)} | ${escPdf(dateLabel)} | ${escPdf(M.type==='meal'?'Meal Mess':'Regular Mess')}</div>
       <div class="summary">
