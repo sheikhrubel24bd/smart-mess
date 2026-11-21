@@ -78,7 +78,7 @@ jobs:
                   block = match.group(0)
                   additions = []
                   if 'name="android:statusBarColor"' not in block:
-                      additions.append('    <item name="android:statusBarColor">#16794f</item>')
+                      additions.append('    <item name="android:statusBarColor">#f0fff7</item>')
                   if 'name="android:windowLightStatusBar"' not in block:
                       additions.append('    <item name="android:windowLightStatusBar">false</item>')
                   if additions:
