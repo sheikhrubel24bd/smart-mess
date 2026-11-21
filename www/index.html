@@ -5548,13 +5548,18 @@ window._smartMessSplashFallback=setTimeout(async()=>{
 },15000);
 
 auth.onAuthStateChanged(async user=>{
+  // Offline অবস্থায় পাওয়া null event-কে সঙ্গে সঙ্গে logout হিসেবে ধরব না।
   await waitForStartupInternet();
-  
-  if(user){
+
+  // ইন্টারনেট ফিরে আসার পর Firebase-এর সংরক্ষিত session আবার পড়ুন।
+  await new Promise(resolve=>setTimeout(resolve,800));
+  const activeUser=auth.currentUser||user;
+
+  if(activeUser){
     S.user={
-      uid:user.uid,
-      name:user.displayName||user.email.split('@')[0],
-      email:user.email
+      uid:activeUser.uid,
+      name:activeUser.displayName||activeUser.email.split('@')[0],
+      email:activeUser.email
     };
 
     await after();
@@ -5563,17 +5568,16 @@ auth.onAuthStateChanged(async user=>{
 
   }else{
 
-  // Auth signed-out হলে সব Listener বন্ধ করুন.
-  stopMessListeners();
+    // ইন্টারনেট চালু থাকা অবস্থায়ও সত্যিই signed-out হলে তবেই Login দেখান।
+    stopMessListeners();
+    S.user=null;
+    M=null;
+    S.members=[];
+    S.screen='auth';
 
-  S.user=null;
-  M=null;
-  S.members=[];
-  S.screen='auth';
-
-  render();
-  hideSplash();
-}
+    render();
+    hideSplash();
+  }
 });
 const App = window.SmartMessApp;
 
