@@ -82,7 +82,7 @@ jobs:
                   block = match.group(0)
                   for name, value in names.items():
                       item = f'<item name="{name}">{value}</item>'
-                      pattern = re.compile(r'<item\\s+name="' + re.escape(name) + r'">.*?</item>', re.S)
+                      pattern = re.compile(r'<item\s+name="' + re.escape(name) + r'">.*?</item>', re.S)
                       if pattern.search(block):
                           block = pattern.sub(item, block)
                       else:
