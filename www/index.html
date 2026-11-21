@@ -116,6 +116,7 @@ body{margin:0;background:var(--bg);color:var(--ink);font-family:"Noto Sans Benga
 #app{max-width:480px;margin:0 auto;padding:16px 14px 112px}
 .top.app-topbar{
   display:flex;align-items:center;gap:9px;
+  position:sticky;top:0;z-index:60;
   min-height:calc(62px + env(safe-area-inset-top,0px));
   margin:calc(-16px - env(safe-area-inset-top,0px)) -14px 14px;
   padding:env(safe-area-inset-top,0px) 14px 0;
