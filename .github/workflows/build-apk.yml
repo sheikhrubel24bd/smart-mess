@@ -65,9 +65,6 @@ jobs:
         run: sed -i 's#<application#<uses-permission android:name="android.permission.CAMERA" />\n    <application#' android/app/src/main/AndroidManifest.xml
       - name: Sync web files
         run: npx cap sync android
-      - name: Build debug APK
-        working-directory: android
-        run: chmod +x gradlew && ./gradlew assembleDebug
       - name: Restore or create stable Android debug keystore
         run: |
           mkdir -p "$HOME/.android"
@@ -77,6 +74,9 @@ jobs:
             keytool -genkeypair -v -keystore "$HOME/.android/debug.keystore" -storepass android -alias androiddebugkey -keypass android -keyalg RSA -keysize 2048 -validity 10000 -dname "CN=Android Debug,O=Android,C=US"
           fi
           cp "$HOME/.android/debug.keystore" android-debug.keystore
+      - name: Build debug APK
+        working-directory: android
+        run: chmod +x gradlew && ./gradlew assembleDebug
       - name: Print Android debug SHA-1
         run: |
           keytool -list -v -keystore "$HOME/.android/debug.keystore" -alias androiddebugkey -storepass android -keypass android | grep -m 1 "SHA1:"
