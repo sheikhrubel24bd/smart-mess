@@ -723,6 +723,55 @@ select{border:1.5px solid var(--bd);background:var(--card);color:var(--ink);bord
 .welcome-shield{width:25px;height:25px;flex:0 0 25px;border-radius:50%;display:grid;place-items:center;background:#159653;color:#fff;font-weight:900;font-size:14px}
 @media(max-height:700px){.welcome-brand{margin-bottom:12px}.welcome-brand img{width:76px;height:76px}.welcome-greeting-card{margin-bottom:12px}.welcome-option{min-height:78px}.welcome-note{margin-top:8px}}
 
+
+/* RESPONSIVE APP LAYOUT — auth screens retain their existing width */
+body.auth-screen #app{max-width:480px}
+#app{width:100%;min-width:0}
+#app *{min-width:0}
+#app img,#app svg,#app video{max-width:100%}
+#app input,#app select,#app textarea{max-width:100%;box-sizing:border-box}
+#app .card,#app .regular-card,#app .task-section,#app .pending-section,#app .completed-section{min-width:0}
+#app .li .t,#app .regular-expense-info,#app .task-info{overflow-wrap:anywhere}
+#app .amt{font-size:clamp(30px,7vw,46px);overflow-wrap:anywhere}
+#app table{max-width:100%;border-collapse:collapse}
+#app .table-wrap,#app .table-responsive{width:100%;max-width:100%;overflow-x:auto;-webkit-overflow-scrolling:touch}
+#app th,#app td{overflow-wrap:anywhere}
+@media(max-width:420px){
+  #app{padding-left:10px;padding-right:10px}
+  #app .card{padding:12px}
+  #app h1{font-size:clamp(21px,6vw,26px);overflow-wrap:anywhere}
+  #app .grid{grid-template-columns:repeat(2,minmax(0,1fr))}
+  #app .stats{grid-template-columns:repeat(2,minmax(0,1fr))}
+  #app .stat.hero{grid-column:1/-1}
+  #app .row{gap:7px}
+  #app .btn{font-size:15px;padding:12px 10px}
+  #app .code{font-size:clamp(18px,5vw,24px);letter-spacing:1px;overflow-wrap:anywhere}
+  nav{width:calc(100% - 16px);padding:6px}
+  nav button .nav-label{font-size:8px;white-space:normal;overflow-wrap:anywhere}
+}
+@media(min-width:700px){
+  body:not(.auth-screen) #app{max-width:960px;padding:24px 26px 126px}
+  body:not(.auth-screen) #app .top.app-topbar{margin:-24px -26px 22px;padding:0 26px;min-height:68px}
+  body:not(.auth-screen) #app .card{padding:20px;margin-bottom:16px}
+  body:not(.auth-screen) #app .grid{grid-template-columns:repeat(3,minmax(0,1fr));gap:16px}
+  body:not(.auth-screen) #app .stats{gap:16px}
+  body:not(.auth-screen) #app .regular-summary{grid-template-columns:repeat(3,minmax(0,1fr));gap:16px}
+  body:not(.auth-screen) nav{max-width:920px;width:calc(100% - 48px)}
+  body:not(.auth-screen) nav button{font-size:12px}
+  body:not(.auth-screen) nav button .nav-label{font-size:11px}
+}
+@media(min-width:1024px){
+  body:not(.auth-screen) #app{max-width:1180px;padding:28px 34px 132px}
+  body:not(.auth-screen) #app .top.app-topbar{margin:-28px -34px 26px;padding:0 34px}
+  body:not(.auth-screen) #app .regular-summary{grid-template-columns:repeat(4,minmax(0,1fr))}
+  body:not(.auth-screen) #app .grid{grid-template-columns:repeat(4,minmax(0,1fr))}
+  body:not(.auth-screen) nav{max-width:1120px}
+}
+@media(orientation:landscape) and (max-height:520px){
+  body:not(.auth-screen) #app{padding-bottom:100px}
+  body:not(.auth-screen) nav{bottom:5px;min-height:56px}
+  body:not(.auth-screen) nav button{min-height:42px}
+}
 </style>
 </head>
 <body>
@@ -5134,6 +5183,7 @@ async function deleteTask(id){
 
 
 function render(){
+  document.body.classList.toggle('auth-screen',S.screen==='auth');
   document.documentElement.lang=L;
   let v,nav='';
   if(S.screen=='auth')v=authView();else if(S.screen=='welcome')v=welcomeView();else if(S.screen=='create')v=createView();else if(S.screen=='join')v=joinView();
