@@ -20,6 +20,18 @@
   padding:16px;
 }
 
+#splash::before{
+  content:"";
+  position:absolute;
+  top:0;
+  left:0;
+  right:0;
+  height:max(env(safe-area-inset-top, 0px), 28px);
+  background:#16794f;
+  z-index:1;
+  pointer-events:none;
+}
+
 .splash-stage{
   position:relative;
   width:min(78vw, 34vh, 320px);
