@@ -5524,7 +5524,7 @@ async function waitForStartupInternet(){
   while(!(await hasInternetConnection())){
     if(!notified){
       notified=true;
-      alert(T('আপনি অফলাইনে আছেন। প্রথমে ডাটা চালু করুন।','You are offline. Please turn on mobile data first.'));
+      alert('You are offline. Please turn on mobile data first.');
     }
     await new Promise(resolve=>setTimeout(resolve,2500));
   }
