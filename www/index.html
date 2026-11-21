@@ -4627,6 +4627,8 @@ async function exportMonthlyPdf(mode='download'){
       table{width:100%;border-collapse:collapse;font-size:10px;page-break-inside:auto}thead{display:table-header-group}
       tr{page-break-inside:avoid;break-inside:avoid}th{background:#e8f5ed;color:#176b43;text-align:left}
       th,td{padding:6px 5px;border:1px solid #d9e7de;vertical-align:top}tbody tr:nth-child(even){background:#fafdfa}
+      .financial-summary td:last-child{text-align:right;padding-right:15px;white-space:nowrap}
+      .member-accounts th:not(:first-child),.member-accounts td:not(:first-child){text-align:center;vertical-align:middle}
       .note{font-size:9px;color:#60766a;margin-top:10px}.center-pocket td{text-align:center!important;font-weight:700;background:#f5fbf7}
     </style></head><body><main class="report">
       <div class="mess-meta">Mess: ${escPdf(M.name)} | ${escPdf(dateLabel)} | ${escPdf(M.type==='meal'?'Meal Mess':'Regular Mess')}</div>
@@ -4636,7 +4638,7 @@ async function exportMonthlyPdf(mode='download'){
         <div class="metric"><span>নগদ অবশিষ্ট / Cash balance</span><b>${money(cashLeft)}</b></div>
       </div>
       <div class="section-card"><h2>মেসের আর্থিক সারসংক্ষেপ / Financial Summary</h2>
-      <table><tbody>
+      <table class="financial-summary"><tbody>
         <tr><td>বাজার ও অন্যান্য খরচ / Market & other expenses</td><td>${money(c.tot)}</td></tr>
         <tr><td>জমা থেকে খরচ / Expenses from deposits</td><td>${money(depositSpent)}</td></tr>
         <tr class="center-pocket"><td>পকেট থেকে মেসের খরচ / Mess expenses paid from pocket</td><td>${money(pocketSpent)}</td></tr>
@@ -4645,11 +4647,9 @@ async function exportMonthlyPdf(mode='download'){
         <tr><td>সদস্যদের মোট পাওনা / Member credits</td><td>${money(totalReceivable)}</td></tr>
       </tbody></table></div>
       <div class="section-card"><h2>সদস্যভিত্তিক হিসাব / Member Accounts</h2>
-      <table><thead><tr><th>সদস্য / Member</th><th>মিল / Meals</th><th>জমা / Deposit</th><th>পকেট থেকে মেসের খরচ / Paid from pocket</th><th>খরচের ভাগ / Share</th><th>ব্যালেন্স / Balance</th></tr></thead><tbody>${memberRows}${formerRows}</tbody></table></div>
+      <table class="member-accounts"><thead><tr><th>সদস্য / Member</th><th>মিল / Meals</th><th>জমা / Deposit</th><th>পকেট থেকে মেসের খরচ / Paid from pocket</th><th>খরচের ভাগ / Share</th><th>ব্যালেন্স / Balance</th></tr></thead><tbody>${memberRows}${formerRows}</tbody></table></div>
       <div class="section-card"><h2>ডিপোজিটের বিস্তারিত / Deposit Details</h2>
       <table><thead><tr><th>তারিখ / Date</th><th>সদস্য / Member</th><th>জমা / Deposit</th></tr></thead><tbody>${depositRows||'<tr><td colspan="3">কোনো জমা নেই / No deposits</td></tr>'}</tbody></table></div>
-      <div class="section-card"><h2>খরচের বিস্তারিত / Expense Details</h2>
-      <table><thead><tr><th>তারিখ / Date</th><th>বিবরণ / Description</th><th>প্রদানকারী / Paid by</th><th>উৎস / Source</th><th>পরিমাণ / Amount</th></tr></thead><tbody>${expenseRows||'<tr><td colspan="5">কোনো খরচ নেই / No expenses</td></tr>'}</tbody></table></div>
       <div class="note">এই রিপোর্টটি Smart-Mess অ্যাপের সংরক্ষিত তথ্য থেকে তৈরি। হিসাব যাচাইয়ের জন্য মূল অ্যাপের তথ্যের সঙ্গে মিলিয়ে নিন।</div>
     </main></body></html>`;
 
@@ -4706,12 +4706,12 @@ async function exportMonthlyPdf(mode='download'){
       hctx.fillStyle='#176b43';hctx.textBaseline='top';
       hctx.textAlign='left';
       hctx.font='bold 47px Arial, sans-serif';
-      hctx.fillText('SMART-MESS',215,14,600);
+      hctx.fillText('SMART-MESS',215,43,600);
       hctx.font='21px Arial, sans-serif';
-      hctx.fillText('Smart Accounting, Easy Mess Life',218,79,600);
+      hctx.fillText('Smart Accounting, Easy Mess Life',218,108,600);
       hctx.textAlign='right';
       hctx.font='bold 27px Arial, sans-serif';
-      hctx.fillText('MONTHLY MESS',1385,8,510);
+      hctx.fillText('MONTHLY MESS REPORT / SUMMARY',1385,8,510);
       hctx.font='bold 19px Arial, "Noto Sans Bengali", sans-serif';
       hctx.fillText('Mess: '+String(M.name||''),1385,61,510);
       hctx.font='19px Arial, sans-serif';
