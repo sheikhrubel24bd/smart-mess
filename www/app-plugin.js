@@ -16,6 +16,6 @@ window.SmartMessPdf = html2pdf;
 StatusBar.setOverlaysWebView({ overlay: true }).catch(error => {
   console.warn('Status bar overlay setup:', error);
 });
-StatusBar.setStyle({ style: Style.Light }).catch(error => {
+StatusBar.setStyle({ style: Style.Dark }).catch(error => {
   console.warn('Status bar style setup:', error);
 });
