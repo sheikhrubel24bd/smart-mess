@@ -5672,6 +5672,19 @@ const App = window.SmartMessApp;
 
 if(App){
  App.addListener('backButton',()=>{
+  // Pending Join Dashboard থেকে Back চাপলে Welcome page-এ ফিরুন।
+  // Firebase login session এবং পাঠানো Join Request অপরিবর্তিত থাকবে।
+  if(S.screen==='app' && S.pendingJoin){
+   NAV_HISTORY=[];
+   S.screen='welcome';
+   S.tab='home';
+   S.item=null;
+   S.view=null;
+   render();
+   window.scrollTo(0,0);
+   return;
+  }
+
   // Welcome page থেকে Back চাপলে history navigation নয়, exit confirmation দেখান।
   if(S.screen==='welcome'){
    const exitMsg = L === 'bn'
