@@ -4717,8 +4717,13 @@ async function exportMonthlyPdf(mode='download'){
         const info=await Filesystem.stat({path,directory:Directory.Cache});
         if(!info||Number(info.size)<=0)throw new Error('SHARE_FILE_EMPTY');
         const file=await Filesystem.getUri({path,directory:Directory.Cache});
-        await window.SmartMessShare.share({title:'Smart-Mess Report',text:'Monthly mess report',files:[file.uri],dialogTitle:T('PDF রিপোর্ট শেয়ার করুন','Share PDF Report')});
-        say(T('PDF শেয়ার করার জন্য প্রস্তুত','PDF is ready to share'));
+        try{
+          await window.SmartMessShare.share({title:'Smart-Mess Report',text:'Monthly mess report',files:[file.uri],dialogTitle:T('PDF রিপোর্ট শেয়ার করুন','Share PDF Report')});
+          say(T('PDF শেয়ার করার জন্য প্রস্তুত','PDF is ready to share'));
+        }catch(shareError){
+          if(/cancel/i.test(String(shareError?.message||shareError)))say(T('PDF তৈরি হয়েছে, কিন্তু আপনি শেয়ার মেনু বন্ধ করেছেন। ফাইল পাঠানো হয়নি।','PDF was created, but the share sheet was closed. The file was not shared.'));
+          else throw shareError;
+        }
       }else{
         // আগে Documents-এ লিখে stat দিয়ে নিশ্চিত করি ফাইল সত্যিই তৈরি হয়েছে।
         try{
@@ -4734,8 +4739,13 @@ async function exportMonthlyPdf(mode='download'){
           const fallbackInfo=await Filesystem.stat({path:fallbackPath,directory:Directory.Cache});
           if(!fallbackInfo||Number(fallbackInfo.size)<=0)throw saveError;
           const fallbackFile=await Filesystem.getUri({path:fallbackPath,directory:Directory.Cache});
-          await window.SmartMessShare.share({title:'Smart-Mess PDF Report',text:T('PDF তৈরি হয়েছে। Save to device নির্বাচন করে সংরক্ষণ করুন।','PDF created. Choose Save to device to store it.'),files:[fallbackFile.uri],dialogTitle:T('PDF সংরক্ষণ করুন','Save PDF')});
-          say(T('PDF তৈরি হয়েছে। Documents-এ সরাসরি রাখা যায়নি; শেয়ার মেনু থেকে Save to device নির্বাচন করুন।','PDF created. Direct save was unavailable; choose Save to device in the share menu.'));
+          try{
+            await window.SmartMessShare.share({title:'Smart-Mess PDF Report',text:T('PDF তৈরি হয়েছে। Save to device নির্বাচন করে সংরক্ষণ করুন।','PDF created. Choose Save to device to store it.'),files:[fallbackFile.uri],dialogTitle:T('PDF সংরক্ষণ করুন','Save PDF')});
+            say(T('PDF তৈরি হয়েছে। Documents-এ সরাসরি রাখা যায়নি; শেয়ার মেনু থেকে Save to device নির্বাচন করুন।','PDF created. Direct save was unavailable; choose Save to device in the share menu.'));
+          }catch(shareError){
+            if(/cancel/i.test(String(shareError?.message||shareError)))say(T('PDF তৈরি হয়েছে, কিন্তু আপনি সংরক্ষণের মেনু বন্ধ করেছেন। PDF ফোনে সেভ হয়নি। আবার Download চাপুন এবং Save to device নির্বাচন করুন।','PDF was created, but the save sheet was closed. It was not saved. Tap Download again and choose Save to device.'));
+            else throw shareError;
+          }
         }
       }
     }else if(mode==='share'&&navigator.canShare&&navigator.share){
