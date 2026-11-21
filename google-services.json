@@ -1,0 +1,39 @@
+{
+  "project_info": {
+    "project_number": "1009030541190",
+    "project_id": "smart-mess-294f3",
+    "storage_bucket": "smart-mess-294f3.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:1009030541190:android:ce0110f869a444d3c8c607",
+        "android_client_info": {
+          "package_name": "com.smartmess.app"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "1009030541190-olne73hiklegje74gmq9uet78n7c1gkm.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyBTk8Jl5TlLgl_gNySBLZI8pC6zP_ClcXY"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": [
+            {
+              "client_id": "1009030541190-olne73hiklegje74gmq9uet78n7c1gkm.apps.googleusercontent.com",
+              "client_type": 3
+            }
+          ]
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
