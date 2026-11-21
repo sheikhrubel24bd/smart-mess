@@ -32,6 +32,19 @@
   pointer-events:none;
 }
 
+/* Keep the status-bar area green on Welcome, Create Mess and Find Mess screens. */
+body.pre-mess-screen::before{
+  content:"";
+  position:fixed;
+  top:0;
+  left:0;
+  right:0;
+  height:max(env(safe-area-inset-top, 0px), 28px);
+  background:#16794f;
+  z-index:99998;
+  pointer-events:none;
+}
+
 /* Keep the native status-bar area green on Login and Sign Up screens too. */
 body.auth-screen::before{
   content:"";
@@ -5449,6 +5462,7 @@ async function deleteTask(id){
 
 function render(){
   document.body.classList.toggle('auth-screen',S.screen==='auth');
+  document.body.classList.toggle('pre-mess-screen',['welcome','create','join'].includes(S.screen));
   document.body.classList.toggle('app-screen',S.screen==='app');
   document.documentElement.lang=L;
   let v,nav='';
@@ -5562,6 +5576,15 @@ const App = window.SmartMessApp;
 
 if(App){
  App.addListener('backButton',()=>{
+  // Welcome page থেকে Back চাপলে history navigation নয়, exit confirmation দেখান।
+  if(S.screen==='welcome'){
+   const exitMsg = L === 'bn'
+    ? 'আপনি কি স্মার্ট মেস অ্যাপ থেকে বের হতে চান?'
+    : 'Do you want to exit Smart Mess?';
+   if(confirm(exitMsg)) App.exitApp();
+   return;
+  }
+
   if(NAV_HISTORY.length){
    goBack();
    return;
