@@ -253,7 +253,8 @@ body{margin:0;background:var(--bg);color:var(--ink);font-family:"Noto Sans Benga
 /* PULL TO REFRESH */
 #pullRefresh{
   position:fixed;
-  top:calc(env(safe-area-inset-top, 0px) + 8px);
+  /* টপবারের ঠিক নিচের প্রান্ত থেকে লোডার বের হবে */
+  top:calc(env(safe-area-inset-top, 0px) + 62px);
   left:50%;
   transform:translate(-50%,-100px);
   width:42px;
@@ -267,11 +268,17 @@ body{margin:0;background:var(--bg);color:var(--ink);font-family:"Noto Sans Benga
   justify-content:center;
   font-size:22px;
   z-index:999;
-  transition:transform .2s;
+  transition:transform .28s cubic-bezier(.2,.75,.25,1);
+}
+
+.top.app-topbar{
+  position:relative;
+  z-index:1000;
 }
 
 #pullRefresh.loading{
-  transform:translate(-50%,12px);
+  /* লোডিংয়ের সময় গোল বাটনটি টপবারের নিচে আংশিক দৃশ্যমান থাকবে */
+  transform:translate(-50%,-20px);
 }
 
 #pullRefresh.loading span{
@@ -5692,7 +5699,7 @@ render();
     }
 
     if(!auth.currentUser || !M){
-      indicator.style.transform='translate(-50%,-60px)';
+      indicator.style.transform='translate(-50%,-100px)';
       return;
     }
 
@@ -5711,7 +5718,7 @@ render();
     }finally{
       refreshing=false;
       indicator.classList.remove('loading');
-      indicator.style.transform='translate(-50%,-60px)';
+      indicator.style.transform='translate(-50%,-100px)';
     }
   },{passive:true});
 })();
