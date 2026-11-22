@@ -945,7 +945,7 @@ const cs=()=>CUR[(M&&M.cur)||'BDT'][0];
 const mny=n=>cs()+fmt(n);
 const dt=d=>new Date(d).toLocaleString(L=='bn'?'bn-BD':'en-GB',{day:'numeric',month:'short',hour:'numeric',minute:'2-digit',hour12:true});
 let REG=[],M=null;
- let S={screen:'auth',user:null,cur:'BDT',astep:'start',amode:'login',cc:'+880',ph:'',otp:'',via:'phone',memo:null,view:null,tab:'home',type:'meal',name:'',members:[],item:null,amt:'',payer:0,expSource:'pocket',toast:'',jcode:'',found:null,pend:null,pendingJoin:null,historyDetail:null};
+ let S={screen:'auth',user:null,cur:'BDT',astep:'start',amode:'login',cc:'+880',ph:'',otp:'',via:'phone',memo:null,view:null,tab:'home',type:null,typePrompt:null,name:'',members:[],item:null,amt:'',payer:0,expSource:'pocket',toast:'',jcode:'',found:null,pend:null,pendingJoin:null,historyDetail:null};
   let NAV_HISTORY=[];
 function mk(name,type,members,cur){
   let code;do code='SM-'+(1000+Math.floor(Math.random()*9000));while(REG.some(m=>m.code==code));
@@ -1721,7 +1721,9 @@ const messId=userData.messId;
   source:e.source||'pocket',         
   amt:e.amt,
   d:e.d,
-  memo:e.memo
+  memo:e.memo,
+  createdBy:e.createdBy||null,
+  createdAt:e.createdAt||null
 };
         });
       M.exp.sort((a,b)=>(Number(b.d)||0)-(Number(a.d)||0));
@@ -1964,11 +1966,11 @@ function createView(){
 
   <h2>${T('মেসের ধরন','Mess type')}</h2>
   <div class="types">
-    <button class="type ${S.type=='meal'?'on':''}" onclick="S.type='meal';render()">
+    <button class="type ${S.type=='meal'?'on':''}" onclick="chooseMessType('meal')">
       <span>🍽️</span><b>${T('মিল মেস','Meal mess')}</b>
       <small>${T('যে যত বেলা খায়, তত দেবে','Pay by meals eaten')}</small>
     </button>
-    <button class="type ${S.type=='regular'?'on':''}" onclick="S.type='regular';render()">
+    <button class="type ${S.type=='regular'?'on':''}" onclick="chooseMessType('regular')">
       <span>🏠</span><b>${T('রেগুলার মেস','Regular mess')}</b>
       <small>${T('সবাই সমান ভাগ করে দেবে','Everyone splits equally')}</small>
     </button>
@@ -1980,9 +1982,37 @@ function createView(){
   </div>
 
   <div style="height:16px"></div>
-  <button class="btn" onclick="start()">${T('মেস তৈরি করুন','Create mess')}</button>`;
+  <button class="btn" onclick="start()" ${S.type?'':'disabled'}>${T('মেস তৈরি করুন','Create mess')}</button>
+  ${S.typePrompt?messTypeConfirmView():''}`;
 }
 
+function chooseMessType(type){
+  if(type!=='meal'&&type!=='regular')return;
+  S.typePrompt=type;
+  render();
+}
+function confirmMessType(ok){
+  if(ok)S.type=S.typePrompt;
+  S.typePrompt=null;
+  render();
+}
+function messTypeConfirmView(){
+  const meal=S.typePrompt==='meal';
+  const question=meal
+    ?T('আপনার মেসের হিসাব কি সদস্যদের মিল সংখ্যার ভিত্তিতে হিসাব হবে?','Will your mess account be calculated based on each member’s meal count?')
+    :T('আপনার মেসের হিসাব কি সকল সদস্যের উপর সমানভাবে ভাগ হবে?','Will the mess expenses be divided equally among all members?');
+  return `
+    <div style="position:fixed;inset:0;z-index:9999;background:rgba(0,0,0,.58);display:flex;align-items:center;justify-content:center;padding:22px" onclick="if(event.target===this)confirmMessType(false)">
+      <div role="dialog" aria-modal="true" style="width:100%;max-width:420px;background:var(--card);color:var(--ink);border-radius:20px;padding:22px;box-shadow:0 18px 55px rgba(0,0,0,.28)">
+        <div style="font-size:30px;text-align:center;margin-bottom:10px">${meal?'🍽️':'🏠'}</div>
+        <h2 style="text-align:center;margin:0 0 18px;line-height:1.55">${question}</h2>
+        <div style="display:flex;gap:10px">
+          <button class="btn" style="flex:1" onclick="confirmMessType(true)">${T('হ্যাঁ','Yes')}</button>
+          <button class="btn ghost" style="flex:1" onclick="confirmMessType(false)">${T('না','No')}</button>
+        </div>
+      </div>
+    </div>`;
+}
 function addMem(){const v=document.getElementById('nmem').value.trim();if(v){S.members.push(v);render()}}
 async function start(){
   if(!auth.currentUser) return say(T('আগে লগইন করুন','Please login first'));
@@ -2303,12 +2333,73 @@ async function send(){
     say(messages[e.message]||'অনুরোধ পাঠানো যায়নি। Firebase Rules পরীক্ষা করতে হবে।');
   }
 }
+function activityTime(v){
+  if(!v)return 0;
+  if(typeof v==='number')return v;
+  if(typeof v.toMillis==='function')return v.toMillis();
+  if(typeof v.toDate==='function')return v.toDate().getTime();
+  const n=Date.parse(v);
+  return Number.isFinite(n)?n:0;
+}
+function activityNotifications(){
+  const uid=auth.currentUser?.uid;
+  const rows=[];
+  (M.exp||[]).forEach(e=>{
+    if(!e.createdBy||e.createdBy===uid)return;
+    const memberIndex=M.memberUids.indexOf(e.createdBy);
+    const who=memberIndex>=0?M.members[memberIndex]:T('একজন সদস্য','A member');
+    const itemName=e.item==='other'?(e.otherName||T('অন্যান্য খরচ','Other expense')):nm(e.item);
+    rows.push({
+      kind:'expense',
+      id:e.id,
+      time:activityTime(e.createdAt)||Number(e.d)||0,
+      who,
+      title:T('নতুন খরচ যোগ হয়েছে','New expense added'),
+      detail:itemName+' · '+cs()+fmt(e.amt),
+      target:'expenses'
+    });
+  });
+  (M.tasks||[]).forEach(t=>{
+    if(!t.createdBy||t.createdBy===uid)return;
+    const memberIndex=M.memberUids.indexOf(t.createdBy);
+    const who=memberIndex>=0?M.members[memberIndex]:T('একজন সদস্য','A member');
+    rows.push({
+      kind:'task',
+      id:t.id,
+      time:activityTime(t.createdAt)||0,
+      who,
+      title:T('নতুন টাস্ক যোগ হয়েছে','New task added'),
+      detail:(t.title||'')+(t.quantity?' · '+T('পরিমাণ','Quantity')+': '+t.quantity:''),
+      target:'task'
+    });
+  });
+  return rows.sort((a,b)=>b.time-a.time).slice(0,5);
+}
 function reqView(){
-  const rows=M.reqs.map((r,i)=>({r,i}));const P=rows.filter(x=>x.r.s=='p'),D=rows.filter(x=>x.r.s!='p');
-  return `<h1>🔔 ${T('যোগদানের অনুরোধ','Join requests')}</h1>
-  ${P.length?P.map(({r,i})=>`<div class="card"><b style="font-size:18px">${esc(r.name)}</b><div class="mut">${T('আপনার মেসে যোগ দিতে চায়','wants to join your mess')}</div>
-  <div class="row" style="margin-top:10px"><button class="btn" onclick="decide(${i},true)">✅ ${T('গ্রহণ','Accept')}</button><button class="btn ghost" style="color:var(--bad);border-color:var(--bad)" onclick="decide(${i},false)">❌ ${T('বাতিল','Reject')}</button></div></div>`).join(''):`<div class="card mut">${T('কোনো নতুন অনুরোধ নেই।','No new requests.')}</div>`}
-  ${D.length?`<h2>${T('আগের অনুরোধ','Earlier requests')}</h2><div class="card">${D.map(({r})=>`<div class="li"><div class="t">${esc(r.name)}</div><span class="tag ${r.s=='a'?'pos':'neg'}">${r.s=='a'?T('অনুমোদিত','Accepted'):T('বাতিল','Rejected')}</span></div>`).join('')}</div>`:''}`;
+  const rows=(M.reqs||[]).map((r,i)=>({r,i}));
+  const P=rows.filter(x=>x.r.s=='p'),D=rows.filter(x=>x.r.s!='p');
+  const notices=activityNotifications();
+  return `
+    <h1>🔔 ${T('নোটিফিকেশন','Notifications')}</h1>
+    <div class="mut" style="margin:-4px 0 12px">${T('সর্বশেষ ৫টি কার্যক্রম','Latest 5 activities')}</div>
+    ${notices.length?notices.map(n=>`
+      <button class="card" style="width:100%;text-align:left;border:1px solid var(--bd);margin-bottom:10px;color:var(--ink)" onclick="go('${n.target}')">
+        <div class="row" style="align-items:center;gap:9px">
+          <span style="font-size:22px">${n.kind==='expense'?'🧾':'📋'}</span>
+          <b style="flex:1">${n.title}</b>
+          <small class="mut">${n.time?esc(dt(n.time)):''}</small>
+        </div>
+        <div style="font-size:14px;margin-top:7px">${T('যোগ করেছেন','Added by')}: <b>${esc(n.who)}</b></div>
+        <div style="font-size:14px;margin-top:4px;color:var(--mut)">${esc(n.detail)}</div>
+      </button>
+    `).join(''):`<div class="card mut">${T('নতুন কোনো নোটিফিকেশন নেই।','No new notifications.')}</div>`}
+    ${M.role==='admin'?`
+      <h2 style="margin-top:22px">${T('যোগদানের অনুরোধ','Join requests')}</h2>
+      ${P.length?P.map(({r,i})=>`<div class="card"><b style="font-size:18px">${esc(r.name)}</b><div class="mut">${T('আপনার মেসে যোগ দিতে চায়','wants to join your mess')}</div>
+        <div class="row" style="margin-top:10px"><button class="btn" onclick="decide(${i},true)">✅ ${T('গ্রহণ','Accept')}</button><button class="btn ghost" style="color:var(--bad);border-color:var(--bad)" onclick="decide(${i},false)">❌ ${T('বাতিল','Reject')}</button></div></div>`).join(''):`<div class="card mut">${T('কোনো নতুন অনুরোধ নেই।','No new requests.')}</div>`}
+      ${D.length?`<h2>${T('আগের অনুরোধ','Earlier requests')}</h2><div class="card">${D.map(({r})=>`<div class="li"><div class="t">${esc(r.name)}</div><span class="tag ${r.s=='a'?'pos':'neg'}">${r.s=='a'?T('অনুমোদিত','Accepted'):T('বাতিল','Rejected')}</span></div>`).join('')}</div>`:''}
+    `:''}
+  `;
 }
 async function decide(i,ok){
   const r=M.reqs[i];
