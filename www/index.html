@@ -378,7 +378,7 @@ nav button .nav-label{display:block;width:100%;font-size:9px;line-height:1.15;wh
   filter:none;
 }
 .top.app-topbar .top-icon .i-settings{background-position:16.6667% 0}
-.top.app-topbar .top-icon i{position:absolute;top:0;right:0;background:#ffcf4a;color:#263629;font-style:normal;font-size:10px;font-weight:700;border-radius:99px;min-width:15px;padding:0 3px;text-align:center}
+.top.app-topbar .top-icon i{position:absolute;top:-1px;right:-1px;background:#e53935;color:#fff;font-style:normal;font-size:11px;font-weight:800;border-radius:99px;min-width:17px;height:17px;line-height:17px;padding:0 3px;text-align:center;box-shadow:0 1px 3px rgba(0,0,0,.22);border:1px solid rgba(255,255,255,.9)}
 .nav-icon{width:23px;height:23px}
 
 nav button.on{background:#35a866;color:#fff;font-weight:800}
@@ -1200,9 +1200,10 @@ function topbar(){
   }
 
   if(app){
+    const badgeCount=Math.min(5,p+notificationUnreadCount());
     return `<div class="top app-topbar">
       <span class="sp"></span>
-      <button class="top-icon" onclick="go('req')" aria-label="${T('নোটিফিকেশন','Notifications')}"><span class="sm-icon i-bell"></span>${p?`<i>${bn(p)}</i>`:''}</button>
+      <button class="top-icon" onclick="go('req')" aria-label="${T('নোটিফিকেশন','Notifications')}"><span class="sm-icon i-bell"></span>${badgeCount?`<i>${L=='bn'?bn(badgeCount):badgeCount}</i>`:''}</button>
       <button class="lang" onclick="tl()" aria-label="Language">${L=='bn'?'EN':'বাং'}</button>
       <button class="top-icon" onclick="go('settings')" aria-label="${T('সেটিংস','Settings')}"><span class="top-settings-icon"></span></button>
     </div>`;
@@ -2375,10 +2376,34 @@ function activityNotifications(){
   });
   return rows.sort((a,b)=>b.time-a.time).slice(0,5);
 }
+function notificationSeenKey(){
+  const uid=auth.currentUser?.uid||'guest';
+  return 'smartmess_notification_seen_'+(M?.id||'no-mess')+'_'+uid;
+}
+function notificationSeenIds(){
+  try{
+    const saved=JSON.parse(localStorage.getItem(notificationSeenKey())||'[]');
+    return Array.isArray(saved)?saved:[];
+  }catch(e){return [];}
+}
+function notificationUnreadCount(){
+  if(!M||!auth.currentUser)return 0;
+  const seen=new Set(notificationSeenIds());
+  return activityNotifications().filter(n=>!seen.has(n.kind+':'+n.id)).length;
+}
+function markNotificationsRead(notices){
+  if(!M||!auth.currentUser)return;
+  try{
+    const seen=new Set(notificationSeenIds());
+    (notices||activityNotifications()).forEach(n=>seen.add(n.kind+':'+n.id));
+    localStorage.setItem(notificationSeenKey(),JSON.stringify(Array.from(seen).slice(-100)));
+  }catch(e){console.warn('Could not save notification read state:',e);}
+}
 function reqView(){
   const rows=(M.reqs||[]).map((r,i)=>({r,i}));
   const P=rows.filter(x=>x.r.s=='p'),D=rows.filter(x=>x.r.s!='p');
   const notices=activityNotifications();
+  markNotificationsRead(notices);
   return `
     <h1>🔔 ${T('নোটিফিকেশন','Notifications')}</h1>
     <div class="mut" style="margin:-4px 0 12px">${T('সর্বশেষ ৫টি কার্যক্রম','Latest 5 activities')}</div>
