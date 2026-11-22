@@ -277,8 +277,8 @@ body{margin:0;background:var(--bg);color:var(--ink);font-family:"Noto Sans Benga
 }
 
 #pullRefresh.loading{
-  /* লোডিং শুরু হলে বাটনটি টপবারের নিচে সম্পূর্ণ বডিতে বের হবে */
-  transform:translate(-50%,8px);
+  /* 42px বাটনটি 62px টপবারের নিচে পুরোপুরি দৃশ্যমান থাকবে */
+  transform:translate(-50%,21px);
 }
 
 #pullRefresh.loading span{
@@ -5705,6 +5705,8 @@ render();
 
     refreshing=true;
     indicator.classList.add('loading');
+    // touchmove-এর inline transform সরিয়ে CSS loading অবস্থান কার্যকর করি
+    indicator.style.transform='';
 
 
     try{
