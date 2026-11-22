@@ -250,36 +250,40 @@ body{margin:0;background:var(--bg);color:var(--ink);font-family:"Noto Sans Benga
 :root[data-theme="dark"] .regular-expense{border-color:var(--bd)}
 :root[data-theme="dark"] .regular-expense-info small{color:var(--mut)}
 
-/* COMPLETE PULL-TO-REFRESH BUTTON */
+/* PULL-TO-REFRESH: COMPLETE BUTTON */
 #pullRefresh{
   position:fixed;
-  top:calc(env(safe-area-inset-top, 0px) + 70px);
+  top:calc(env(safe-area-inset-top,0px) + 70px);
   left:50%;
-  width:46px;
-  height:46px;
+  width:48px;
+  height:48px;
   padding:0;
-  border:0;
+  border:2px solid #d7eee1;
   border-radius:50%;
   display:flex;
   align-items:center;
   justify-content:center;
   background:#fff;
   color:#16794f;
-  box-shadow:0 3px 12px rgba(0,0,0,.22);
-  font-size:27px;
+  box-shadow:0 4px 14px rgba(0,0,0,.22);
+  font-size:29px;
+  font-weight:700;
   line-height:1;
-  z-index:999;
+  z-index:1001;
   opacity:0;
+  visibility:hidden;
   pointer-events:none;
-  transform:translate(-50%,-160%);
-  transition:transform .3s cubic-bezier(.2,.75,.25,1),opacity .2s ease;
+  transform:translate(-50%,-150%);
+  transition:transform .28s ease,opacity .2s ease,visibility .2s ease;
 }
 #pullRefresh span{display:block;line-height:1}
+#pullRefresh.pulling,
 #pullRefresh.loading{
   opacity:1;
+  visibility:visible;
   transform:translate(-50%,0);
 }
-#pullRefresh.loading span{animation:refreshSpin .8s linear infinite}
+#pullRefresh.loading span{animation:refreshSpin .75s linear infinite}
 @keyframes refreshSpin{to{transform:rotate(360deg)}}
 .top.app-topbar{position:relative;z-index:1000}
 
@@ -5654,55 +5658,54 @@ function render(){
   document.getElementById('app').innerHTML=topbar()+(S.screen==='app'?'<div class="app-content">'+v+'</div>':v)+nav+(S.view!=null&&M.exp[S.view]?`<div class="ov" onclick="S.view=null;render()"><img src="${M.exp[S.view].memo}" alt=""></div>`:'')+(S.toast?`<div class="toast">${esc(S.toast)}</div>`:'');
 }
 render();
-// PULL TO REFRESH
+// PULL TO REFRESH — dedicated button states, no inline transform
 (function(){
   let startY=0;
   let pulling=false;
   let refreshing=false;
-  const limit=75;
+  const threshold=75;
   const indicator=document.getElementById('pullRefresh');
 
+  function hideButton(){
+    indicator.classList.remove('pulling','loading');
+  }
+
   document.addEventListener('touchstart',e=>{
+    if(refreshing || e.touches.length!==1) return;
     const area=document.querySelector('.app-content');
-    if(refreshing || (area?area.scrollTop:window.scrollY)>0) return;
+    if(!area || area.scrollTop>0) return;
     startY=e.touches[0].clientY;
     pulling=true;
   },{passive:true});
 
   document.addEventListener('touchmove',e=>{
-    if(!pulling || refreshing) return;
-
+    if(!pulling || refreshing || e.touches.length!==1) return;
     const distance=e.touches[0].clientY-startY;
-
     const area=document.querySelector('.app-content');
-    if(distance>0 && (area?area.scrollTop:window.scrollY)<=0){
-      indicator.style.transform=
-        `translate(-50%,${Math.max(0,Math.min(distance-60,18))}px)`;
+    if(distance>8 && area && area.scrollTop<=0){
+      indicator.classList.add('pulling');
+    }else if(distance<=8){
+      indicator.classList.remove('pulling');
     }
   },{passive:true});
 
   document.addEventListener('touchend',async e=>{
     if(!pulling || refreshing) return;
     pulling=false;
-
     const distance=e.changedTouches[0].clientY-startY;
 
-    if(distance<limit){
-      indicator.style.transform='';
-      indicator.style.opacity='';
+    if(distance<threshold){
+      hideButton();
       return;
     }
-
     if(!auth.currentUser || !M){
-      indicator.style.transform='translate(-50%,-100px)';
+      hideButton();
       return;
     }
 
     refreshing=true;
+    indicator.classList.remove('pulling');
     indicator.classList.add('loading');
-    // touchmove-এর inline transform সরিয়ে CSS loading অবস্থান কার্যকর করি
-    indicator.style.transform='';
-
 
     try{
       await after();
@@ -5714,12 +5717,15 @@ render();
       say(T('ডাটা আপডেট করা যায়নি','Refresh failed'));
     }finally{
       refreshing=false;
-      indicator.classList.remove('loading');
-      indicator.style.transform='translate(-50%,-100px)';
+      hideButton();
     }
   },{passive:true});
-})();
 
+  document.addEventListener('touchcancel',()=>{
+    pulling=false;
+    if(!refreshing) hideButton();
+  },{passive:true});
+})();
 
 async function hasInternetConnection(){
   if(!navigator.onLine) return false;
