@@ -250,44 +250,38 @@ body{margin:0;background:var(--bg);color:var(--ink);font-family:"Noto Sans Benga
 :root[data-theme="dark"] .regular-expense{border-color:var(--bd)}
 :root[data-theme="dark"] .regular-expense-info small{color:var(--mut)}
 
-/* PULL TO REFRESH */
+/* COMPLETE PULL-TO-REFRESH BUTTON */
 #pullRefresh{
   position:fixed;
-  /* টপবারের ঠিক নিচের প্রান্ত থেকে লোডার বের হবে */
-  top:calc(env(safe-area-inset-top, 0px) + 62px);
+  top:calc(env(safe-area-inset-top, 0px) + 70px);
   left:50%;
-  transform:translate(-50%,-100px);
-  width:42px;
-  height:42px;
+  width:46px;
+  height:46px;
+  padding:0;
+  border:0;
   border-radius:50%;
-  background:var(--card);
-  color:var(--pri);
-  box-shadow:0 2px 10px #0002;
   display:flex;
   align-items:center;
   justify-content:center;
-  font-size:22px;
+  background:#fff;
+  color:#16794f;
+  box-shadow:0 3px 12px rgba(0,0,0,.22);
+  font-size:27px;
+  line-height:1;
   z-index:999;
-  transition:transform .28s cubic-bezier(.2,.75,.25,1);
+  opacity:0;
+  pointer-events:none;
+  transform:translate(-50%,-160%);
+  transition:transform .3s cubic-bezier(.2,.75,.25,1),opacity .2s ease;
 }
-
-.top.app-topbar{
-  position:relative;
-  z-index:1000;
-}
-
+#pullRefresh span{display:block;line-height:1}
 #pullRefresh.loading{
-  /* 42px বাটনটি 62px টপবারের নিচে পুরোপুরি দৃশ্যমান থাকবে */
-  transform:translate(-50%,21px);
+  opacity:1;
+  transform:translate(-50%,0);
 }
-
-#pullRefresh.loading span{
-  animation:refreshSpin .8s linear infinite;
-}
-
-@keyframes refreshSpin{
-  to{transform:rotate(360deg)}
-}
+#pullRefresh.loading span{animation:refreshSpin .8s linear infinite}
+@keyframes refreshSpin{to{transform:rotate(360deg)}}
+.top.app-topbar{position:relative;z-index:1000}
 
 h1{font-size:26px;margin:4px 0 2px}h2{font-size:18px;margin:18px 0 8px}
 .mut{color:var(--mut);font-size:14px}
@@ -904,7 +898,7 @@ body.app-screen #app .app-content{
   <div class="splash-loading">Loading...</div>
 </div>
 <div id="app"></div>
-<div id="pullRefresh"><span>↻</span></div>
+<button id="pullRefresh" type="button" aria-label="Refreshing"><span>↻</span></button>
 
   <script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-auth-compat.js"></script>
@@ -5683,7 +5677,7 @@ render();
     const area=document.querySelector('.app-content');
     if(distance>0 && (area?area.scrollTop:window.scrollY)<=0){
       indicator.style.transform=
-        `translate(-50%,${Math.min(distance-60,12)}px)`;
+        `translate(-50%,${Math.max(0,Math.min(distance-60,18))}px)`;
     }
   },{passive:true});
 
