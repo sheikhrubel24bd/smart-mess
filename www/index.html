@@ -3738,6 +3738,10 @@ function settingsView(){
     M.members[i]=name;
     S.user.name=name;
 
+    // Keep the cached member list in sync with the updated profile name.
+    const allMember=(M.allMembers||[]).find(m=>m.uid===uid);
+    if(allMember) allMember.name=name;
+
     say(T('নাম পরিবর্তন হয়েছে','Name updated'));
     render();
 
@@ -4297,8 +4301,10 @@ function homeView(){
       <div class="regular-summary-head">
         <h2 class="regular-section-title">${T('মেসের সারসংক্ষেপ','Mess Summary')}</h2>
         ${(()=>{
-          const me=calcAllMembers().find(a=>a.uid===auth.currentUser?.uid);
-          const myName=me?.name||S.user?.name||'';
+          const uid=auth.currentUser?.uid;
+          const me=calcAllMembers().find(a=>a.uid===uid);
+          const myIndex=M.memberUids.indexOf(uid);
+          const myName=(myIndex>=0?M.members[myIndex]:'')||S.user?.name||me?.name||'';
           const balance=Number(me?.bal)||0;
           const status=Math.abs(balance)<.005
             ?T('হিসাব সমান','Settled')
