@@ -26,7 +26,7 @@
   top:0;
   left:0;
   right:0;
-  height:max(env(safe-area-inset-top, 0px), 28px);
+  height:max(var(--safe-area-inset-top, env(safe-area-inset-top, 0px)), 28px);
   background:#16794f;
   z-index:1;
   pointer-events:none;
@@ -39,7 +39,7 @@ body.pre-mess-screen::before{
   top:0;
   left:0;
   right:0;
-  height:max(env(safe-area-inset-top, 0px), 28px);
+  height:max(var(--safe-area-inset-top, env(safe-area-inset-top, 0px)), 28px);
   background:#16794f;
   z-index:99998;
   pointer-events:none;
@@ -52,7 +52,7 @@ body.auth-screen::before{
   top:0;
   left:0;
   right:0;
-  height:max(env(safe-area-inset-top, 0px), 28px);
+  height:max(var(--safe-area-inset-top, env(safe-area-inset-top, 0px)), 28px);
   background:#16794f;
   z-index:99998;
   pointer-events:none;
@@ -145,18 +145,18 @@ body.auth-screen::before{
 }
 
 :root{--bg:#f4f6f1;--card:#fff;--ink:#17261f;--mut:#667a70;--pri:#16794f;--pri2:#dff1e7;--on:#fff;--bad:#c93d3d;--bad2:#fbe6e6;--bd:#dde4dc;--warm:#f2b134;
-box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}
+box-sizing:border-box;padding-top:var(--safe-area-inset-top, env(safe-area-inset-top, 0px));padding-bottom:env(safe-area-inset-bottom,0px)}
 @media (prefers-color-scheme:dark){:root:not([data-theme="light"]){--bg:#121a16;--card:#1b2620;--ink:#e8f0ea;--mut:#92a89b;--pri:#3dbd85;--pri2:#1f3a2e;--on:#0b1a12;--bad:#ff7b7b;--bad2:#3b2222;--bd:#2b3a32}}
 :root[data-theme="dark"]{--bg:#121a16;--card:#1b2620;--ink:#e8f0ea;--mut:#92a89b;--pri:#3dbd85;--pri2:#1f3a2e;--on:#0b1a12;--bad:#ff7b7b;--bad2:#3b2222;--bd:#2b3a32}
 *{box-sizing:border-box}
-html{scroll-padding-top:env(safe-area-inset-top,0px)}
+html{scroll-padding-top:var(--safe-area-inset-top, env(safe-area-inset-top, 0px))}
 body{margin:0;background:var(--bg);color:var(--ink);font-family:"Noto Sans Bengali","Hind Siliguri","Kalpurush",system-ui,sans-serif;font-size:16px;line-height:1.5;-webkit-tap-highlight-color:transparent}
 #app{max-width:480px;margin:0 auto;padding:16px 14px 112px}
 .top.app-topbar{
   display:flex;align-items:center;gap:9px;
-  min-height:calc(62px + env(safe-area-inset-top,0px));
-  margin:calc(-16px - env(safe-area-inset-top,0px)) -14px 14px;
-  padding:env(safe-area-inset-top,0px) 14px 0;
+  min-height:calc(62px + var(--safe-area-inset-top, env(safe-area-inset-top, 0px)));
+  margin:calc(-16px - var(--safe-area-inset-top, env(safe-area-inset-top, 0px))) -14px 14px;
+  padding:var(--safe-area-inset-top, env(safe-area-inset-top, 0px)) 14px 0;
   background:#16794f;color:#fff;
   box-shadow:0 3px 10px #0c513326;
 }
@@ -253,7 +253,7 @@ body{margin:0;background:var(--bg);color:var(--ink);font-family:"Noto Sans Benga
 /* PULL-TO-REFRESH: COMPLETE BUTTON */
 #pullRefresh{
   position:fixed;
-  top:calc(env(safe-area-inset-top,0px) + 70px);
+  top:calc(var(--safe-area-inset-top, env(safe-area-inset-top, 0px)) + 70px);
   left:50%;
   width:48px;
   height:48px;
@@ -827,9 +827,9 @@ body.app-screen #app{
 }
 body.app-screen #app .top.app-topbar{
   position:relative;top:auto;z-index:60;flex:0 0 auto;
-  width:100%;min-height:calc(62px + env(safe-area-inset-top,0px));
-  height:calc(62px + env(safe-area-inset-top,0px));
-  margin:0;padding:env(safe-area-inset-top,0px) 14px 0;
+  width:100%;min-height:calc(62px + var(--safe-area-inset-top, env(safe-area-inset-top, 0px)));
+  height:calc(62px + var(--safe-area-inset-top, env(safe-area-inset-top, 0px)));
+  margin:0;padding:var(--safe-area-inset-top, env(safe-area-inset-top, 0px)) 14px 0;
 }
 body.app-screen #app .app-content{
   flex:1 1 auto;min-height:0;width:100%;
@@ -839,11 +839,11 @@ body.app-screen #app .app-content{
 }
 @media(min-width:700px){
   body.app-screen #app .app-content{padding:24px 26px 126px}
-  body.app-screen #app .top.app-topbar{padding:env(safe-area-inset-top,0px) 26px 0}
+  body.app-screen #app .top.app-topbar{padding:var(--safe-area-inset-top, env(safe-area-inset-top, 0px)) 26px 0}
 }
 @media(min-width:1024px){
   body.app-screen #app .app-content{padding:28px 34px 132px}
-  body.app-screen #app .top.app-topbar{padding:env(safe-area-inset-top,0px) 34px 0}
+  body.app-screen #app .top.app-topbar{padding:var(--safe-area-inset-top, env(safe-area-inset-top, 0px)) 34px 0}
 }
 
 /* Shared dropdown menu anchored below the three-dot action button */
