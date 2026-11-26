@@ -112,45 +112,6 @@ jobs:
               path.write_text(source)
           print(f"Disabled WebView overscroll in {path}")
           PY
-      - name: Set Smart-Mess green status bar and white icons
-        run: |
-          python3 - <<'PY'
-          from pathlib import Path
-          import re
-
-          style_files = list(Path("android/app/src/main/res").glob("values*/styles.xml"))
-          if not style_files:
-              raise SystemExit("Android styles.xml not found")
-
-          names = {
-              "android:statusBarColor": "#16794f",
-              "android:windowLightStatusBar": "false",
-              "android:windowOptOutEdgeToEdgeEnforcement": "true",
-          }
-
-          updated = 0
-          for path in style_files:
-              source = path.read_text()
-              def patch_style(match):
-                  nonlocal_dummy = None
-                  block = match.group(0)
-                  for name, value in names.items():
-                      item = f'<item name="{name}">{value}</item>'
-                      pattern = re.compile(r'<item\s+name="' + re.escape(name) + r'">.*?</item>', re.S)
-                      if pattern.search(block):
-                          block = pattern.sub(item, block)
-                      else:
-                          block = block.replace("</style>", "    " + item + "\n  </style>")
-                  return block
-              changed = re.sub(r'<style[^>]*>.*?</style>', patch_style, source, flags=re.S)
-              if changed != source:
-                  updated += 1
-                  path.write_text(changed)
-
-          if updated == 0:
-              raise SystemExit("No Android theme was updated")
-          print(f"Updated {updated} Android theme file(s)")
-          PY
       - name: Prepare app icon source
         run: |
           mkdir -p assets
