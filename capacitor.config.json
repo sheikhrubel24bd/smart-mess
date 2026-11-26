@@ -3,10 +3,11 @@
   "appName": "Smart Mess",
   "webDir": "www",
   "plugins": {
-    "StatusBar": {
-      "overlaysWebView": false,
+    "SystemBars": {
+      "insetsHandling": "css",
+      "initialViewportFitValueHint": "cover",
       "style": "DARK",
-      "backgroundColor": "#16794f"
+      "hidden": false
     }
   }
 }
