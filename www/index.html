@@ -769,8 +769,21 @@ select{border:1.5px solid var(--bd);background:var(--card);color:var(--ink);bord
 @media(max-height:700px){.welcome-brand{margin-bottom:12px}.welcome-brand img{width:76px;height:76px}.welcome-greeting-card{margin-bottom:12px}.welcome-option{min-height:78px}.welcome-note{margin-top:8px}}
 
 
-/* RESPONSIVE APP LAYOUT — auth screens retain their existing width */
-body.auth-screen #app{max-width:480px}
+/* SMART-MESS AUTH AND PASSWORD RESET PAGES */
+body.auth-screen #app{max-width:480px;padding:12px 18px 24px}
+.auth-brand{text-align:center;margin:2px 0 15px}
+.auth-brand img{display:block;width:88px;height:88px;object-fit:contain;margin:0 auto 0}
+.auth-brand h1{margin:0;color:#16794f;font-size:27px;font-weight:850;line-height:1.2}
+.auth-brand p{margin:3px 0 0;color:#527461;font-size:13px;text-align:center}
+.auth-link{color:#1976d2!important}
+.forgot-page{padding:2px 0 20px}
+.forgot-card{background:var(--card);border:1px solid var(--bd);border-radius:16px;padding:20px 16px;box-shadow:0 4px 14px rgba(22,121,79,.07)}
+.forgot-card h2{margin:0 0 7px;text-align:center;color:var(--ink);font-size:20px}
+.forgot-card p{margin:0 0 17px;text-align:center;color:var(--mut);font-size:13px;line-height:1.6}
+.forgot-card input{width:100%;padding:13px;border:1.5px solid var(--bd);border-radius:10px;background:var(--card);color:var(--ink);font:inherit}
+.forgot-submit{margin-top:13px}
+.forgot-back{display:block;margin:15px auto 0;padding:7px 12px;border:0;background:transparent;color:#1976d2;font-size:14px;font-weight:600}
+body.auth-screen #app{max-width:480px;padding:12px 18px 24px}
 #app{width:100%;min-width:0}
 #app *{min-width:0}
 #app img,#app svg,#app video{max-width:100%}
@@ -1222,8 +1235,11 @@ function topbar(){
   function authView(){
   const m=S.amode=='signup';
   return `
-  <div style="text-align:center;margin:8px 0 18px"><img src="logo.png" alt="Smart-Mess" style="width:104px;height:104px;object-fit:contain"><h1 style="margin:5px 0 0">Smart Mess</h1></div>
-  <div class="mut">${T('মেসের হিসাব, সহজে','Mess accounts, made simple')}</div>
+  <div class="auth-brand">
+    <img src="logo.png" alt="Smart-Mess">
+    <h1>Smart-Mess</h1>
+    <p>${T('মেসের হিসাব সহজে','Mess accounts, made simple')}</p>
+  </div>
 
   <div class="types" style="margin-top:18px">
     <button class="type ${!m?'on':''}" onclick="S.amode='login';render()">
@@ -1244,7 +1260,7 @@ function topbar(){
 
   <h2>${T('পাসওয়ার্ড','Password')}</h2>
   <input type="password" id="authPass" placeholder="${T('কমপক্ষে ৬ অক্ষর','At least 6 characters')}" style="width:100%;padding:12px;border:1.5px solid var(--bd);border-radius:10px;background:var(--card);color:var(--ink);font:inherit" autocomplete="${m?'new-password':'current-password'}">
-  ${!m?`<div style="text-align:right;margin-top:6px"><a href="#" onclick="event.preventDefault();resetPassword()" style="font-size:13px;color:var(--g);text-decoration:none;font-weight:500">${T('পাসওয়ার্ড ভুলে গেছেন?','Forgot password?')}</a></div>`:''}
+  ${!m?`<div style="text-align:right;margin-top:6px"><a href="#" onclick="event.preventDefault();openForgotPassword()" class="auth-link" style="font-size:13px;text-decoration:none;font-weight:600">${T('পাসওয়ার্ড ভুলে গেছেন?','Forgot password?')}</a></div>`:''}
 
   <div style="height:16px"></div>
   <button class="btn" id="authBtn" onclick="authAction()">
@@ -1257,18 +1273,18 @@ function topbar(){
       <span style="height:1px;flex:1;background:var(--bd)"></span>
     </div>
     <div style="text-align:center;margin:2px 0 4px">
-      <a href="#" id="googleAuthBtn" onclick="event.preventDefault();googleAuthAction()" style="display:inline-flex;align-items:center;justify-content:center;gap:9px;padding:8px 12px;color:var(--ink);font-size:14px;font-weight:600;text-decoration:none;border-radius:9px">
+      <a href="#" id="googleAuthBtn" onclick="event.preventDefault();googleAuthAction()" style="display:inline-flex;align-items:center;justify-content:center;gap:9px;padding:8px 12px;color:#1976d2;font-size:14px;font-weight:600;text-decoration:none;border-radius:9px">
         <svg width="19" height="19" viewBox="0 0 48 48" aria-hidden="true"><path fill="#FFC107" d="M43.6 24.5c0-1.4-.1-2.8-.4-4.1H24v7.8h11a9.4 9.4 0 0 1-4.1 6.2v5.1h6.6c3.9-3.6 6.1-8.8 6.1-15z"/><path fill="#FF3D00" d="M24 44c5.5 0 10.1-1.8 13.5-4.9l-6.6-5.1c-1.8 1.2-4.1 1.9-6.9 1.9-5.3 0-9.8-3.6-11.4-8.4H5.8v5.3A20 20 0 0 0 24 44z"/><path fill="#4CAF50" d="M12.6 27.5a12 12 0 0 1 0-7v-5.3H5.8a20 20 0 0 0 0 17.6z"/><path fill="#1976D2" d="M24 12.1c3 0 5.7 1 7.8 3.1l5.8-5.8C34.1 6.1 29.5 4 24 4A20 20 0 0 0 5.8 15.2l6.8 5.3c1.6-4.8 6.1-8.4 11.4-8.4z"/></svg>
         <span>${T('Google দিয়ে চালিয়ে যান','Continue with Google')}</span>
       </a>
     </div>
     <div style="text-align:center;margin:24px 0 10px;font-size:12px;line-height:2;color:var(--mut)">
-      <a href="https://sheikhrubel24bd.github.io/smart-mess-legal/privacy-policy.html" target="_blank" rel="noopener noreferrer" style="color:var(--g);text-decoration:none">${T('গোপনীয়তা নীতি','Privacy Policy')}</a>
+      <a href="https://sheikhrubel24bd.github.io/smart-mess-legal/privacy-policy.html" target="_blank" rel="noopener noreferrer" style="color:#1976d2;text-decoration:none">${T('গোপনীয়তা নীতি','Privacy Policy')}</a>
       <span style="padding:0 5px">|</span>
       <a href="https://sheikhrubel24bd.github.io/smart-mess-legal/terms.html" target="_blank" rel="noopener noreferrer" style="color:var(--g);text-decoration:none">${T('শর্তাবলী','Terms & Conditions')}</a>
       <span style="padding:0 5px">|</span>
       <a href="https://sheikhrubel24bd.github.io/smart-mess-legal/account-delete.html" target="_blank" rel="noopener noreferrer" style="color:var(--g);text-decoration:none">${T('অ্যাকাউন্ট ডিলিট','Account Delete')}</a>
-      <div style="margin-top:5px">© Smart-Mess</div>
+      <div style="margin-top:5px;color:#16794f;font-weight:600">© Smart-Mess</div>
     </div>
   `:''}
   `;
@@ -1411,16 +1427,52 @@ async function googleAuthAction(){
   }
 }
 
-async function resetPassword(){
-  const email=document.getElementById('authEmail').value.trim();
-  if(!email||!email.includes('@'))
-    return say(T('আগে ইমেইল লিখুন','Enter your email first'));
+function openForgotPassword(){
+  S.email=document.getElementById('authEmail')?.value.trim()||S.email||'';
+  to('forgot');
+}
 
+function forgotPasswordView(){
+  return `
+    <div class="forgot-page">
+      <div class="auth-brand">
+        <img src="logo.png" alt="Smart-Mess">
+        <h1>Smart-Mess</h1>
+        <p>${T('মেসের হিসাব সহজে','Mess accounts, made simple')}</p>
+      </div>
+      <div class="forgot-card">
+        <h2>${T('পাসওয়ার্ড ভুলে গেছেন?','Forgot your password?')}</h2>
+        <p>${T('আপনার অ্যাকাউন্টের ইমেইল লিখুন। আমরা সেই ঠিকানায় পাসওয়ার্ড রিসেট লিংক পাঠাব।','Enter your account email. We will send a password reset link to that address.')}</p>
+        <form onsubmit="event.preventDefault();resetPassword()">
+          <input type="email" id="forgotEmail" value="${esc(S.email||'')}" placeholder="example@gmail.com" autocomplete="email" required>
+          <button class="btn forgot-submit" id="forgotSubmitBtn" type="submit">${T('রিসেট লিংক পাঠান','Send reset link')}</button>
+        </form>
+      </div>
+      <button class="forgot-back" onclick="S.screen='auth';S.amode='login';render()">← ${T('লগইনে ফিরে যান','Back to login')}</button>
+    </div>
+  `;
+}
+
+async function resetPassword(){
+  const email=document.getElementById('forgotEmail')?.value.trim()||'';
+  if(!email||!/^\\S+@\\S+\\.\\S+$/.test(email))
+    return say(T('সঠিক ইমেইল ঠিকানা লিখুন','Please enter a valid email address'));
+
+  const btn=document.getElementById('forgotSubmitBtn');
+  if(btn){btn.disabled=true;btn.textContent=T('পাঠানো হচ্ছে...','Sending...');}
   try{
     await auth.sendPasswordResetEmail(email);
-    say(T('পাসওয়ার্ড রিসেট লিংক ইমেইলে পাঠানো হয়েছে','Password reset link sent to your email'));
+    S.email=email;
+    S.screen='auth';
+    S.amode='login';
+    render();
+    say(T('পাসওয়ার্ড রিসেট লিংক আপনার ইমেইলে পাঠানো হয়েছে।','A password reset link has been sent to your email.'));
   }catch(e){
-    say(e.message);
+    console.error('PASSWORD RESET ERROR:',e);
+    if(btn){btn.disabled=false;btn.textContent=T('রিসেট লিংক পাঠান','Send reset link');}
+    say(e.code==='auth/user-not-found'
+      ?T('এই ইমেইলে কোনো অ্যাকাউন্ট পাওয়া যায়নি।','No account was found with this email.')
+      :T('রিসেট লিংক পাঠানো যায়নি। ইমেইল ঠিকানা পরীক্ষা করে আবার চেষ্টা করুন।','Could not send the reset link. Check the email and try again.'));
   }
 }
 
@@ -5660,12 +5712,12 @@ async function deleteTask(id){
 
 
 function render(){
-  document.body.classList.toggle('auth-screen',S.screen==='auth');
+  document.body.classList.toggle('auth-screen',S.screen==='auth'||S.screen==='forgot');
   document.body.classList.toggle('pre-mess-screen',['welcome','create','join'].includes(S.screen));
   document.body.classList.toggle('app-screen',S.screen==='app');
   document.documentElement.lang=L;
   let v,nav='';
-  if(S.screen=='auth')v=authView();else if(S.screen=='welcome')v=welcomeView();else if(S.screen=='create')v=createView();else if(S.screen=='join')v=joinView();
+  if(S.screen=='auth')v=authView();else if(S.screen=='forgot')v=forgotPasswordView();else if(S.screen=='welcome')v=welcomeView();else if(S.screen=='create')v=createView();else if(S.screen=='join')v=joinView();
   else{
       const tabs=S.pendingJoin?[['home','home',T('হোম','Home')]]:[['home','home',T('হোম','Home')],['add','add',T('খরচ যোগ','Add')],['expenses','receipt',T('খরচের তালিকা','Expenses')],['task','task',T('টাস্ক','Tasks')]].concat(M.type=='meal'?[['meal','meals',T('মিল','Meals')]]:[]);   
       v=({home:homeView,add:addView,meal:mealView,rep:reportView,task:taskView,req:reqView,expenses:expenseListView,members:memberListView,settings:settingsView,editMessName:editMessNameView,deposits:depositView,depositDetail:depositDetailView,history:historyView,historyDetail:historyDetailView,formerMembers:formerMembersView,about:aboutView,profile:profileView,editnumber:editNumberView,editname:editNameView}[S.tab]||homeView)();   
@@ -5842,6 +5894,13 @@ if(App){
   }
 
   // Welcome page থেকে Back চাপলে history navigation নয়, exit confirmation দেখান।
+  if(S.screen==='forgot'){
+   S.screen='auth';
+   S.amode='login';
+   render();
+   return;
+  }
+
   if(S.screen==='welcome'){
    const exitMsg = L === 'bn'
     ? 'আপনি কি স্মার্ট মেস অ্যাপ থেকে বের হতে চান?'
