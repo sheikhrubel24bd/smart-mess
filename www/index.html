@@ -308,6 +308,13 @@ h1{font-size:26px;margin:4px 0 2px}h2{font-size:18px;margin:18px 0 8px}
 .report-view .row b{font-size:12px}
 .report-view .card hr{border:0;border-top:1px solid #cfe8d7;margin:6px 0}
 .report-view .card .li{padding:6px 0;border-bottom:1px solid #dcefe2;font-size:12px}
+/* EXPENSE LIST COLORS: match the Smart-Mess dashboard palette without changing its layout */
+.expense-list-card>.expense-list-item{border-radius:10px}
+.expense-list-card>.expense-tone-0{background:#fff0dc}
+.expense-list-card>.expense-tone-1{background:#ffe8e8}
+.expense-list-card>.expense-tone-2{background:#e3efff}
+.expense-list-card>.expense-tone-3{background:#e1f5e8}
+
 .report-view .card .li:last-child{border-bottom:0}
 .report-view .card .t{font-size:11px;line-height:1.35}
 .report-view .card .tag{font-size:10px;padding:3px 7px}
@@ -4290,7 +4297,7 @@ M.periods=periodsSnap.docs.map(d=>({id:d.id,...d.data()}));
   return `
     <h1>🧾 ${T('খরচের তালিকা','Expense List')}</h1>
 
-    <div class="card">
+    <div class="card expense-list-card">
       ${M.exp.length?M.exp.map((e,i)=>({e,i})).map(({e,i})=>{
         const canManage=
   M.role=='admin' ||
@@ -4298,7 +4305,7 @@ M.periods=periodsSnap.docs.map(d=>({id:d.id,...d.data()}));
   M.memberUids[e.payer]===auth.currentUser.uid;
         
         return `
-          <div class="li">
+          <div class="li expense-list-item expense-tone-${i%4}">
             <span class="e">${IT[e.item][0]}</span>
 
             <div class="t" style="min-width:0">
