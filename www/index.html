@@ -315,6 +315,17 @@ input[type=text]{
   cursor:text;
   outline-color:#159447;
 }
+.expense-entry{background:var(--card);border:1px solid var(--bd);border-radius:16px;padding:15px;margin:16px 0;box-shadow:0 3px 12px rgba(22,121,79,.06)}
+.expense-label{display:block;color:var(--mut);font-size:13px;font-weight:700;margin:0 0 7px}
+.expense-input,.expense-select{width:100%;min-width:0;min-height:50px;border:1.5px solid var(--bd);border-radius:11px;padding:11px 13px;background:var(--bg);color:var(--ink);font:inherit;font-size:17px;font-weight:650;outline:none}
+.expense-input:focus,.expense-select:focus{border-color:var(--pri);box-shadow:0 0 0 3px var(--pri2)}
+.expense-input::placeholder{color:var(--mut);font-weight:400;opacity:.8}
+.expense-fields{display:grid;grid-template-columns:minmax(0,1fr) minmax(112px,.82fr);gap:10px}
+.expense-price{margin-top:15px}
+.expense-price .expense-input{font-size:23px;font-weight:800;min-height:58px;background:var(--pri2);border-color:#a9d8ba}
+.expense-hint{font-size:12px;color:var(--mut);margin-top:6px}
+@media(prefers-color-scheme:dark){:root:not([data-theme="light"]) .expense-price .expense-input{border-color:#315a40}}
+:root[data-theme="dark"] .expense-price .expense-input{border-color:#315a40}
 .types{display:grid;grid-template-columns:1fr 1fr;gap:10px}
 .type{border:2px solid var(--bd);background:var(--card);border-radius:14px;padding:14px 10px;text-align:center}
 .type.on{border-color:var(--pri);background:var(--pri2)}
@@ -962,7 +973,7 @@ const cs=()=>CUR[(M&&M.cur)||'BDT'][0];
 const mny=n=>cs()+fmt(n);
 const dt=d=>new Date(d).toLocaleString(L=='bn'?'bn-BD':'en-GB',{day:'numeric',month:'short',hour:'numeric',minute:'2-digit',hour12:true});
 let REG=[],M=null;
- let S={screen:'auth',user:null,cur:'BDT',astep:'start',amode:'login',cc:'+880',ph:'',otp:'',via:'phone',memo:null,view:null,tab:'home',type:null,typePrompt:null,name:'',members:[],item:null,amt:'',payer:0,expSource:'pocket',toast:'',jcode:'',found:null,pend:null,pendingJoin:null,historyDetail:null};
+ let S={screen:'auth',user:null,cur:'BDT',astep:'start',amode:'login',cc:'+880',ph:'',otp:'',via:'phone',memo:null,view:null,tab:'home',type:null,typePrompt:null,name:'',members:[],item:null,amt:'',qty:'',unit:'',payer:0,expSource:'pocket',toast:'',jcode:'',found:null,pend:null,pendingJoin:null,historyDetail:null};
   let NAV_HISTORY=[];
 function mk(name,type,members,cur){
   let code;do code='SM-'+(1000+Math.floor(Math.random()*9000));while(REG.some(m=>m.code==code));
@@ -4275,7 +4286,7 @@ M.periods=periodsSnap.docs.map(d=>({id:d.id,...d.data()}));
 
             <div class="t">
               ${e.item==='other'?(e.otherName||nm(e.item)):nm(e.item)}
-              <small>${esc(M.members[e.payer])}${e.d?' · '+dt(e.d):''}</small>
+              <small>${esc(M.members[e.payer])}${e.quantity!=null&&e.quantity!==''?' · '+esc(e.quantity)+' '+esc(e.unit||''):''}${e.d?' · '+dt(e.d):''}</small>
             </div>
 
             ${e.memo?`<button class="x" onclick="S.view=${i};render()">🧾</button>`:''}
@@ -4421,7 +4432,7 @@ function homeView(){
               <span class="regular-expense-icon">${itemIcon}</span>
               <div class="regular-expense-info">
                 <b>${esc(itemName)}</b>
-                <small>${esc(payerName||T('সদস্য','Member'))}${e.d?' · '+dt(e.d):''}</small>
+                <small>${esc(payerName||T('সদস্য','Member'))}${e.quantity!=null&&e.quantity!==''?' · '+esc(e.quantity)+' '+esc(e.unit||''):''}${e.d?' · '+dt(e.d):''}</small>
               </div>
               <strong>${cs()}${fmt(e.amt)}</strong>
             </div>
@@ -4449,48 +4460,51 @@ function selectDepositSource(){
   S.expSource='deposit';
   render();
 }
+function defaultExpenseUnit(item){
+  const units={veg:'কেজি',fish:'কেজি',chk:'কেজি',meat:'কেজি',egg:'পিস',rice:'কেজি',dal:'কেজি',oil:'লিটার',onion:'কেজি',pot:'কেজি',spice:'প্যাকেট',milk:'লিটার',other:'কেজি'};
+  return units[item]||'পিস';
+}
 function addView(){
   if(!S.item){
-    const g=k=>Object.entries(IT).filter(([_,v])=>v[3]==k).map(([id,v])=>`<button class="ic" onclick="S.item='${id}';S.amt='';render()"><span>${v[0]}</span><small>${nm(id)}</small></button>`).join('');
-    return `<h1>${T('কী কিনলেন?','What did you buy?')}</h1><div class="mut">${T('ছবিতে ট্যাপ করুন','Tap a picture')}</div><h2>${T('বাজার','Groceries')}</h2><div class="grid">${g('b')}</div><h2>${T('ফিক্সড খরচ','Fixed costs')}</h2><div class="grid">${g('f')}</div>`;
+    const g=k=>Object.entries(IT).filter(([_,v])=>v[3]==k).map(([id,v])=>`<button class="ic" onclick="S.item='${id}';S.amt='';S.qty='';S.unit=defaultExpenseUnit('${id}');render()"><span>${v[0]}</span><small>${nm(id)}</small></button>`).join('');
+    return `<h1>${T('কী কিনলেন?','What did you buy?')}</h1><div class="mut">${T('পণ্য নির্বাচন করুন','Select an item')}</div><h2>${T('বাজার','Groceries')}</h2><div class="grid">${g('b')}</div><h2>${T('ফিক্সড খরচ','Fixed costs')}</h2><div class="grid">${g('f')}</div>`;
   }
-  const v=IT[S.item];
-  return `<div class="row"><button class="x" onclick="S.item=null;render()" aria-label="${T('পেছনে','Back')}">←</button>${S.item==='other'?`<input type="text" value="${esc(S.otherName||'')}" placeholder="${T('পণ্যের নাম লিখুন','Enter product name')}" oninput="S.otherName=this.value" style="flex:1;min-width:0;font-size:20px;font-weight:700">`:`<div style="font-size:22px;font-weight:700">${v[0]} ${nm(S.item)}</div>`}</div>
-  <div class="amt">${cs()}${S.amt?bn(S.amt):bn(0)}</div>
-  <div class="quick">${[10,20,50,100].map(q=>`<button onclick="S.amt=String((Number(S.amt)||0)+${q});render()">+${bn(q)}</button>`).join('')}</div>
-  <div class="keys">
-${[1,2,3,4,5,6,7,8,9].map(k=>`<button class="key" onclick="key('${k}')">${bn(k)}</button>`).join('')}
-<button class="key" onclick="key('.')">.</button>
-<button class="key" onclick="key('0')">${bn(0)}</button>
-<button class="key" onclick="S.amt=S.amt.slice(0,-1);render()" aria-label="${T('মুছুন','Delete')}">⌫</button>
-</div>
-  <h2>💰 ${T('টাকা কোথা থেকে দিয়েছেন?','Payment source')}</h2>
-  <div class="chips">
-    <button class="chip ${S.expSource==='pocket'?'on':''}"
-      onclick="S.expSource='pocket';render()">
-      ${T('নিজের পকেট','Own pocket')}
-    </button>
-
-    <button class="chip ${S.expSource==='deposit'?'on':''}"
-      onclick="selectDepositSource()">
-      ${T('মেসের জমা','Mess deposit')}
-    </button>
-  </div>
-    <h2>${T('কে কিনেছে?','Who bought it?')}</h2>${M.me==0?`<div class="chips">${M.members.map((m,i)=>`<button class="chip ${S.payer==i?'on':''}" onclick="S.payer=${i};render()">${esc(m)}</button>`).join('')}</div>`:`<div class="mut">${esc(M.members[M.me])} (${T('আপনি','you')})</div>`}
-  <h2>🧾 ${T('মেমো / রসিদ (ঐচ্ছিক)','Receipt (optional)')}</h2>${S.memo?`<div class="row"><img class="thumb" src="${S.memo}" alt=""><button class="x" onclick="S.memo=null;render()" aria-label="${T('সরান','Remove')}">✕</button></div>`:`<label class="btn ghost" style="display:block;text-align:center"><input type="file" accept="image/*" style="display:none" onchange="memo(this)">📷 ${T('মেমোর ছবি তুলুন বা আপলোড করুন','Take or upload a receipt photo')}</label>`}
-  <div style="height:8px"></div><button class="btn" ${Number(S.amt)>0?'':'disabled'} onclick="S.editExp?updateExp():saveExp()">✅ ${S.editExp?T('পরিবর্তন সংরক্ষণ করুন','Update expense'):T('খরচ সংরক্ষণ করুন','Save expense')}</button>`;
+  const v=IT[S.item],isMarket=v&&v[3]==='b';
+  const unitOptions=['কেজি','গ্রাম','লিটার','মিলিলিটার','পিস','ডজন','প্যাকেট','বস্তা','বোতল'];
+  return `
+    <div class="row"><button class="x" onclick="S.item=null;render()" aria-label="${T('পেছনে','Back')}">←</button>
+      ${S.item==='other'?`<input type="text" value="${esc(S.otherName||'')}" placeholder="${T('পণ্যের নাম লিখুন','Enter product name')}" oninput="S.otherName=this.value" style="flex:1;min-width:0;font-size:20px;font-weight:700">`:`<div style="font-size:22px;font-weight:700">${v[0]} ${nm(S.item)}</div>`}
+    </div>
+    <div class="expense-entry">
+      ${isMarket?`
+        <label class="expense-label" for="expenseQty">${T('পরিমাণ','Quantity')}</label>
+        <div class="expense-fields">
+          <input class="expense-input" id="expenseQty" type="number" inputmode="decimal" min="0" step="any" value="${esc(S.qty||'')}" placeholder="${T('পরিমাণ লিখুন','Enter quantity')}" oninput="S.qty=this.value">
+          <select class="expense-select" id="expenseUnit" onchange="S.unit=this.value" aria-label="${T('একক নির্বাচন','Select unit')}">
+            ${unitOptions.map(unit=>`<option value="${unit}" ${(S.unit||defaultExpenseUnit(S.item))===unit?'selected':''}>${unit}</option>`).join('')}
+          </select>
+        </div>
+      `:''}
+      <div class="expense-price">
+        <label class="expense-label" for="expenseAmount">${T('মোট দাম','Total price')} (${esc(M.cur||'BDT')})</label>
+        <input class="expense-input" id="expenseAmount" type="number" inputmode="decimal" min="0" step="any" value="${esc(S.amt||'')}" placeholder="${T('দাম লিখুন','Enter price')}" oninput="S.amt=this.value;document.getElementById('saveExpenseBtn').disabled=!(Number(this.value)>0)">
+        <div class="expense-hint">${T('ফোনের Numeric Keyboard ব্যবহার করে দাম লিখুন','Enter the price using your phone keyboard')}</div>
+      </div>
+    </div>
+    <h2>💰 ${T('টাকা কোথা থেকে দিয়েছেন?','Payment source')}</h2>
+    <div class="chips">
+      <button class="chip ${S.expSource==='pocket'?'on':''}" onclick="S.expSource='pocket';render()">${T('নিজের পকেট','Own pocket')}</button>
+      <button class="chip ${S.expSource==='deposit'?'on':''}" onclick="selectDepositSource()">${T('মেসের জমা','Mess deposit')}</button>
+    </div>
+    <h2>${T('কে কিনেছে?','Who bought it?')}</h2>
+    ${M.me==0?`<div class="chips">${M.members.map((m,i)=>`<button class="chip ${S.payer==i?'on':''}" onclick="S.payer=${i};render()">${esc(m)}</button>`).join('')}</div>`:`<div class="mut">${esc(M.members[M.me])} (${T('আপনি','you')})</div>`}
+    <h2>🧾 ${T('মেমো / রসিদ (ঐচ্ছিক)','Receipt (optional)')}</h2>
+    ${S.memo?`<div class="row"><img class="thumb" src="${S.memo}" alt=""><button class="x" onclick="S.memo=null;render()" aria-label="${T('সরান','Remove')}">✕</button></div>`:`<label class="btn ghost" style="display:block;text-align:center"><input type="file" accept="image/*" style="display:none" onchange="memo(this)">📷 ${T('মেমোর ছবি তুলুন বা আপলোড করুন','Take or upload a receipt photo')}</label>`}
+    <div style="height:8px"></div>
+    <button class="btn" id="saveExpenseBtn" ${Number(S.amt)>0?'':'disabled'} onclick="S.editExp?updateExp():saveExp()">✅ ${S.editExp?T('পরিবর্তন সংরক্ষণ করুন','Update expense'):T('খরচ সংরক্ষণ করুন','Save expense')}</button>
+  `;
 }
 function memo(inp){const f=inp.files[0];if(!f)return;const r=new FileReader();r.onload=()=>{const im=new Image();im.onload=()=>{const k=Math.min(1,800/Math.max(im.width,im.height)),c=document.createElement('canvas');c.width=im.width*k;c.height=im.height*k;c.getContext('2d').drawImage(im,0,0,c.width,c.height);S.memo=c.toDataURL('image/jpeg',.7);render()};im.src=r.result};r.readAsDataURL(f)}
-function key(k){
-  if(k==='.'){
-    if(!S.amt.includes('.')) S.amt=S.amt||'0',S.amt+='.';
-  }else{
-    if((S.amt+k).length<=8){
-      S.amt+=k;
-    }
-  }
-  render();
-}
 async function saveExp(){
     if(S.savingExp) return;
   S.savingExp=true;
@@ -4500,8 +4514,15 @@ async function saveExp(){
     ? Math.min(S.payer,M.members.length-1)
     : M.me;
 
-  if(!item || !amt || amt<=0)
+  if(!item || !amt || amt<=0){
+    S.savingExp=false;
     return say('সঠিক খরচের পরিমাণ দিন।');
+  }
+  const isMarket=IT[item]?.[3]==='b',qty=Number(S.qty);
+  if(isMarket&&(!Number.isFinite(qty)||qty<=0)){
+    S.savingExp=false;
+    return say('সঠিক পরিমাণ লিখুন।');
+  }
   if((S.expSource||'pocket')==='deposit' && amt>availableMessDeposit()){
     S.savingExp=false;
     alert('মেসে পর্যাপ্ত পরিমাণ জমার টাকা নেই। দয়া করে নিজের পকেট নির্বাচন করুন।');
@@ -4539,6 +4560,8 @@ if(item==='other' && !(S.otherName||'').trim()){
     const expense={
       item:item,
       otherName:item==='other'?(S.otherName||'').trim():null,
+      quantity:isMarket?qty:null,
+      unit:isMarket?(S.unit||defaultExpenseUnit(item)):null,
       payerUid:payerUid,
       payerPeriodId:payerMember.currentPeriodId,
       memberUidsAtTime:[...M.memberUids],
@@ -4564,6 +4587,8 @@ if(item==='other' && !(S.otherName||'').trim()){
     S.item=null;
     S.otherName='';
     S.amt='';
+    S.qty='';
+    S.unit='';
     S.memo=null;
     S.tab='home';
 
@@ -4593,8 +4618,10 @@ if(item==='other' && !(S.otherName||'').trim()){
 
   S.editExp=id;
   S.item=e.item;
-  S.otherName=e.otherName||''; 
+  S.otherName=e.otherName||'';
   S.amt=String(e.amt);
+  S.qty=e.quantity==null?'':String(e.quantity);
+  S.unit=e.unit||defaultExpenseUnit(e.item);
   S.expSource=e.source||'pocket';
   S.memo=e.memo||null;
   S.tab='add';
@@ -4628,6 +4655,11 @@ if(item==='other' && !(S.otherName||'').trim()){
     S.updatingExp=false;
     return say('সঠিক খরচের পরিমাণ দিন।');
   }
+  const isMarket=IT[item]?.[3]==='b',qty=Number(S.qty);
+  if(isMarket&&(!Number.isFinite(qty)||qty<=0)){
+    S.updatingExp=false;
+    return say('সঠিক পরিমাণ লিখুন।');
+  }
   if((S.expSource||'pocket')==='deposit' && amt>availableMessDeposit(id)){
     S.updatingExp=false;
     alert('মেসে পর্যাপ্ত পরিমাণ জমার টাকা নেই। দয়া করে নিজের পকেট নির্বাচন করুন।');
@@ -4646,6 +4678,8 @@ if(item==='other' && !(S.otherName||'').trim()){
       .update({
                 item:item,
         otherName:item==='other'?(S.otherName||'').trim():null,
+        quantity:isMarket?qty:null,
+        unit:isMarket?(S.unit||defaultExpenseUnit(item)):null,
         source:S.expSource||'pocket',
         amt:amt,
         memo:S.memo||null
@@ -4654,6 +4688,8 @@ if(item==='other' && !(S.otherName||'').trim()){
     S.editExp=null;
     S.item=null;
     S.amt='';
+    S.qty='';
+    S.unit='';
     S.memo=null;
     S.tab='expenses';
 
