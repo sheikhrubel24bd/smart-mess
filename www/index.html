@@ -4284,14 +4284,17 @@ M.periods=periodsSnap.docs.map(d=>({id:d.id,...d.data()}));
           <div class="li">
             <span class="e">${IT[e.item][0]}</span>
 
-            <div class="t">
-              ${e.item==='other'?(e.otherName||nm(e.item)):nm(e.item)}
-              <small>${esc(M.members[e.payer])}${e.quantity!=null&&e.quantity!==''?' · '+esc(e.quantity)+' '+esc(e.unit||''):''}${e.d?' · '+dt(e.d):''}</small>
+            <div class="t" style="min-width:0">
+              <div style="display:flex;align-items:baseline;gap:6px;flex-wrap:wrap">
+                <strong>${e.item==='other'?(e.otherName||nm(e.item)):nm(e.item)}</strong>
+                ${e.quantity!=null&&e.quantity!==''?`<span style="font-size:13px;color:var(--mut)">${esc(e.quantity)} ${esc(e.unit||'')}</span>`:''}
+              </div>
+              <small>${esc(M.members[e.payer])}${e.d?' · '+dt(e.d):''}</small>
             </div>
 
             ${e.memo?`<button class="x" onclick="S.view=${i};render()">🧾</button>`:''}
 
-            <b>${cs()}${fmt(e.amt)}</b>
+            <b style="white-space:nowrap">${cs()}${fmt(e.amt)}</b>
 
             ${canManage?`
               <button class="x" onclick="S.expMenu=S.expMenu=='${e.id}'?null:'${e.id}';render()">⋮</button>
@@ -4431,10 +4434,13 @@ function homeView(){
             <div class="regular-expense">
               <span class="regular-expense-icon">${itemIcon}</span>
               <div class="regular-expense-info">
-                <b>${esc(itemName)}</b>
-                <small>${esc(payerName||T('সদস্য','Member'))}${e.quantity!=null&&e.quantity!==''?' · '+esc(e.quantity)+' '+esc(e.unit||''):''}${e.d?' · '+dt(e.d):''}</small>
+                <div style="display:flex;align-items:baseline;gap:6px;flex-wrap:wrap">
+                  <b>${esc(itemName)}</b>
+                  ${e.quantity!=null&&e.quantity!==''?`<span style="font-size:12px;color:var(--mut)">${esc(e.quantity)} ${esc(e.unit||'')}</span>`:''}
+                </div>
+                <small>${esc(payerName||T('সদস্য','Member'))}${e.d?' · '+dt(e.d):''}</small>
               </div>
-              <strong>${cs()}${fmt(e.amt)}</strong>
+              <strong style="white-space:nowrap">${cs()}${fmt(e.amt)}</strong>
             </div>
           `;
         }).join(''):`<div class="mut">${T('এখনো কোনো খরচ নেই','No expenses yet')}</div>`}
