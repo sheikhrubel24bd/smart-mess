@@ -783,7 +783,6 @@ body.auth-screen #app{max-width:480px;padding:12px 18px 24px}
 .forgot-card input{width:100%;padding:13px;border:1.5px solid var(--bd);border-radius:10px;background:var(--card);color:var(--ink);font:inherit}
 .forgot-submit{margin-top:13px}
 .forgot-back{display:block;margin:15px auto 0;padding:7px 12px;border:0;background:transparent;color:#1976d2;font-size:14px;font-weight:600}
-body.auth-screen #app{max-width:480px;padding:12px 18px 24px}
 #app{width:100%;min-width:0}
 #app *{min-width:0}
 #app img,#app svg,#app video{max-width:100%}
@@ -1455,7 +1454,7 @@ function forgotPasswordView(){
 
 async function resetPassword(){
   const email=document.getElementById('forgotEmail')?.value.trim()||'';
-  if(!email||!/^\\S+@\\S+\\.\\S+$/.test(email))
+  if(!email||!/^\S+@\S+\.\S+$/.test(email))
     return say(T('সঠিক ইমেইল ঠিকানা লিখুন','Please enter a valid email address'));
 
   const btn=document.getElementById('forgotSubmitBtn');
