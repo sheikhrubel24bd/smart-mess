@@ -5238,6 +5238,13 @@ async function exportMonthlyPdf(mode='download'){
     const dateLabel=new Date().toLocaleDateString(L==='bn'?'bn-BD':'en-US',{year:'numeric',month:'long'});
     const memberRows=current.map((a,i)=>'<tr><td>'+escPdf(M.members[i])+'</td><td>'+escPdf(M.type==='meal'?(M.meals?.[i]||0):(a.meals||0))+'</td><td>'+money(a.deposited)+'</td><td>'+money(a.personalExpenses)+'</td><td>'+money(a.share)+'</td><td>'+money(a.bal)+'</td></tr>').join('');
     const formerRows=former.map(a=>'<tr><td>'+escPdf(a.name)+' (সাবেক সদস্য)</td><td>—</td><td>'+money(a.deposited)+'</td><td>'+money(a.personalExpenses)+'</td><td>'+money(a.share)+'</td><td>'+money(a.bal)+'</td></tr>').join('');
+    const memberCard=(a,i,isFormer=false)=>{
+      const bal=Number(a.bal)||0;
+      const state=bal>0.009?{bn:'পাওনা',en:'Receivable',amount:bal,cls:'member-credit'}:bal< -0.009?{bn:'দেনা',en:'Payable',amount:Math.abs(bal),cls:'member-due'}:{bn:'মিটে গেছে',en:'Settled',amount:0,cls:'member-clear'};
+      const meals=isFormer?'—':(M.type==='meal'?(M.meals?.[i]||0):(a.meals||0));
+      return '<article class="member-card '+['member-orange','member-red','member-blue','member-green','member-purple','member-teal','member-yellow','member-pink'][i%8]+'"><div class="member-head"><b>'+escPdf(a.name)+(isFormer?' (সাবেক সদস্য)':'')+'</b><span>'+escPdf(state.en)+'</span></div><div class="member-stats"><div><small>মিল / Meals</small><strong>'+escPdf(meals)+'</strong></div><div><small>জমা / Deposit</small><strong>'+money(a.deposited)+'</strong></div><div><small>পকেট খরচ / Paid</small><strong>'+money(a.personalExpenses)+'</strong></div><div><small>খরচের ভাগ / Share</small><strong>'+money(a.share)+'</strong></div></div><div class="member-balance '+state.cls+'"><span>'+state.bn+' / '+state.en+'</span><b>'+(state.amount?money(state.amount):money(0))+'</b></div></article>';
+    };
+    const memberCards=current.map((a,i)=>memberCard(a,i,false)).join('')+former.map((a,i)=>memberCard(a,i,true)).join('');
     const depositRows=(M.deposits||[]).slice().sort((a,b)=>(a.date?.toDate?.()?.getTime?.()||0)-(b.date?.toDate?.()?.getTime?.()||0)).map(d=>{
       const member=(M.allMembers||[]).find(x=>x.uid===d.uid);
       const when=d.date?.toDate?.()?.toLocaleDateString(L==='bn'?'bn-BD':'en-US')||'—';
@@ -5267,8 +5274,37 @@ async function exportMonthlyPdf(mode='download'){
       .muted{color:#35483d!important;font-size:10px;margin-bottom:10px}
       h2{font-size:14px;margin:0 0 9px;color:#176b43!important;-webkit-text-fill-color:#176b43!important;padding:0 0 6px;border-bottom:1px solid #cfe5d7}
       .section-card{border:1.5px solid #cfe5d7;border-radius:10px;background:#fff!important;padding:11px;margin:12px 0;box-shadow:0 1px 3px rgba(22,107,67,.06)}
+      .section-card.financial{background:#e3efff!important;border-color:#b9d4f3}
+      .section-card.members-section{background:#f0faf3!important;border-color:#b9dfc6}
+      .section-card.deposits-section{background:#fff7e8!important;border-color:#f3d8b2}
+      .section-card.expenses-section{background:#fff0f0!important;border-color:#f2caca}
       .summary{display:flex;gap:7px;margin:10px 0}
       .metric{flex:1;border:1px solid #cfe5d7;border-radius:7px;padding:8px;background:#f5fbf7!important}
+      .metric:nth-child(1){background:#fff0dc!important;border-color:#f3d8b2}
+      .metric:nth-child(2){background:#e3efff!important;border-color:#b9d4f3}
+      .metric:nth-child(3){background:#e1f5e8!important;border-color:#b9dfc6}
+      .member-grid{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+      .member-card{border:1px solid #cfe5d7;border-radius:9px;padding:8px;break-inside:avoid;page-break-inside:avoid;background:#fff!important}
+      .member-orange{background:#fff0dc!important;border-color:#f3d8b2}
+      .member-red{background:#ffe8e8!important;border-color:#f2caca}
+      .member-blue{background:#e3efff!important;border-color:#b9d4f3}
+      .member-green{background:#e1f5e8!important;border-color:#b9dfc6}
+      .member-purple{background:#f0e8ff!important;border-color:#d9c7f5}
+      .member-teal{background:#def5f2!important;border-color:#b7e3dc}
+      .member-yellow{background:#fff7d9!important;border-color:#f0e2a8}
+      .member-pink{background:#fde8f1!important;border-color:#f2c9dc}
+      .member-head{display:flex;justify-content:space-between;gap:5px;align-items:center;border-bottom:1px solid #ffffffaa;padding-bottom:5px;margin-bottom:6px;font-size:11px}
+      .member-head span{font-size:8px;color:#42584b!important}
+      .member-stats{display:grid;grid-template-columns:1fr 1fr;gap:5px}
+      .member-stats div{min-width:0}
+      .member-stats small{display:block;font-size:8px;color:#42584b!important}
+      .member-stats strong{display:block;font-size:9px;overflow-wrap:anywhere}
+      .member-balance{display:flex;justify-content:space-between;gap:5px;align-items:center;margin-top:7px;padding:5px 6px;border-radius:6px;font-size:9px}
+      .member-balance b{font-size:10px;white-space:nowrap}
+      .member-credit{background:#dcecff!important;color:#174f91!important}
+      .member-due{background:#ffe0e0!important;color:#a3222a!important}
+      .member-clear{background:#dff3e5!important;color:#12663b!important}
+      .expense-table tbody tr:nth-child(even){background:#fff5f5!important}
       .metric span{display:block;font-size:10px;color:#35483d!important;-webkit-text-fill-color:#35483d!important}
       .metric b{font-size:13px;color:#176b43!important;-webkit-text-fill-color:#176b43!important}
       table{width:100%;border-collapse:collapse;font-size:10px;page-break-inside:auto;color:#17251d!important}
@@ -5308,7 +5344,7 @@ async function exportMonthlyPdf(mode='download'){
         <div class="metric"><span>মোট জমা / Deposits</span><b>${money(totalDeposit)}</b></div>
         <div class="metric"><span>নগদ অবশিষ্ট / Cash balance</span><b>${money(cashLeft)}</b></div>
       </div>
-      <div class="section-card"><h2>মেসের আর্থিক সারসংক্ষেপ / Financial Summary</h2>
+      <div class="section-card financial"><h2>মেসের আর্থিক সারসংক্ষেপ / Financial Summary</h2>
       <table class="financial-summary"><colgroup><col style="width:68%"><col style="width:32%"></colgroup><tbody>
         <tr><td>বাজার ও অন্যান্য খরচ / Market & other expenses</td><td>${money(c.tot)}</td></tr>
         <tr><td>জমা থেকে খরচ / Expenses from deposits</td><td>${money(depositSpent)}</td></tr>
@@ -5317,10 +5353,10 @@ async function exportMonthlyPdf(mode='download'){
         <tr><td>সদস্যদের কাছ থেকে আদায় / To collect</td><td>${money(totalOwed)}</td></tr>
         <tr><td>সদস্যদের মোট পাওনা / Member credits</td><td>${money(totalReceivable)}</td></tr>
       </tbody></table></div>
-      <div class="section-card"><h2>সদস্যভিত্তিক হিসাব / Member Accounts</h2>
-      <table class="member-accounts"><colgroup><col style="width:22%"><col style="width:8%"><col style="width:14%"><col style="width:22%"><col style="width:17%"><col style="width:17%"></colgroup><thead><tr><th>সদস্য / Member</th><th>মিল / Meals</th><th>জমা / Deposit</th><th>পকেট থেকে মেসের খরচ / Paid from pocket</th><th>খরচের ভাগ / Share</th><th>ব্যালেন্স / Balance</th></tr></thead><tbody>${memberRows}${formerRows}</tbody></table></div>
-      <div class="section-card"><h2>ডিপোজিটের বিস্তারিত / Deposit Details</h2>
+      <div class="section-card members-section"><h2>সদস্যভিত্তিক হিসাব / Member Accounts</h2><div class="member-grid">${memberCards||'<p>কোনো সদস্য নেই / No members</p>'}</div></div>
+      <div class="section-card deposits-section"><h2>ডিপোজিটের বিস্তারিত / Deposit Details</h2>
       <table><thead><tr><th>তারিখ / Date</th><th>সদস্য / Member</th><th>জমা / Deposit</th></tr></thead><tbody>${depositRows||'<tr><td colspan="3">কোনো জমা নেই / No deposits</td></tr>'}</tbody></table></div>
+      <div class="section-card expenses-section"><h2>খরচের বিস্তারিত / Expense Details</h2><table class="expense-table"><thead><tr><th>তারিখ / Date</th><th>খরচের বিবরণ / Item</th><th>পরিশোধকারী / Paid by</th><th>উৎস / Source</th><th>পরিমাণ / Amount</th></tr></thead><tbody>${expenseRows||'<tr><td colspan="5">কোনো খরচ নেই / No expenses</td></tr>'}</tbody></table></div>
       <div class="note">এই রিপোর্টটি Smart-Mess অ্যাপের সংরক্ষিত তথ্য থেকে তৈরি। হিসাব যাচাইয়ের জন্য মূল অ্যাপের তথ্যের সঙ্গে মিলিয়ে নিন।</div>
     </main></body></html>`;
 
