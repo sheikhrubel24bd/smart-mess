@@ -290,6 +290,20 @@ body{margin:0;background:var(--bg);color:var(--ink);font-family:"Noto Sans Benga
 h1{font-size:26px;margin:4px 0 2px}h2{font-size:18px;margin:18px 0 8px}
 .mut{color:var(--mut);font-size:14px}
 .card{background:var(--card);border:1px solid var(--bd);border-radius:14px;padding:14px;margin-bottom:10px}
+.report-view{color:var(--ink);font-size:13px;line-height:1.42}
+.report-view h1{font-size:19px;margin:4px 0 3px;color:#087344}
+.report-view h2{font-size:15px;margin:13px 0 7px;color:#087344}
+.report-view .mut{font-size:11px;line-height:1.4}
+.report-view .card{background:linear-gradient(120deg,#e8f7ed 0%,#f8fff9 100%);border:1px solid #c5e8d1;border-radius:12px;padding:9px 11px;margin-bottom:7px;box-shadow:0 2px 7px #16794f0d}
+.report-view .row{font-size:12px;gap:5px;min-height:22px}
+.report-view .row b{font-size:12px}
+.report-view .card hr{border:0;border-top:1px solid #cfe8d7;margin:6px 0}
+.report-view .card .li{padding:6px 0;border-bottom:1px solid #dcefe2;font-size:12px}
+.report-view .card .li:last-child{border-bottom:0}
+.report-view .card .t{font-size:11px;line-height:1.35}
+.report-view .card .tag{font-size:10px;padding:3px 7px}
+.report-view .card b[style*="font-size:18px"]{font-size:14px!important;color:#087344}
+.report-view button.btn,.report-view button.secondary{font-size:12px;padding:9px 6px!important;border-radius:10px!important}
 button{font:inherit;color:inherit;cursor:pointer}
   /* BUTTON TOUCH EFFECT */
 button{
@@ -4968,6 +4982,7 @@ function reportView(){
     .reduce((s,a)=>s+Math.abs(a.bal),0);
 
   return `
+  <div class="report-view">
   <h1>${T('মাসিক হিসাব','Monthly report')}</h1>
 
   <div class="mut">
@@ -5157,6 +5172,7 @@ function reportView(){
         ↗ ${T('PDF শেয়ার','Share PDF')}
       </button>
     </div>
+  </div>
   `;
 }
   
