@@ -1790,7 +1790,9 @@ const messId=userData.messId;
           return {
   id:doc.id,
   item:e.item,
-  otherName:e.otherName||'',          
+  otherName:e.otherName||'',
+  quantity:e.quantity==null?null:e.quantity,
+  unit:e.unit||null,
   payer:memberUids.indexOf(e.payerUid),
   payerUid:e.payerUid,
   memberUidsAtTime:e.memberUidsAtTime||null,
