@@ -3749,7 +3749,7 @@ function settingsView(){
       font-size:15px;
       font-weight:600;
     ">
-      <img src="icons/${iconFile}" alt="" style="width:36px;height:36px;object-fit:contain;flex:0 0 36px">
+      <img src="icons/${iconFile}" alt="" style="${iconFile==='delete-mess.png'?'width:30px;height:30px;flex:0 0 30px':'width:36px;height:36px;flex:0 0 36px'};object-fit:contain">
       <span style="flex:1">${label}</span>
       <span style="color:var(--muted);font-size:19px">›</span>
     </button>`;
