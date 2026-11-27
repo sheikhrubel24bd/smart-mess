@@ -227,6 +227,10 @@ body{margin:0;background:var(--bg);color:var(--ink);font-family:"Noto Sans Benga
 .regular-recent{background:#fff;border:1px solid #e2eee6;border-radius:16px;padding:15px;margin-top:4px}
 .regular-recent h2{font-size:17px;color:#087b42;margin:0 0 8px}
 .regular-expense{display:flex;align-items:center;gap:10px;padding:11px 0;border-bottom:1px solid #edf1ee;min-width:0}
+.regular-expense.recent-expense-tone-0{background:#fff0dc;border-radius:10px;padding:11px 10px;margin:5px 0;border:0}
+.regular-expense.recent-expense-tone-1{background:#ffe8e8;border-radius:10px;padding:11px 10px;margin:5px 0;border:0}
+.regular-expense.recent-expense-tone-2{background:#e3efff;border-radius:10px;padding:11px 10px;margin:5px 0;border:0}
+.regular-expense.recent-expense-tone-3{background:#e1f5e8;border-radius:10px;padding:11px 10px;margin:5px 0;border:0}
 .regular-expense:last-child{border-bottom:0}
 .regular-expense-icon{font-size:23px;flex:0 0 28px;text-align:center}
 .regular-expense-info{flex:1;min-width:0;display:flex;flex-direction:column;gap:2px}
@@ -4260,7 +4264,7 @@ M.periods=periodsSnap.docs.map(d=>({id:d.id,...d.data()}));
           uid!==auth.currentUser.uid;
 
         return `
-          <div style="padding:12px 0;border-bottom:1px solid var(--bd)">
+          <div class="member-list-item member-tone-${i%4}" style="padding:12px 10px;border-bottom:1px solid var(--bd)">
 
             <div style="display:flex;align-items:center;justify-content:space-between;gap:8px">
 
@@ -4453,7 +4457,7 @@ function homeView(){
 
       <section class="regular-recent">
         <h2>${T('সাম্প্রতিক খরচ','Recent Expenses')}</h2>
-        ${recent.length?recent.map(e=>{
+        ${recent.length?recent.map((e,i)=>{
           const payerIndex=M.memberUids.indexOf(e.payerUid);
           const payerName=payerIndex>=0
             ?M.members[payerIndex]
@@ -4463,7 +4467,7 @@ function homeView(){
             :nm(e.item);
           const itemIcon=IT[e.item]?.[0]||'🧾';
           return `
-            <div class="regular-expense">
+            <div class="regular-expense recent-expense-tone-${i%4}">
               <span class="regular-expense-icon">${itemIcon}</span>
               <div class="regular-expense-info">
                 <div style="display:flex;align-items:baseline;gap:6px;flex-wrap:wrap">
