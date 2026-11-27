@@ -294,7 +294,12 @@ h1{font-size:26px;margin:4px 0 2px}h2{font-size:18px;margin:18px 0 8px}
 .report-view h1{font-size:19px;margin:4px 0 3px;color:#087344}
 .report-view h2{font-size:15px;margin:13px 0 7px;color:#087344}
 .report-view .mut{font-size:11px;line-height:1.4}
-.report-view .card{background:linear-gradient(120deg,#e8f7ed 0%,#f8fff9 100%);border:1px solid #c5e8d1;border-radius:12px;padding:9px 11px;margin-bottom:7px;box-shadow:0 2px 7px #16794f0d}
+.report-view .card{border-radius:12px;padding:8px 10px;margin-bottom:7px;box-shadow:0 2px 7px #16794f0d}
+.report-view .report-deposit{background:#e3efff;border:1px solid #b9d4f3;color:#2161bd}
+.report-view .report-market{background:#fff0dc;border:1px solid #f3d8b2;color:#bd6900}
+.report-view .report-other{background:#ffe8e8;border:1px solid #f2caca;color:#c52d36}
+.report-view .report-members{background:#e1f5e8;border:1px solid #b9dfc6;color:#087b42}
+.report-view .report-settlement{background:#fff0dc;border:1px solid #f3d8b2;color:#bd6900}
 .report-view .row{font-size:12px;gap:5px;min-height:22px}
 .report-view .row b{font-size:12px}
 .report-view .card hr{border:0;border-top:1px solid #cfe8d7;margin:6px 0}
@@ -4995,7 +5000,7 @@ function reportView(){
 
   <h2>${T('মেসের সম্পূর্ণ হিসাব','Mess financial summary')}</h2>
 
-  <div class="card">
+  <div class="card report-deposit">
 
     <div class="row" style="justify-content:space-between">
       <span>${T('মোট জমা','Total deposits')}</span>
@@ -5044,9 +5049,9 @@ function reportView(){
     const ok=Math.abs(b)<.005;
 
     return `
-    <div class="card">
+    <div class="card ${["report-market","report-other","report-deposit","report-members"][i%4]}">
 
-      <b style="font-size:18px">${esc(m)}</b>
+      <b style="font-size:14px">${esc(m)}</b>
 
       <div class="row" style="justify-content:space-between;margin-top:10px">
         <span>${T('মোট জমা','Total deposit')}</span>
@@ -5093,7 +5098,7 @@ function reportView(){
 
   <h2>${T('টাকা সমন্বয়','Settlement')}</h2>
 
-  <div class="card">
+  <div class="card report-settlement">
 
     ${M.members.map((m,i)=>{
       const b=currentAccounts[i]?.bal||0;
