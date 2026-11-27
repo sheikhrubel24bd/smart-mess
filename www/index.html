@@ -1005,7 +1005,7 @@ const bn=n=>L=='bn'?String(n).replace(/\d/g,d=>BN[d]):String(n);
 const fmt=n=>bn(Number(n).toLocaleString('en-US',{minimumFractionDigits:Number(n)%1?2:0,maximumFractionDigits:2}));
 const esc=s=>String(s).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
 const OIL='<svg viewBox="0 0 32 32" width="1em" height="1em" style="vertical-align:-.12em"><rect x="12" y="2" width="8" height="4" rx="1" fill="#2f9e5b"/><path d="M13 6h6v4c0 1 4 3 4 7v11a2 2 0 0 1-2 2H11a2 2 0 0 1-2-2V17c0-4 4-6 4-7z" fill="#f4c430" stroke="#b8860b"/><rect x="10" y="16" width="12" height="9" rx="1.5" fill="#fff8dc"/><ellipse cx="16" cy="20.5" rx="3" ry="2" fill="#7cb342" transform="rotate(-20 16 20.5)"/></svg>';
-const IT={veg:['🥬','সবজি','Vegetables','b'],fish:['🐟','মাছ','Fish','b'],chk:['🍗','মুরগি','Chicken','b'],meat:['🥩','মাংস','Meat','b'],egg:['🥚','ডিম','Eggs','b'],rice:['🍚','চাল','Rice','b'],dal:['🫘','ডাল','Lentils','b'],oil:[OIL,'সয়াবিন তেল','Soybean oil','b'],onion:['🧅','পেঁয়াজ','Onion','b'],pot:['🥔','আলু','Potato','b'],spice:['🧂','মসলা','Spices','b'],milk:['🥛','দুধ','Milk','b'],other:['➕','অন্যান্য','Other','b'],
+const IT={veg:['🥬','সবজি','Vegetables','b'],fish:['🐟','মাছ','Fish','b'],chk:['🍗','মুরগি','Chicken','b'],meat:['🥩','মাংস','Meat','b'],egg:['🥚','ডিম','Eggs','b'],rice:['🍚','চাল','Rice','b'],dal:['🫘','ডাল','Lentils','b'],oil:[OIL,'সয়াবিন তেল','Soybean oil','b'],onion:['🧅','পেঁয়াজ','Onion','b'],pot:['🥔','আলু','Potato','b'],spice:['🧂','মসলা','Spices','b'],milk:['🥛','দুধ','Milk','b'],water:['💧','পানি','Water','b'],other:['➕','অন্যান্য','Other','b'],
 gas:['🔥','গ্যাস','Gas','f'],elec:['💡','বিদ্যুৎ','Electricity','f'],net:['📶','ইন্টারনেট','Internet','f'],rent:['🏠','ভাড়া','Rent','f'],maid:['👩','বুয়া','Maid','f'],clean:['🧼','ক্লিনিং','Cleaning','f']};
 const nm=id=>T(IT[id][1],IT[id][2]);
 const CUR={BDT:['৳','টাকা','Taka'],SAR:['SAR ','সৌদি রিয়াল','Saudi Riyal'],USD:['$','ডলার','US Dollar'],AED:['AED ','দিরহাম','UAE Dirham'],KWD:['KD ','কুয়েতি দিনার','Kuwaiti Dinar'],QAR:['QR ','কাতারি রিয়াল','Qatari Riyal'],OMR:['OMR ','ওমানি রিয়াল','Omani Rial'],MYR:['RM ','রিঙ্গিত','Malaysian Ringgit'],INR:['₹','ভারতীয় রুপি','Indian Rupee'],GBP:['£','পাউন্ড','British Pound'],EUR:['€','ইউরো','Euro']};
@@ -4503,13 +4503,13 @@ function selectDepositSource(){
   render();
 }
 function defaultExpenseUnit(item){
-  const units={veg:'কেজি',fish:'কেজি',chk:'কেজি',meat:'কেজি',egg:'পিস',rice:'কেজি',dal:'কেজি',oil:'লিটার',onion:'কেজি',pot:'কেজি',spice:'প্যাকেট',milk:'লিটার',other:'কেজি'};
+  const units={veg:'কেজি',fish:'কেজি',chk:'কেজি',meat:'কেজি',egg:'পিস',rice:'কেজি',dal:'কেজি',oil:'লিটার',onion:'কেজি',pot:'কেজি',spice:'প্যাকেট',milk:'লিটার',water:'বোতল',other:'কেজি'};
   return units[item]||'পিস';
 }
 function addView(){
   if(!S.item){
-    const g=k=>Object.entries(IT).filter(([_,v])=>v[3]==k).map(([id,v])=>`<button class="ic" onclick="S.item='${id}';S.amt='';S.qty='';S.unit=defaultExpenseUnit('${id}');render()"><span>${v[0]}</span><small>${nm(id)}</small></button>`).join('');
-    return `<h1>${T('কী কিনলেন?','What did you buy?')}</h1><div class="mut">${T('পণ্য নির্বাচন করুন','Select an item')}</div><h2>${T('বাজার','Groceries')}</h2><div class="grid">${g('b')}</div><h2>${T('ফিক্সড খরচ','Fixed costs')}</h2><div class="grid">${g('f')}</div>`;
+    const g=k=>Object.entries(IT).filter(([_,v])=>v[3]==k).map(([id,v])=>`<button class="ic" style="padding:8px 3px;border:1.5px solid var(--pri)" onclick="S.item='${id}';S.amt='';S.qty='';S.unit=defaultExpenseUnit('${id}');render()"><span style="font-size:30px">${v[0]}</span><small style="font-size:12px">${nm(id)}</small></button>`).join('');
+    return `<h1>${T('কী কিনলেন?','What did you buy?')}</h1><div class="mut">${T('পণ্য নির্বাচন করুন','Select an item')}</div><h2>${T('বাজার','Groceries')}</h2><div class="grid" style="grid-template-columns:repeat(3,minmax(0,1fr));gap:8px">${g('b')}</div><h2>${T('ফিক্সড খরচ','Fixed costs')}</h2><div class="grid" style="grid-template-columns:repeat(3,minmax(0,1fr));gap:8px">${g('f')}</div>`;
   }
   const v=IT[S.item],isMarket=v&&v[3]==='b';
   const unitOptions=['কেজি','গ্রাম','লিটার','মিলিলিটার','পিস','ডজন','প্যাকেট','বস্তা','বোতল'];
