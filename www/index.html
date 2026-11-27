@@ -299,7 +299,11 @@ h1{font-size:26px;margin:4px 0 2px}h2{font-size:18px;margin:18px 0 8px}
 .report-view .report-market{background:#fff0dc;border:1px solid #f3d8b2;color:#bd6900}
 .report-view .report-other{background:#ffe8e8;border:1px solid #f2caca;color:#c52d36}
 .report-view .report-members{background:#e1f5e8;border:1px solid #b9dfc6;color:#087b42}
-.report-view .report-settlement{background:#fff0dc;border:1px solid #f3d8b2;color:#bd6900}
+.report-view .report-purple{background:#f0e8ff;border:1px solid #d9c7f5;color:#7040a8}
+.report-view .report-teal{background:#def5f2;border:1px solid #b7e3dc;color:#08786b}
+.report-view .report-yellow{background:#fff7d9;border:1px solid #f0e2a8;color:#8a6a00}
+.report-view .report-pink{background:#fde8f1;border:1px solid #f2c9dc;color:#a83268}
+.report-view .report-settlement{background:#e1f5e8;border:1px solid #b9dfc6;color:#087b42}
 .report-view .row{font-size:12px;gap:5px;min-height:22px}
 .report-view .row b{font-size:12px}
 .report-view .card hr{border:0;border-top:1px solid #cfe8d7;margin:6px 0}
@@ -5049,7 +5053,7 @@ function reportView(){
     const ok=Math.abs(b)<.005;
 
     return `
-    <div class="card ${["report-market","report-other","report-deposit","report-members"][i%4]}">
+    <div class="card ${["report-market","report-other","report-deposit","report-members","report-purple","report-teal","report-yellow","report-pink"][i%8]}">
 
       <b style="font-size:14px">${esc(m)}</b>
 
