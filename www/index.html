@@ -1244,13 +1244,13 @@ function topbar(){
 
   <h2>${T('পাসওয়ার্ড','Password')}</h2>
   <input type="password" id="authPass" placeholder="${T('কমপক্ষে ৬ অক্ষর','At least 6 characters')}" style="width:100%;padding:12px;border:1.5px solid var(--bd);border-radius:10px;background:var(--card);color:var(--ink);font:inherit" autocomplete="${m?'new-password':'current-password'}">
+  ${!m?`<div style="text-align:right;margin-top:6px"><a href="#" onclick="event.preventDefault();resetPassword()" style="font-size:13px;color:var(--g);text-decoration:none;font-weight:500">${T('পাসওয়ার্ড ভুলে গেছেন?','Forgot password?')}</a></div>`:''}
 
   <div style="height:16px"></div>
   <button class="btn" id="authBtn" onclick="authAction()">
     ${m?T('একাউন্ট তৈরি করুন','Create account'):T('লগইন করুন','Log in')}
   </button>
   ${!m?`
-    <button class="btn ghost" style="margin-top:10px" onclick="resetPassword()">${T('পাসওয়ার্ড ভুলে গেছেন?','Forgot password?')}</button>
     <div style="display:flex;align-items:center;gap:12px;margin:18px 0;color:var(--mut)">
       <span style="height:1px;flex:1;background:var(--bd)"></span>
       <small>${T('অথবা','OR')}</small>
