@@ -308,6 +308,14 @@ h1{font-size:26px;margin:4px 0 2px}h2{font-size:18px;margin:18px 0 8px}
 .report-view .row b{font-size:12px}
 .report-view .card hr{border:0;border-top:1px solid #cfe8d7;margin:6px 0}
 .report-view .card .li{padding:6px 0;border-bottom:1px solid #dcefe2;font-size:12px}
+/* SMART-MESS LIST COLORS: keep existing layouts, color only the list cards */
+.member-list-card>.member-list-item,
+.former-list-card>.former-list-item,
+.task-page .task-list-item{border-radius:10px;margin:5px 0}
+.member-list-card>.member-tone-0,.former-list-card>.former-tone-0,.task-page .task-tone-0{background:#fff0dc}
+.member-list-card>.member-tone-1,.former-list-card>.former-tone-1,.task-page .task-tone-1{background:#ffe8e8}
+.member-list-card>.member-tone-2,.former-list-card>.former-tone-2,.task-page .task-tone-2{background:#e3efff}
+.member-list-card>.member-tone-3,.former-list-card>.former-tone-3,.task-page .task-tone-3{background:#e1f5e8}
 /* EXPENSE LIST COLORS: match the Smart-Mess dashboard palette without changing its layout */
 .expense-list-card>.expense-list-item{border-radius:10px}
 .expense-list-card>.expense-tone-0{background:#fff0dc}
@@ -3532,7 +3540,7 @@ async function deleteDeposit(id){
       <h2>${T('জমার ইতিহাস','Deposit History')}</h2>
 
       ${records.length?records.map(d=>`
-        <div style="padding:12px 0;border-bottom:1px solid var(--bd)">
+        <div class="member-list-item member-tone-${i%4}" style="padding:12px 10px;border-bottom:1px solid var(--bd)">
           <b>+${Number(d.amt).toFixed(2)} ${M.cur}</b>
           <div class="mut">
             ${d.date?.toDate?.().toLocaleString('bn-BD')||T('তারিখ পাওয়া যায়নি','Date unavailable')}
@@ -4018,7 +4026,7 @@ function formerMembersView(){
   const accounts=calcAllMembers();
   return `
     <h1>📋 ${T('সাবেক সদস্যদের হিসাবকাল','Closed Membership Periods')}</h1>
-    <div class="card" style="margin-top:12px">
+    <div class="card former-list-card" style="margin-top:12px">
       ${periods.length?periods.map((p,i)=>{
         const a=accounts.find(x=>x.periodId===p.id)||{};
         const balance=p.balanceFrozen===true?(Number(p.finalBalance)||0):(Number(a.bal)||0);
@@ -4027,7 +4035,7 @@ function formerMembersView(){
         const personal=p.balanceFrozen===true?(Number(p.finalPersonalExpenses)||0):(Number(a.personalExpenses)||0);
         const share=p.balanceFrozen===true?(Number(p.finalShare)||0):(Number(a.share)||0);
         return `
-          <div style="padding:13px 0;border-bottom:1px solid var(--line)">
+          <div class="former-list-item former-tone-${i%4}" style="padding:13px 10px;border-bottom:1px solid var(--line)">
             <div style="display:flex;align-items:center;justify-content:space-between;gap:8px"><b>${i+1}. ${esc(p.name||'নাম নেই')}</b>
             ${M.role==='admin'?`<span class="action-menu-anchor">
               <button type="button" aria-label="Former member actions" style="appearance:none;background:transparent;border:0;box-shadow:none;padding:0 4px;color:var(--muted);font-size:24px;line-height:1;cursor:pointer;flex-shrink:0" onclick="S.formerMenuPeriod=S.formerMenuPeriod==='${p.id}'?null:'${p.id}';render()">⋮</button>
@@ -4238,7 +4246,7 @@ M.periods=periodsSnap.docs.map(d=>({id:d.id,...d.data()}));
   return `
     <h1>👥 ${T('সদস্য তালিকা','Member List')}</h1>
 
-    <div class="card" style="margin-top:12px">
+    <div class="card member-list-card" style="margin-top:12px">
       ${M.members.map((name,i)=>{
         const phone=(M.memberPhones&&M.memberPhones[i])||'';
         const uid=M.memberUids[i];
@@ -5514,7 +5522,7 @@ function taskView(){
     .sort((a,b)=>getTaskTime(b.completedAt)-getTaskTime(a.completedAt))
     .slice(0,3);
 
-  const renderTask=t=>{
+  const renderTask=(t,i)=>{
 
     const creator=M.members[M.memberUids.indexOf(t.createdBy)]||'';
     const completer=M.members[M.memberUids.indexOf(t.completedBy)]||'';
@@ -5532,7 +5540,7 @@ function taskView(){
       :'';
 
     return `
-      <div class="task-item ${isDone?'done':''}">
+      <div class="task-item task-list-item task-tone-${i%4} ${isDone?'done':''}">
 
         <button class="task-check"
           ${isDone?'disabled':`onclick="toggleTask('${t.id}')"`}>
