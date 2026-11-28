@@ -1,5 +1,7 @@
 name: Build Smart-Mess Play Store AAB
 on:
+  push:
+    branches: [main]
   workflow_dispatch:
 jobs:
   build:
@@ -178,28 +180,3 @@ jobs:
           name: Smart-Mess-Play-Store-AAB
           path: android/app/build/outputs/bundle/release/app-release.aab
           retention-days: 7
-      - name: Build debug APK
-        working-directory: android
-        run: chmod +x gradlew && ./gradlew assembleDebug
-      - name: Verify APK signing SHA-1
-        run: |
-          APK="android/app/build/outputs/apk/debug/app-debug.apk"
-          APKSIGNER="$(find "$ANDROID_HOME/build-tools" -type f -name apksigner | sort -V | tail -n 1)"
-          EXPECTED="$(keytool -list -v -keystore "$HOME/.android/debug.keystore" -alias androiddebugkey -storepass android -keypass android | awk '/SHA1:/{print $2; exit}' | tr -d ':' | tr '[:lower:]' '[:upper:]')"
-          echo "apksigner path: $APKSIGNER"
-          CERT_OUTPUT="$("$APKSIGNER" verify --print-certs "$APK" 2>&1)"
-          echo "$CERT_OUTPUT"
-          ACTUAL="$(printf '%s\n' "$CERT_OUTPUT" | sed -nE 's/.*SHA-1 digest: *([0-9A-Fa-f: ]+).*/\1/p' | head -n 1 | tr -d ' :' | tr '[:lower:]' '[:upper:]')"
-          echo "Expected signing SHA-1: $EXPECTED"
-          echo "Actual APK signing SHA-1: $ACTUAL"
-          test -n "$ACTUAL" && test "$EXPECTED" = "$ACTUAL"
-      - name: Upload debug keystore for reuse
-        uses: actions/upload-artifact@v4
-        with:
-          name: Smart-Mess-Debug-Keystore
-          path: android-debug.keystore
-      - name: Upload APK
-        uses: actions/upload-artifact@v4
-        with:
-          name: Smart-Mess-APK
-          path: android/app/build/outputs/apk/debug/app-debug.apk
